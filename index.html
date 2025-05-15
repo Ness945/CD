@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculateur NST</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <style>
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: .5;
+            }
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .tab-button {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .tab-button.active {
+            color: #1E40AF;
+            font-weight: bold;
+            background-color: #EFF6FF;
+        }
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, #3B82F6, #1E40AF);
+        }
+        .tab-button:hover:not(.active) {
+            background-color: #F3F4F6;
+            color: #4B5563;
+        }
+        .tab-icon {
+            transition: transform 0.3s ease;
+        }
+        .tab-button:hover .tab-icon {
+            transform: translateY(-2px);
+        }
+        .tab-button.active .tab-icon {
+            color: #3B82F6;
+        }
+        .collapsible-section {
+            transition: max-height 0.3s ease-out;
+            overflow: hidden;
+        }
+        .toggle-button {
+            transition: transform 0.3s ease;
+        }
+        .toggle-button.rotated {
+            transform: rotate(180deg);
+        }
+        #sf-resultMessage {
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="p-4 sm:p-6 max-w-md mx-auto bg-white rounded-xl shadow-lg w-full">
+        <!-- En-tête avec titre principal -->
+        <div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-4 rounded-t-xl">
+            <h1 class="text-xl sm:text-2xl font-bold text-center">Calculateur NST</h1>
+        </div>
+        
+        <!-- Navigation à onglets améliorée -->
+        <div class="flex mb-6 shadow-sm rounded-lg overflow-hidden">
+            <button id="tab-sprint-flash" class="tab-button active flex-1 py-3 px-4 flex flex-col items-center justify-center gap-2">
+                <svg class="tab-icon h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span>SPRINT FLASH</span>
+            </button>
+        </div>
+        
+        <!-- Contenu pour l'onglet SPRINT FLASH -->
+        <div id="content-sprint-flash" class="tab-content active">
+            <!-- Valeurs attendues -->
+            <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <h2 class="flex items-center gap-2 text-lg font-semibold mb-4 text-blue-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    Valeurs Attendues
+                </h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-white p-3 rounded shadow-sm">
+                        <label class="block text-gray-700 mb-1 font-medium">Côté Freins (mm):</label>
+                        <input 
+                            type="number" 
+                            id="sf-attenduFreins"
+                            value="145" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
+                            oninput="calculateSFAdjustments()"
+                        />
+                    </div>
+                    <div class="bg-white p-3 rounded shadow-sm">
+                        <label class="block text-gray-700 mb-1 font-medium">Côté Coupe (mm):</label>
+                        <input 
+                            type="number" 
+                            id="sf-attenduCoupe"
+                            value="145" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
+                            oninput="calculateSFAdjustments()"
+                        />
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Valeurs mesurées -->
+            <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <h2 class="flex items-center gap-2 text-lg font-semibold mb-4 text-blue-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                    Valeurs Mesurées
+                </h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-white p-3 rounded shadow-sm">
+                        <label class="block text-gray-700 mb-1 font-medium">Côté Freins (mm):</label>
+                        <input 
+                            type="number" 
+                            id="sf-mesureFreins"
+                            value="149" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
+                            oninput="calculateSFAdjustments()"
+                        />
+                    </div>
+                    <div class="bg-white p-3 rounded shadow-sm">
+                        <label class="block text-gray-700 mb-1 font-medium">Côté Coupe (mm):</label>
+                        <input 
+                            type="number" 
+                            id="sf-mesureCoupe"
+                            value="142" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
+                            oninput="calculateSFAdjustments()"
+                        />
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Alerte hors limites -->
+            <div id="sf-alertHorsLimites" class="mb-6 p-4 bg-red-100 text-red-800 rounded-lg border-2 border-red-500 font-bold text-center animate-pulse hidden">
+                <div class="flex items-center justify-center gap-2 mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span class="text-xl">AJUSTEMENT IMPOSSIBLE</span>
+                </div>
+                <p class="mt-2">Les valeurs d'ajustement dépassent les limites acceptables (±10).</p>
+            </div>
+            
+            <!-- Différence entre côtés -->
+            <div class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <h2 class="flex items-center gap-2 text-lg font-semibold mb-4 text-blue-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    Analyse des mesures
+                </h2>
+                <div class="space-y-3 bg-white p-3 rounded-lg shadow-sm">
+                    <div class="flex justify-between items-center">
+                        <p class="font-medium">Écart Freins:</p>
+                        <span id="sf-ecartFreins" class="px-2 py-1 rounded-full bg-red-100 text-red-700 font-bold">
+                            4.0 mm (trop grand)
+                        </span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <p class="font-medium">Écart Coupe:</p>
+                        <span id="sf-ecartCoupe" class="px-2 py-1 rounded-full bg-green-100 text-green-700 font-bold">
+                            -3.0 mm (trop petit)
+                        </span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center border-t border-gray-200 pt-2 mt-2">
+                        <p class="font-medium">Type d'ajustement:</p>
+                        <span id="sf-typeAjustement" class="px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 font-bold">
+                            Longueur fil + Centrage
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Résultats - masqués si hors limites -->
+            <div id="sf-resultatContainer" class="p-4 bg-blue-50 rounded-lg border border-blue-200 mb-6">
+                <h2 class="flex items-center gap-2 text-lg font-semibold mb-4 text-blue-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Ajustements nécessaires
+                </h2>
+                
+                <div id="sf-longueurFilContainer" class="mb-4 bg-yellow-50 p-3 rounded-lg border border-yellow-300 shadow-sm">
+                    <p class="font-medium flex items-center gap-1 text-yellow-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                        </svg>
+                        1. Ajustement Longueur Fil:
+                    </p>
+                    <div class="flex justify-center items-center mt-2">
+                        <span id="sf-ajustementLongueurFil" class="text-3xl font-bold text-red-600">
+                            -4.0
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="mb-4 bg-white p-3 rounded-lg border border-blue-200 shadow-sm">
+                    <p class="font-medium flex items-center gap-1 text-blue-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                        </svg>
+                        <span id="sf-centragePrefixe">2. </span>Ajustement Centrage:
+                    </p>
+                    <div class="flex justify-center items-center mt-2">
+                        <span id="sf-ajustementCentrage" class="text-3xl font-bold text-green-600">
+                            +0.7
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Section Instructions -->
+                <div class="mt-4">
+                    <div class="bg-white p-3 rounded-lg border border-blue-200 shadow-sm">
+                        <h3 class="font-semibold text-blue-800 flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                            Instructions:
+                        </h3>
+                        <div id="sf-instructionsContent" class="bg-gray-50 p-3 rounded-lg border-b border-blue-200 mt-2">
+                            <div id="sf-resultMessage" class="text-sm font-mono leading-relaxed"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4 p-3 bg-white rounded-lg border border-blue-200 shadow-sm">
+                    <h3 class="font-semibold text-blue-800 mb-2 flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        Après ajustement, vos mesures devraient être:
+                    </h3>
+                    <div class="grid grid-cols-2 gap-4 mt-2 bg-gray-50 p-3 rounded-lg">
+                        <div class="text-center p-2 bg-blue-50 rounded-lg">
+                            <p class="font-medium text-blue-700">Côté Freins:</p>
+                            <p id="sf-attenduFreinsDisplay" class="text-xl font-bold">145 mm</p>
+                        </div>
+                        <div class="text-center p-2 bg-blue-50 rounded-lg">
+                            <p class="font-medium text-blue-700">Côté Coupe:</p>
+                            <p id="sf-attenduCoupeDisplay" class="text-xl font-bold">145 mm</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="sf-horsLimitesMessage" class="p-4 bg-gray-50 rounded-lg border border-gray-200 text-gray-700 text-center mb-6 hidden">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p class="italic">Les ajustements ne peuvent pas être affichés car les valeurs dépassent les limites acceptables.</p>
+            </div>
+            
+            <!-- Rappel des règles -->
+            <div class="p-4 bg-gray-50 rounded-lg text-sm mb-6">
+                <h3 class="font-semibold mb-3 flex items-center gap-1 text-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Rappel des règles (SPRINT FLASH):
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
+                        <h4 class="font-semibold text-blue-800 mb-2 border-b pb-1">Règles de centrage:</h4>
+                        <ul class="list-disc list-inside space-y-1">
+                            <li>Décalage 1mm vers côté Freins: <span class="font-bold text-green-600">+0.2</span> au centrage</li>
+                            <li>Décalage 1mm vers côté Coupe: <span class="font-bold text-red-600">-0.2</span> au centrage</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
+                        <h4 class="font-semibold text-blue-800 mb-2 border-b pb-1 flex justify-between items-center">
+                            <span>Règles de longueur fil:</span>
+                            <button id="sf-editRatioBtn" class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded hover:bg-blue-200">
+                                Modifier
+                            </button>
+                        </h4>
+                        <div id="sf-ratioDisplay">
+                            <ul class="list-disc list-inside space-y-1">
+                                <li>Réduire longueur fil 1mm côté Freins: <span class="font-bold text-red-600">-<span id="sf-ratioValue">1.5</span></span> à la longueur</li>
+                                <li>Augmenter longueur fil 1mm côté Freins: <span class="font-bold text-green-600">+<span id="sf-ratioValue2">1.5</span></span> à la longueur</li>
+                            </ul>
+                        </div>
+                        <div id="sf-ratioEdit" class="hidden mt-2 bg-blue-50 p-2 rounded">
+                            <label class="block text-sm font-medium text-blue-800 mb-1">Ratio longueur (1mm = ?)</label>
+                            <div class="flex items-center gap-2">
+                                <input 
+                                    type="number" 
+                                    id="sf-longueurRatio" 
+                                    value="1.5" 
+                                    step="0.1"
+                                    class="w-full px-2 py-1 border border-blue-300 rounded text-sm"
+                                />
+                                <button id="sf-saveRatioBtn" class="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 text-sm">
+                                    OK
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3 p-2 bg-yellow-50 rounded-lg border border-yellow-200 text-xs">
+                    <p class="font-semibold flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        Note importante:
+                    </p>
+                    <p>Les ajustements supérieurs à ±10 ne sont pas possibles.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables d'état
+        let sfAttenduFreins = 145;
+        let sfAttenduCoupe = 145;
+        let sfMesureFreins = 149;
+        let sfMesureCoupe = 142;
+        let sfLongueurRatio = 1.5; // Ratio configurable
+        
+        // Éléments DOM
+        const sfInputAttenduFreins = document.getElementById('sf-attenduFreins');
+        const sfInputAttenduCoupe = document.getElementById('sf-attenduCoupe');
+        const sfInputMesureFreins = document.getElementById('sf-mesureFreins');
+        const sfInputMesureCoupe = document.getElementById('sf-mesureCoupe');
+        const sfEcartFreinsElement = document.getElementById('sf-ecartFreins');
+        const sfEcartCoupeElement = document.getElementById('sf-ecartCoupe');
+        const sfTypeAjustementElement = document.getElementById('sf-typeAjustement');
+        const sfAjustementLongueurFilElement = document.getElementById('sf-ajustementLongueurFil');
+        const sfAjustementCentrageElement = document.getElementById('sf-ajustementCentrage');
+        const sfResultMessageElement = document.getElementById('sf-resultMessage');
+        const sfAttenduFreinsDisplay = document.getElementById('sf-attenduFreinsDisplay');
+        const sfAttenduCoupeDisplay = document.getElementById('sf-attenduCoupeDisplay');
+        const sfAlertHorsLimites = document.getElementById('sf-alertHorsLimites');
+        const sfResultatContainer = document.getElementById('sf-resultatContainer');
+        const sfHorsLimitesMessage = document.getElementById('sf-horsLimitesMessage');
+        const sfLongueurFilContainer = document.getElementById('sf-longueurFilContainer');
+        const sfCentragePrefixe = document.getElementById('sf-centragePrefixe');
+        
+        // Gestion du ratio de longueur fil
+        const editRatioBtn = document.getElementById('sf-editRatioBtn');
+        const saveRatioBtn = document.getElementById('sf-saveRatioBtn');
+        const ratioDisplay = document.getElementById('sf-ratioDisplay');
+        const ratioEdit = document.getElementById('sf-ratioEdit');
+        const longueurRatioInput = document.getElementById('sf-longueurRatio');
+        const ratioValueDisplay = document.getElementById('sf-ratioValue');
+        const ratioValueDisplay2 = document.getElementById('sf-ratioValue2');
+        
+        editRatioBtn.addEventListener('click', () => {
+            ratioDisplay.classList.add('hidden');
+            ratioEdit.classList.remove('hidden');
+        });
+        
+        saveRatioBtn.addEventListener('click', () => {
+            const newRatio = parseFloat(longueurRatioInput.value);
+            if (!isNaN(newRatio) && newRatio > 0) {
+                sfLongueurRatio = newRatio;
+                ratioValueDisplay.textContent = newRatio.toFixed(1);
+                ratioValueDisplay2.textContent = newRatio.toFixed(1);
+                ratioDisplay.classList.remove('hidden');
+                ratioEdit.classList.add('hidden');
+                calculateSFAdjustments(); // Recalculer avec le nouveau ratio
+            }
+        });
+        
+        // Fonction pour calculer les différences entre attendu et mesuré
+        function calculateSFDifferences() {
+            const diffFreins = sfAttenduFreins - sfMesureFreins;
+            const diffCoupe = sfAttenduCoupe - sfMesureCoupe;
+            return { frein: diffFreins, coupe: diffCoupe };
+        }
+        
+        // Détermine si un ajustement de longueur fil est nécessaire
+        function sfNeedsLongueurFilAdjustment() {
+            const sommeAttendu = sfAttenduFreins + sfAttenduCoupe;
+            const sommeMesure = sfMesureFreins + sfMesureCoupe;
+            return Math.abs(sommeMesure - sommeAttendu) > 0.5;
+        }
+        
+        // Calcule l'ajustement de longueur fil nécessaire
+        function calculateSFLongueurFilAdjustment() {
+            const sommeAttendu = sfAttenduFreins + sfAttenduCoupe;
+            const sommeMesure = sfMesureFreins + sfMesureCoupe;
+            const difference = sommeMesure - sommeAttendu;
+            // Conversion selon le ratio configurable
+            const adjustment = Math.round(-difference * sfLongueurRatio * 10) / 10;
+            return adjustment;
+        }
+        
+        // Calcule l'ajustement du centrage
+        function calculateSFCentrage(longueurFilAdjustment) {
+            // Effet de l'ajustement de longueur fil en mm
+            const longueurFilEffectInMm = longueurFilAdjustment / sfLongueurRatio;
+            // Nouvelle mesure après ajustement longueur fil
+            const newMesureFreins = sfMesureFreins + longueurFilEffectInMm;
+            
+            // Calcul des écarts
+            const ecartFreins = newMesureFreins - sfAttenduFreins;
+            const ecartCoupe = sfMesureCoupe - sfAttenduCoupe;
+            
+            // Différence entre les écarts
+            const difference = ecartFreins - ecartCoupe;
+            
+            // Décalage nécessaire (moitié de la différence)
+            const decalageNecessaire = difference / 2;
+            
+            // Conversion selon la règle:
+            // Décalage 1mm vers Freins = +0.2 au centrage
+            // Décalage 1mm vers Coupe = -0.2 au centrage
+            const ajustement = Math.round(-decalageNecessaire * 0.2 * 10) / 10;
+            
+            return ajustement;
+        }
+        
+        // Vérifie si les ajustements dépassent les limites
+        function sfVerifierLimites(ajustementLongueur, ajustementCentrage) {
+            return Math.abs(ajustementLongueur) > 10 || Math.abs(ajustementCentrage) > 10;
+        }
+        
+        // Génère les instructions détaillées
+        function generateSFResultMessage(needsLongueurAdjustment, longueurAdjustment, centrageAdjustment) {
+            let message = '';
+            
+            // Calcul des mesures et effets
+            const longueurFilEffectInMm = longueurAdjustment / sfLongueurRatio;
+            const newMesureFreins = sfMesureFreins + longueurFilEffectInMm;
+            const decalageNecessaire = Math.abs(centrageAdjustment / 0.2);
+            
+            if (needsLongueurAdjustment) {
+                if (longueurAdjustment < 0) {
+                    message += `<strong>1. Réduire la longueur fil de ${Math.abs(longueurFilEffectInMm).toFixed(1)}mm côté Freins:</strong> Enlever ${longueurAdjustment.toFixed(1)} à la longueur fil<br><br>`;
+                } else {
+                    message += `<strong>1. Augmenter la longueur fil de ${Math.abs(longueurFilEffectInMm).toFixed(1)}mm côté Freins:</strong> Ajouter ${longueurAdjustment.toFixed(1)} à la longueur fil<br><br>`;
+                }
+                
+                message += `Nouvelle mesure estimée côté Freins après ajustement: ${newMesureFreins.toFixed(1)}mm<br><br>`;
+                
+                if (Math.abs(centrageAdjustment) > 0.05) {
+                    if (centrageAdjustment > 0) {
+                        message += `<strong>2. Décaler de ${decalageNecessaire.toFixed(1)}mm vers côté Freins:</strong> Ajouter ${centrageAdjustment > 0 ? '+' : ''}${centrageAdjustment.toFixed(1)} au centrage`;
+                    } else {
+                        message += `<strong>2. Décaler de ${decalageNecessaire.toFixed(1)}mm vers côté Coupe:</strong> Enlever ${centrageAdjustment.toFixed(1)} au centrage`;
+                    }
+                } else {
+                    message += "<strong>2. Aucun ajustement de centrage nécessaire</strong> après correction de la longueur fil.";
+                }
+            } else if (Math.abs(centrageAdjustment) > 0.05) {
+                if (centrageAdjustment > 0) {
+                    message += `<strong>Décaler de ${decalageNecessaire.toFixed(1)}mm vers côté Freins:</strong> Ajouter ${centrageAdjustment > 0 ? '+' : ''}${centrageAdjustment.toFixed(1)} au centrage`;
+                } else {
+                    message += `<strong>Décaler de ${decalageNecessaire.toFixed(1)}mm vers côté Coupe:</strong> Enlever ${centrageAdjustment.toFixed(1)} au centrage`;
+                }
+            } else {
+                message += "<strong>Aucun ajustement nécessaire.</strong> Les mesures sont déjà correctes.";
+            }
+            
+            return message;
+        }
+        
+        // Met à jour l'affichage des écarts
+        function updateSFEcartDisplay() {
+            const differences = calculateSFDifferences();
+            
+            // Écart côté freins
+            if (differences.frein < -0.5) {
+                sfEcartFreinsElement.textContent = `${differences.frein.toFixed(1)} mm (trop grand)`;
+                sfEcartFreinsElement.classList.remove('bg-green-100', 'text-green-700', 'bg-blue-100', 'text-blue-700');
+                sfEcartFreinsElement.classList.add('bg-red-100', 'text-red-700');
+            } else if (differences.frein > 0.5) {
+                sfEcartFreinsElement.textContent = `${differences.frein.toFixed(1)} mm (trop petit)`;
+                sfEcartFreinsElement.classList.remove('bg-red-100', 'text-red-700', 'bg-blue-100', 'text-blue-700');
+                sfEcartFreinsElement.classList.add('bg-green-100', 'text-green-700');
+            } else {
+                sfEcartFreinsElement.textContent = `${differences.frein.toFixed(1)} mm (OK)`;
+                sfEcartFreinsElement.classList.remove('bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700');
+                sfEcartFreinsElement.classList.add('bg-blue-100', 'text-blue-700');
+            }
+            
+            // Écart côté coupe
+            if (differences.coupe < -0.5) {
+                sfEcartCoupeElement.textContent = `${differences.coupe.toFixed(1)} mm (trop grand)`;
+                sfEcartCoupeElement.classList.remove('bg-green-100', 'text-green-700', 'bg-blue-100', 'text-blue-700');
+                sfEcartCoupeElement.classList.add('bg-red-100', 'text-red-700');
+            } else if (differences.coupe > 0.5) {
+                sfEcartCoupeElement.textContent = `${differences.coupe.toFixed(1)} mm (trop petit)`;
+                sfEcartCoupeElement.classList.remove('bg-red-100', 'text-red-700', 'bg-blue-100', 'text-blue-700');
+                sfEcartCoupeElement.classList.add('bg-green-100', 'text-green-700');
+            } else {
+                sfEcartCoupeElement.textContent = `${differences.coupe.toFixed(1)} mm (OK)`;
+                sfEcartCoupeElement.classList.remove('bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700');
+                sfEcartCoupeElement.classList.add('bg-blue-100', 'text-blue-700');
+            }
+        }
+        
+        // Met à jour l'affichage du type d'ajustement
+        function updateSFTypeAjustement(needsLongueurAdjustment, centrageAdjustment) {
+            if (needsLongueurAdjustment && Math.abs(centrageAdjustment) > 0.05) {
+                sfTypeAjustementElement.textContent = "Longueur fil + Centrage";
+                sfTypeAjustementElement.classList.remove('bg-blue-100', 'text-blue-800', 'bg-green-100', 'text-green-800');
+                sfTypeAjustementElement.classList.add('bg-yellow-100', 'text-yellow-800');
+                sfLongueurFilContainer.classList.remove('hidden');
+                sfCentragePrefixe.textContent = "2. ";
+            } else if (needsLongueurAdjustment) {
+                sfTypeAjustementElement.textContent = "Longueur fil uniquement";
+                sfTypeAjustementElement.classList.remove('bg-blue-100', 'text-blue-800', 'bg-yellow-100', 'text-yellow-800');
+                sfTypeAjustementElement.classList.add('bg-green-100', 'text-green-800');
+                sfLongueurFilContainer.classList.remove('hidden');
+                sfCentragePrefixe.textContent = "";
+            } else if (Math.abs(centrageAdjustment) > 0.05) {
+                sfTypeAjustementElement.textContent = "Centrage uniquement";
+                sfTypeAjustementElement.classList.remove('bg-green-100', 'text-green-800', 'bg-yellow-100', 'text-yellow-800');
+                sfTypeAjustementElement.classList.add('bg-blue-100', 'text-blue-800');
+                sfLongueurFilContainer.classList.add('hidden');
+                sfCentragePrefixe.textContent = "";
+            } else {
+                sfTypeAjustementElement.textContent = "Aucun ajustement nécessaire";
+                sfTypeAjustementElement.classList.remove('bg-yellow-100', 'text-yellow-800', 'bg-blue-100', 'text-blue-800');
+                sfTypeAjustementElement.classList.add('bg-green-100', 'text-green-800');
+                sfLongueurFilContainer.classList.add('hidden');
+                sfCentragePrefixe.textContent = "";
+            }
+        }
+        
+        // Met à jour l'affichage des ajustements
+        function updateSFAdjustementDisplay(longueurAdjustment, centrageAdjustment) {
+            // Affichage de l'ajustement longueur fil
+            sfAjustementLongueurFilElement.textContent = `${longueurAdjustment.toFixed(1)}`;
+            if (longueurAdjustment < 0) {
+                sfAjustementLongueurFilElement.classList.remove('text-green-600');
+                sfAjustementLongueurFilElement.classList.add('text-red-600');
+            } else {
+                sfAjustementLongueurFilElement.classList.remove('text-red-600');
+                sfAjustementLongueurFilElement.classList.add('text-green-600');
+            }
+            
+            // Affichage de l'ajustement centrage
+            sfAjustementCentrageElement.textContent = `${centrageAdjustment > 0 ? '+' : ''}${centrageAdjustment.toFixed(1)}`;
+            if (centrageAdjustment < 0) {
+                sfAjustementCentrageElement.classList.remove('text-green-600');
+                sfAjustementCentrageElement.classList.add('text-red-600');
+            } else {
+                sfAjustementCentrageElement.classList.remove('text-red-600');
+                sfAjustementCentrageElement.classList.add('text-green-600');
+            }
+        }
+        
+        // Fonction principale de calcul
+        function calculateSFAdjustments() {
+            // Récupération des valeurs actuelles
+            sfAttenduFreins = parseFloat(sfInputAttenduFreins.value);
+            sfAttenduCoupe = parseFloat(sfInputAttenduCoupe.value);
+            sfMesureFreins = parseFloat(sfInputMesureFreins.value);
+            sfMesureCoupe = parseFloat(sfInputMesureCoupe.value);
+            
+            // Mise à jour des écarts affichés
+            updateSFEcartDisplay();
+            
+            // Déterminer si un ajustement de longueur fil est nécessaire
+            const needLongueurAdjustment = sfNeedsLongueurFilAdjustment();
+            
+            // Calculer les ajustements nécessaires
+            const ajustementLongueur = needLongueurAdjustment ? calculateSFLongueurFilAdjustment() : 0;
+            const ajustementCentrage = calculateSFCentrage(ajustementLongueur);
+            
+            // Mettre à jour l'affichage du type d'ajustement
+            updateSFTypeAjustement(needLongueurAdjustment, ajustementCentrage);
+            
+            // Mettre à jour l'affichage des ajustements
+            updateSFAdjustementDisplay(ajustementLongueur, ajustementCentrage);
+            
+            // Vérifier si les ajustements dépassent les limites
+            if (sfVerifierLimites(ajustementLongueur, ajustementCentrage)) {
+                sfAlertHorsLimites.classList.remove('hidden');
+                sfResultatContainer.classList.add('hidden');
+                sfHorsLimitesMessage.classList.remove('hidden');
+            } else {
+                sfAlertHorsLimites.classList.add('hidden');
+                sfResultatContainer.classList.remove('hidden');
+                sfHorsLimitesMessage.classList.add('hidden');
+            }
+            
+            // Générer le message de résultat
+            const message = generateSFResultMessage(needLongueurAdjustment, ajustementLongueur, ajustementCentrage);
+            sfResultMessageElement.innerHTML = message;
+            
+            // Mettre à jour l'affichage des valeurs attendues après ajustement
+            sfAttenduFreinsDisplay.textContent = `${sfAttenduFreins.toFixed(1)} mm`;
+            sfAttenduCoupeDisplay.textContent = `${sfAttenduCoupe.toFixed(1)} mm`;
+        }
+        
+        // Calculer les ajustements au chargement de la page
+        calculateSFAdjustments();
+    </script>
+</body>
+</html>
