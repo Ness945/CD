@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculateur NST Unifié</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <style>
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: .5;
+            }
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .tab-button {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .tab-button.active {
+            color: #1E40AF;
+            font-weight: bold;
+            background-color: #EFF6FF;
+        }
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, #3B82F6, #1E40AF);
+        }
+        .tab-button:hover:not(.active) {
+            background-color: #F3F4F6;
+            color: #4B5563;
+        }
+        .tab-icon {
+            transition: transform 0.3s ease;
+        }
+        .tab-button:hover .tab-icon {
+            transform: translateY(-2px);
+        }
+        .tab-button.active .tab-icon {
+            color: #3B82F6;
+        }
+        .collapsible-section {
+            transition: max-height 0.3s ease-out;
+            overflow: hidden;
+            max-height: 0;
+        }
+        .collapsible-section.open {
+            max-height: 1000px; /* Une valeur suffisamment grande pour contenir tout le contenu */
+        }
+        .toggle-button {
+            transition: transform 0.3s ease;
+        }
+        .toggle-button.rotated {
+            transform: rotate(180deg);
+        }
+        #gmt-resultMessage, #sf-resultMessage {
+            line-height: 1.6;
+        }
+        
+        /* Mode sombre */
+        .dark-mode {
+            color-scheme: dark;
+        }
+        
+        .dark-mode body {
+            background-color: #111827;
+            color: #F9FAFB;
+        }
+        
+        .dark-mode .bg-white {
+            background-color: #1F2937;
+            color: #F9FAFB;
+        }
+        
+        .dark-mode .bg-gray-50, 
+        .dark-mode .bg-gray-100 {
+            background-color: #111827;
+            color: #F9FAFB;
+        }
+        
+        .dark-mode .bg-blue-50 {
+            background-color: #1E3A8A;
+            color: #F9FAFB;
+        }
+        
+        .dark-mode .bg-blue-100 {
+            background-color: #1E40AF;
+            color: #F9FAFB;
+        }
+        
+        .dark-mode .bg-indigo-50 {
+            background-color: #312E81;
+            color: #F9FAFB;
+        }
+        
+        .dark-mode .bg-indigo-100 {
+            background-color: #3730A3;
+            color: #F9FAFB;
+        }
+        
+        .dark-mode .bg-yellow-50 {
+            background-color: #78350F;
+            color: #F9FAFB;
+        }
+        
+        .dark-mode .bg-yellow-100 {
+            background-color: #92400E;
+            color: #F9FAFB;
+        }
+        
+        .dark-mode .bg-green-100 {
+            background-color: #064E3B;
+            color: #F9FAFB;
+        }
+        
+        .dark-mode .bg-red-100 {
+            background-color: #7F1D1D;
+            color: #F9FAFB;
+        }
+        
+        .dark-mode .text-gray-700,
+        .dark-mode .text-gray-600 {
+            color: #F3F4F6;
+        }
+        
+        .dark-mode .text-blue-700,
+        .dark-mode .text-blue-800,
+        .dark-mode .text-blue-600 {
+            color: #93C5FD; /* Plus clair pour meilleur contraste */
+        }
+        
+        .dark-mode .text-indigo-700,
+        .dark-mode .text-indigo-800 {
+            color: #A5B4FC; /* Plus clair pour meilleur contraste */
+        }
+        
+        .dark-mode .text-yellow-700,
+        .dark-mode .text-yellow-800 {
+            color: #FCD34D; /* Plus clair pour meilleur contraste */
+        }
+        
+        .dark-mode .text-green-700,
+        .dark-mode .text-green-800,
+        .dark-mode .text-green-600 {
+            color: #6EE7B7; /* Plus clair pour meilleur contraste */
+        }
+        
+        .dark-mode .text-red-700,
+        .dark-mode .text-red-800,
+        .dark-mode .text-red-600 {
+            color: #FCA5A5; /* Plus clair pour meilleur contraste */
+        }
+        
+        .dark-mode .border,
+        .dark-mode .border-gray-200,
+        .dark-mode .border-blue-200,
+        .dark-mode .border-indigo-200,
+        .dark-mode .border-yellow-200 {
+            border-color: #4B5563;
+        }
+        
+        .dark-mode .border-yellow-300,
+        .dark-mode .border-blue-300 {
+            border-color: #6B7280;
+        }
+        
+        .dark-mode input,
+        .dark-mode select {
+            background-color: #374151;
+            color: #F9FAFB;
+            border-color: #6B7280;
+        }
+        
+        .dark-mode input:focus,
+        .dark-mode select:focus {
+            border-color: #60A5FA;
+        }
+        
+        .dark-mode .shadow-lg,
+        .dark-mode .shadow-sm {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.7), 0 4px 6px -2px rgba(0, 0, 0, 0.6);
+        }
+        
+        .dark-mode .tab-button.active {
+            background-color: #1E3A8A;
+            color: #F9FAFB;
+        }
+        
+        .dark-mode .tab-button:hover:not(.active) {
+            background-color: #374151;
+            color: #F9FAFB;
+        }
+        
+        /* Style pour les spans de résultats en mode sombre */
+        .dark-mode #gmt-ecartA,
+        .dark-mode #gmt-ecartB,
+        .dark-mode #sf-ecartFreins,
+        .dark-mode #sf-ecartCoupe,
+        .dark-mode #gmt-typeAjustement,
+        .dark-mode #sf-typeAjustement {
+            border: 1px solid #6B7280;
+        }
+        
+        /* Amélioration de la visibilité des chiffres et du contraste */
+        .dark-mode .font-bold.text-green-600,
+        .dark-mode .font-bold.text-green-700 {
+            color: #10B981 !important; /* Vert clair */
+        }
+        
+        .dark-mode .font-bold.text-red-600,
+        .dark-mode .font-bold.text-red-700 {
+            color: #F87171 !important; /* Rouge clair */
+        }
+        
+        .dark-mode .font-bold.text-blue-600,
+        .dark-mode .font-bold.text-blue-700 {
+            color: #60A5FA !important; /* Bleu clair */
+        }
+        
+        .dark-mode .font-bold.text-yellow-600,
+        .dark-mode .font-bold.text-yellow-700,
+        .dark-mode .font-bold.text-yellow-800 {
+            color: #FBBF24 !important; /* Jaune clair */
+        }
+        
+        .theme-toggle {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.5rem;
+            border-radius: 9999px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: transparent;
+            border: none;
+        }
+        
+        .dark-mode .theme-toggle {
+            background-color: #374151; 
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="p-4 sm:p-6 max-w-md mx-auto bg-white rounded-xl shadow-lg w-full relative">
+        <!-- Bouton de changement de thème -->
+        <button id="theme-toggle" class="theme-toggle">
+            <svg id="sun-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            <svg id="moon-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-300 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+        </button>
+        
+        <!-- En-tête avec titre principal -->
+        <div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-4 rounded-t-xl">
+            <h1 class="text-xl sm:text-2xl font-bold text-center">Calculateur NST Unifié</h1>
+        </div>
+        
+        <!-- Navigation à onglets améliorée -->
+        <div class="flex mb-6 shadow-sm rounded-lg overflow-hidden">
+            <button id="tab-gmt" class="tab-button active flex-1 py-3 px-4 flex flex-col items-center justify-center gap-2">
+                <svg class="tab-icon h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <span>GMT</span>
+            </button>
+            <button id="tab-sprint-flash" class="tab-button flex-1 py-3 px-4 flex flex-col items-center justify-center gap-2">
+                <svg class="tab-icon h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span>SPRINT FLASH</span>
+            </button>
+        </div>
+        
+        <!-- Contenu pour l'onglet GMT -->
+        <div id="content-gmt" class="tab-content active">
+            <!-- Valeurs attendues -->
+            <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <h2 class="flex items-center gap-2 text-lg font-semibold mb-4 text-blue-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    Valeurs Attendues
+                </h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-white p-3 rounded shadow-sm">
+                        <label class="block text-gray-700 mb-1 font-medium">Côté A (mm):</label>
+                        <input 
+                            type="number" 
+                            id="gmt-attenduA"
+                            value="110" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
+                        />
+                    </div>
+                    <div class="bg-white p-3 rounded shadow-sm">
+                        <label class="block text-gray-700 mb-1 font-medium">Côté B (mm):</label>
+                        <input 
+                            type="number" 
+                            id="gmt-attenduB"
+                            value="110" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
+                        />
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Valeurs mesurées -->
+            <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <h2 class="flex items-center gap-2 text-lg font-semibold mb-4 text-blue-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                    Valeurs Mesurées
+                </h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-white p-3 rounded shadow-sm">
+                        <label class="block text-gray-700 mb-1 font-medium">Côté A (mm):</label>
+                        <input 
+                            type="number" 
+                            id="gmt-mesureA"
+                            value="108.5" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
+                        />
+                    </div>
+                    <div class="bg-white p-3 rounded shadow-sm">
+                        <label class="block text-gray-700 mb-1 font-medium">Côté B (mm):</label>
+                        <input 
+                            type="number" 
+                            id="gmt-mesureB"
+                            value="108.5" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
+                        />
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Alerte hors limites -->
+            <div id="gmt-alertHorsLimites" class="mb-6 p-4 bg-red-100 text-red-800 rounded-lg border-2 border-red-500 font-bold text-center animate-pulse hidden">
+                <div class="flex items-center justify-center gap-2 mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span class="text-xl">AJUSTEMENT IMPOSSIBLE</span>
+                </div>
+                <p class="mt-2">Les valeurs d'ajustement dépassent les limites acceptables (±4 dents ou ±40mm centrage).</p>
+                <p class="mt-1 text-red-900 font-bold">Veuillez contacter le garant machine.</p>
+            </div>
+            
+            <!-- Différence entre côtés -->
+            <div class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <h2 class="flex items-center gap-2 text-lg font-semibold mb-4 text-blue-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    Analyse des mesures
+                </h2>
+                <div class="space-y-3 bg-white p-3 rounded-lg shadow-sm">
+                    <div class="flex justify-between items-center">
+                        <p class="font-medium">Écart Côté A:</p>
+                        <span id="gmt-ecartA" class="px-2 py-1 rounded-full bg-red-100 text-red-700 font-bold">
+                            1.5 mm (trop petit)
+                        </span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <p class="font-medium">Écart Côté B:</p>
+                        <span id="gmt-ecartB" class="px-2 py-1 rounded-full bg-green-100 text-green-700 font-bold">
+                            1.5 mm (trop petit)
+                        </span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center border-t border-gray-200 pt-2 mt-2">
+                        <p class="font-medium">Type d'ajustement:</p>
+                        <span id="gmt-typeAjustement" class="px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 font-bold">
+                            Mise en angle + Centrage
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Résultats - masqués si hors limites -->
+            <div id="gmt-resultatContainer" class="p-4 bg-blue-50 rounded-lg border border-blue-200 mb-6">
+                <h2 class="flex items-center gap-2 text-lg font-semibold mb-4 text-blue-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Ajustements nécessaires
+                </h2>
+                
+                <div id="gmt-angleContainer" class="mb-4 bg-yellow-50 p-3 rounded-lg border border-yellow-300 shadow-sm">
+                    <p class="font-medium flex items-center gap-1 text-yellow-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                        </svg>
+                        1. Ajustement Mise en Angle:
+                    </p>
+                    <div class="flex justify-center items-center mt-2">
+                        <span id="gmt-ajustementAngle" class="text-3xl font-bold text-red-600">
+                            +1 dent
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="mb-4 bg-white p-3 rounded-lg border border-blue-200 shadow-sm">
+                    <p class="font-medium flex items-center gap-1 text-blue-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                        </svg>
+                        <span id="gmt-centragePrefixe">2. </span>Ajustement Centrage:
+                    </p>
+                    <div class="flex justify-center items-center mt-2">
+                        <span id="gmt-ajustementCentrage" class="text-3xl font-bold text-green-600">
+                            0 mm
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Section Instructions avec bouton pour masquer/afficher -->
+                <div class="mt-4">
+                    <div class="flex justify-between items-center bg-blue-100 p-3 rounded-lg border border-blue-200 shadow-sm cursor-pointer hover:bg-blue-200 transition-colors" id="gmt-instructionsToggle">
+                        <h3 class="font-semibold text-blue-800 flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                            Cliquez pour voir les instructions détaillées
+                        </h3>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 toggle-button" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
+                    <div id="gmt-instructionsContent" class="collapsible-section bg-gray-50 p-3 rounded-b-lg border-l border-r border-b border-blue-200">
+                        <div id="gmt-resultMessage" class="text-sm font-mono leading-relaxed">1. Ajouter 1 dent à la mise en angle<br><br>
+   Nouvelle mesure estimée après ajustement: 108.5 + 1.39 = 109.89mm sur chaque côté<br><br>
+   Longueur totale après mise en angle: 219.78mm (très proche des 220mm attendus)
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4 p-3 bg-white rounded-lg border border-blue-200 shadow-sm">
+                    <h3 class="font-semibold text-blue-800 mb-2 flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        Après ajustement, vos mesures devraient être:
+                    </h3>
+                    <div class="grid grid-cols-2 gap-4 mt-2 bg-gray-50 p-3 rounded-lg">
+                        <div class="text-center p-2 bg-blue-50 rounded-lg">
+                            <p class="font-medium text-blue-700">Côté A:</p>
+                            <p id="gmt-attenduADisplay" class="text-xl font-bold">110 mm</p>
+                        </div>
+                        <div class="text-center p-2 bg-blue-50 rounded-lg">
+                            <p class="font-medium text-blue-700">Côté B:</p>
+                            <p id="gmt-attenduBDisplay" class="text-xl font-bold">110 mm</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="gmt-horsLimitesMessage" class="p-4 bg-gray-50 rounded-lg border border-gray-200 text-gray-700 text-center mb-6 hidden">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p class="italic">Les ajustements ne peuvent pas être affichés car les valeurs dépassent les limites acceptables.</p>
+            </div>
+            
+            <!-- Rappel des règles -->
+            <div class="p-4 bg-gray-50 rounded-lg text-sm mb-6">
+                <h3 class="font-semibold mb-3 flex items-center gap-1 text-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Rappel des règles (GMT):
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
+                        <h4 class="font-semibold text-blue-800 mb-2 border-b pb-1">Règles de centrage:</h4>
+                        <ul class="list-disc list-inside space-y-1">
+                            <li>Décalage 1mm vers côté A: <span class="font-bold text-blue-600">+5</span> au centrage</li>
+                            <li>Décalage 1mm vers côté B: <span class="font-bold text-red-600">-5</span> au centrage</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
+                        <h4 class="font-semibold text-blue-800 mb-2 border-b pb-1">Règles de mise en angle:</h4>
+                        <ul class="list-disc list-inside space-y-1">
+                            <li>1 dent complète = <span class="font-bold text-blue-600">+2.78 mm</span> (total)</li>
+                            <li>1/2 dent = <span class="font-bold text-blue-600">+1.39 mm</span> (total)</li>
+                            <li>Répartition: <span class="font-bold text-blue-600">50%</span> sur chaque côté</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Onglet d'explications -->
+            <div class="mb-6 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+                <div class="flex justify-between items-center cursor-pointer bg-indigo-100 p-3 rounded-lg hover:bg-indigo-200 transition-colors" id="gmt-explanationToggle">
+                    <h3 class="font-semibold text-indigo-800 flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Cliquez pour comprendre le calcul GMT
+                    </h3>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 toggle-button" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
+                <div id="gmt-explanationContent" class="collapsible-section mt-2">
+                    <div class="bg-white p-3 rounded-lg">
+                        <h4 class="font-semibold text-indigo-700 mb-2">Comment fonctionne le calculateur GMT?</h4>
+                        <div class="space-y-2 text-sm">
+                            <p><strong>1. Mise en angle:</strong> Ce réglage permet de changer la longueur totale du fil.</p>
+                            <ul class="list-disc list-inside pl-2 space-y-1">
+                                <li>Quand vous ajoutez une dent, vous allongez le fil de 2.78mm au total</li>
+                                <li>Vous pouvez aussi ajouter une demi-dent (1.39mm)</li>
+                                <li>Cet ajustement affecte les deux côtés de la même façon</li>
+                            </ul>
+                            
+                            <p class="mt-3"><strong>2. Centrage:</strong> Ce réglage permet de déplacer le fil d'un côté à l'autre sans changer sa longueur totale.</p>
+                            <ul class="list-disc list-inside pl-2 space-y-1">
+                                <li>Pour décaler le fil de 1mm vers le côté A: ajouter +5 au centrage</li>
+                                <li>Pour décaler le fil de 1mm vers le côté B: ajouter -5 au centrage</li>
+                                <li>Ce qui est ajouté d'un côté est retiré de l'autre côté</li>
+                            </ul>
+                            
+                            <p class="mt-3"><strong>3. Comment le calculateur fonctionne:</strong></p>
+                            <ol class="list-decimal list-inside pl-2 space-y-1">
+                                <li>D'abord, il vérifie si la longueur totale du fil est correcte</li>
+                                <li>Si besoin, il suggère un ajustement de mise en angle</li>
+                                <li>Ensuite, il vérifie si le fil est bien centré</li>
+                                <li>Si besoin, il suggère un ajustement de centrage</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Contenu pour l'onglet SPRINT FLASH -->
+        <div id="content-sprint-flash" class="tab-content">
+            <!-- Valeurs attendues -->
+            <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <h2 class="flex items-center gap-2 text-lg font-semibold mb-4 text-blue-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    Valeurs Attendues
+                </h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-white p-3 rounded shadow-sm">
+                        <label class="block text-gray-700 mb-1 font-medium">Côté Freins (mm):</label>
+                        <input 
+                            type="number" 
+                            id="sf-attenduFreins"
+                            value="145" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
+                        />
+                    </div>
+                    <div class="bg-white p-3 rounded shadow-sm">
+                        <label class="block text-gray-700 mb-1 font-medium">Côté Coupe (mm):</label>
+                        <input 
+                            type="number" 
+                            id="sf-attenduCoupe"
+                            value="145" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
+                        />
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Valeurs mesurées -->
+            <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <h2 class="flex items-center gap-2 text-lg font-semibold mb-4 text-blue-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                    Valeurs Mesurées
+                </h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-white p-3 rounded shadow-sm">
+                        <label class="block text-gray-700 mb-1 font-medium">Côté Freins (mm):</label>
+                        <input 
+                            type="number" 
+                            id="sf-mesureFreins"
+                            value="149" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
+                        />
+                    </div>
+                    <div class="bg-white p-3 rounded shadow-sm">
+                        <label class="block text-gray-700 mb-1 font-medium">Côté Coupe (mm):</label>
+                        <input 
+                            type="number" 
+                            id="sf-mesureCoupe"
+                            value="142" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
+                        />
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Alerte hors limites -->
+            <div id="sf-alertHorsLimites" class="mb-6 p-4 bg-red-100 text-red-800 rounded-lg border-2 border-red-500 font-bold text-center animate-pulse hidden">
+                <div class="flex items-center justify-center gap-2 mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span class="text-xl">AJUSTEMENT IMPOSSIBLE</span>
+                </div>
+                <p class="mt-2">Les valeurs d'ajustement dépassent les limites acceptables (±10).</p>
+            </div>
+            
+            <!-- Différence entre côtés -->
+            <div class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <h2 class="flex items-center gap-2 text-lg font-semibold mb-4 text-blue-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    Analyse des mesures
+                </h2>
+                <div class="space-y-3 bg-white p-3 rounded-lg shadow-sm">
+                    <div class="flex justify-between items-center">
+                        <p class="font-medium">Écart Freins:</p>
+                        <span id="sf-ecartFreins" class="px-2 py-1 rounded-full bg-red-100 text-red-700 font-bold">
+                            4.0 mm (trop grand)
+                        </span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <p class="font-medium">Écart Coupe:</p>
+                        <span id="sf-ecartCoupe" class="px-2 py-1 rounded-full bg-green-100 text-green-700 font-bold">
+                            -3.0 mm (trop petit)
+                        </span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center border-t border-gray-200 pt-2 mt-2">
+                        <p class="font-medium">Type d'ajustement:</p>
+                        <span id="sf-typeAjustement" class="px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 font-bold">
+                            Longueur fil + Centrage
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Résultats - masqués si hors limites -->
+            <div id="sf-resultatContainer" class="p-4 bg-blue-50 rounded-lg border border-blue-200 mb-6">
+                <h2 class="flex items-center gap-2 text-lg font-semibold mb-4 text-blue-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Ajustements nécessaires
+                </h2>
+                
+                <div id="sf-longueurFilContainer" class="mb-4 bg-yellow-50 p-3 rounded-lg border border-yellow-300 shadow-sm">
+                    <p class="font-medium flex items-center gap-1 text-yellow-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                        </svg>
+                        1. Ajustement Longueur Fil:
+                    </p>
+                    <div class="flex justify-center items-center mt-2">
+                        <span id="sf-ajustementLongueurFil" class="text-3xl font-bold text-red-600">
+                            -4.0
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="mb-4 bg-white p-3 rounded-lg border border-blue-200 shadow-sm">
+                    <p class="font-medium flex items-center gap-1 text-blue-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                        </svg>
+                        <span id="sf-centragePrefixe">2. </span>Ajustement Centrage:
+                    </p>
+                    <div class="flex justify-center items-center mt-2">
+                        <span id="sf-ajustementCentrage" class="text-3xl font-bold text-green-600">
+                            +0.7
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Section Instructions -->
+                <div class="mt-4">
+                    <div class="flex justify-between items-center bg-blue-100 p-3 rounded-lg border border-blue-200 shadow-sm cursor-pointer hover:bg-blue-200 transition-colors" id="sf-instructionsToggle">
+                        <h3 class="font-semibold text-blue-800 flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                            Cliquez pour voir les instructions détaillées
+                        </h3>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 toggle-button" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
+                    <div id="sf-instructionsContent" class="collapsible-section bg-gray-50 p-3 rounded-b-lg border-l border-r border-b border-blue-200">
+                        <div id="sf-resultMessage" class="text-sm font-mono leading-relaxed"></div>
+                    </div>
+                </div>
+                
+                <div class="mt-4 p-3 bg-white rounded-lg border border-blue-200 shadow-sm">
+                    <h3 class="font-semibold text-blue-800 mb-2 flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        Après ajustement, vos mesures devraient être:
+                    </h3>
+                    <div class="grid grid-cols-2 gap-4 mt-2 bg-gray-50 p-3 rounded-lg">
+                        <div class="text-center p-2 bg-blue-50 rounded-lg">
+                            <p class="font-medium text-blue-700">Côté Freins:</p>
+                            <p id="sf-attenduFreinsDisplay" class="text-xl font-bold">145 mm</p>
+                        </div>
+                        <div class="text-center p-2 bg-blue-50 rounded-lg">
+                            <p class="font-medium text-blue-700">Côté Coupe:</p>
+                            <p id="sf-attenduCoupeDisplay" class="text-xl font-bold">145 mm</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="sf-horsLimitesMessage" class="p-4 bg-gray-50 rounded-lg border border-gray-200 text-gray-700 text-center mb-6 hidden">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p class="italic">Les ajustements ne peuvent pas être affichés car les valeurs dépassent les limites acceptables.</p>
+            </div>
+            
+            <!-- Rappel des règles -->
+            <div class="p-4 bg-gray-50 rounded-lg text-sm mb-6">
+                <h3 class="font-semibold mb-3 flex items-center gap-1 text-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Rappel des règles (SPRINT FLASH):
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
+                        <h4 class="font-semibold text-blue-800 mb-2 border-b pb-1">Règles de centrage:</h4>
+                        <ul class="list-disc list-inside space-y-1">
+                            <li>Décalage 1mm vers côté Freins: <span class="font-bold text-green-600">+0.2</span> au centrage</li>
+                            <li>Décalage 1mm vers côté Coupe: <span class="font-bold text-red-600">-0.2</span> au centrage</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
+                        <h4 class="font-semibold text-blue-800 mb-2 border-b pb-1 flex justify-between items-center">
+                            <span>Règles de longueur fil:</span>
+                            <button id="sf-editRatioBtn" class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded hover:bg-blue-200">
+                                Modifier
+                            </button>
+                        </h4>
+                        <div id="sf-ratioDisplay">
+                            <ul class="list-disc list-inside space-y-1">
+                                <li>Réduire longueur fil 1mm côté Freins: <span class="font-bold text-red-600">-<span id="sf-ratioValue">1.5</span></span> à la longueur</li>
+                                <li>Augmenter longueur fil 1mm côté Freins: <span class="font-bold text-green-600">+<span id="sf-ratioValue2">1.5</span></span> à la longueur</li>
+                            </ul>
+                        </div>
+                        <div id="sf-ratioEdit" class="hidden mt-2 bg-blue-50 p-2 rounded">
+                            <label class="block text-sm font-medium text-blue-800 mb-1">Ratio longueur (1mm = ?)</label>
+                            <div class="flex items-center gap-2">
+                                <input 
+                                    type="number" 
+                                    id="sf-longueurRatio" 
+                                    value="1.5" 
+                                    step="0.1"
+                                    class="w-full px-2 py-1 border border-blue-300 rounded text-sm"
+                                />
+                                <button id="sf-saveRatioBtn" class="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 text-sm">
+                                    OK
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3 p-2 bg-yellow-50 rounded-lg border border-yellow-200 text-xs">
+                    <p class="font-semibold flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        Note importante:
+                    </p>
+                    <p>Les ajustements supérieurs à ±10 ne sont pas possibles.</p>
+                </div>
+            <!-- Onglet d'explications pour SPRINT FLASH -->
+            <div class="mb-6 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+                <div class="flex justify-between items-center cursor-pointer bg-indigo-100 p-3 rounded-lg hover:bg-indigo-200 transition-colors" id="sf-explanationToggle">
+                    <h3 class="font-semibold text-indigo-800 flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Cliquez pour comprendre le calcul SPRINT FLASH
+                    </h3>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 toggle-button" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
+                <div id="sf-explanationContent" class="collapsible-section mt-2">
+                    <div class="bg-white p-3 rounded-lg">
+                        <h4 class="font-semibold text-indigo-700 mb-2">Comment fonctionne le calculateur SPRINT FLASH?</h4>
+                        <div class="space-y-2 text-sm">
+                            <p><strong>1. Longueur fil:</strong> Ce réglage permet de modifier la longueur du fil côté Freins.</p>
+                            <ul class="list-disc list-inside pl-2 space-y-1">
+                                <li>La modification de la longueur se fait uniquement du côté Freins</li>
+                                <li>Pour 1mm de changement sur le fil, il faut ajuster la valeur de longueur selon le ratio (par défaut: 1.5)</li>
+                                <li>Ce ratio peut être modifié selon les spécifications de votre machine</li>
+                            </ul>
+                            
+                            <p class="mt-3"><strong>2. Centrage:</strong> Ce réglage permet d'équilibrer les côtés Freins et Coupe.</p>
+                            <ul class="list-disc list-inside pl-2 space-y-1">
+                                <li>Pour décaler le fil de 1mm vers côté Freins: ajouter +0.2 au centrage</li>
+                                <li>Pour décaler le fil de 1mm vers côté Coupe: ajouter -0.2 au centrage</li>
+                                <li>Ce qui est retiré d'un côté est ajouté à l'autre</li>
+                            </ul>
+                            
+                            <p class="mt-3"><strong>3. Comment le calculateur fonctionne:</strong></p>
+                            <ol class="list-decimal list-inside pl-2 space-y-1">
+                                <li>D'abord, il vérifie si la somme des mesures correspond à la somme des valeurs attendues</li>
+                                <li>Si besoin, il suggère un ajustement de longueur de fil</li>
+                                <li>Ensuite, il vérifie si le fil est bien réparti entre les deux côtés</li>
+                                <li>Si besoin, il suggère un ajustement de centrage</li>
+                            </ol>
+                            
+                            <p class="mt-3 text-xs text-indigo-600 italic">Note: Contrairement au GMT, les ajustements SPRINT FLASH ont des limites plus strictes (±10), au-delà desquelles un ajustement n'est pas recommandé.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Gestion des onglets
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Désactiver tous les onglets
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+                
+                // Activer l'onglet cliqué
+                button.classList.add('active');
+                const contentId = 'content-' + button.id.replace('tab-', '');
+                document.getElementById(contentId).classList.add('active');
+            });
+        });
+        
+        // ===== LOGIQUE COMMUNE =====
+        // Gestion des sections pliables
+        function setupCollapsibleSection(toggleId, contentId, openByDefault = false) {
+            const toggle = document.getElementById(toggleId);
+            const content = document.getElementById(contentId);
+            
+            if (!toggle || !content) return;
+            
+            const toggleButton = toggle.querySelector('.toggle-button');
+            
+            toggle.addEventListener('click', () => {
+                content.classList.toggle('open');
+                toggleButton.classList.toggle('rotated');
+            });
+            
+            // Par défaut, masquer ou afficher le contenu selon le paramètre
+            if (openByDefault) {
+                content.classList.add('open');
+                toggleButton.classList.add('rotated');
+            } else {
+                content.classList.remove('open');
+                toggleButton.classList.remove('rotated');
+            }
+        }
+        
+        // ===== LOGIQUE GMT =====
+        // Variables d'état pour GMT
+        let gmtAttenduA = 110;
+        let gmtAttenduB = 110;
+        let gmtMesureA = 108.5;
+        let gmtMesureB = 108.5;
+        
+        // Constantes pour les règles GMT
+        const GMT_DENT_COMPLETE = 2.78; // Une dent complète ajoute 2.78mm en total
+        const GMT_DEMI_DENT = 1.39;     // Une demi-dent ajoute 1.39mm en total
+        const GMT_RATIO_CENTRAGE = 5;   // 5mm de centrage = 1mm de déplacement sur la pose
+        
+        // Éléments DOM pour GMT
+        const gmtInputAttenduA = document.getElementById('gmt-attenduA');
+        const gmtInputAttenduB = document.getElementById('gmt-attenduB');
+        const gmtInputMesureA = document.getElementById('gmt-mesureA');
+        const gmtInputMesureB = document.getElementById('gmt-mesureB');
+        const gmtEcartAElement = document.getElementById('gmt-ecartA');
+        const gmtEcartBElement = document.getElementById('gmt-ecartB');
+        const gmtTypeAjustementElement = document.getElementById('gmt-typeAjustement');
+        const gmtAjustementAngleElement = document.getElementById('gmt-ajustementAngle');
+        const gmtAjustementCentrageElement = document.getElementById('gmt-ajustementCentrage');
+        const gmtResultMessageElement = document.getElementById('gmt-resultMessage');
+        const gmtAttenduADisplay = document.getElementById('gmt-attenduADisplay');
+        const gmtAttenduBDisplay = document.getElementById('gmt-attenduBDisplay');
+        const gmtAlertHorsLimites = document.getElementById('gmt-alertHorsLimites');
+        const gmtResultatContainer = document.getElementById('gmt-resultatContainer');
+        const gmtHorsLimitesMessage = document.getElementById('gmt-horsLimitesMessage');
+        const gmtAngleContainer = document.getElementById('gmt-angleContainer');
+        const gmtCentragePrefixe = document.getElementById('gmt-centragePrefixe');
+        
+        // Écouteurs d'événements pour GMT
+        gmtInputAttenduA.addEventListener('input', () => {
+            gmtAttenduA = Number(gmtInputAttenduA.value);
+            calculateGMTAdjustments();
+        });
+        
+        gmtInputAttenduB.addEventListener('input', () => {
+            gmtAttenduB = Number(gmtInputAttenduB.value);
+            calculateGMTAdjustments();
+        });
+        
+        gmtInputMesureA.addEventListener('input', () => {
+            gmtMesureA = Number(gmtInputMesureA.value);
+            calculateGMTAdjustments();
+        });
+        
+        gmtInputMesureB.addEventListener('input', () => {
+            gmtMesureB = Number(gmtInputMesureB.value);
+            calculateGMTAdjustments();
+        });
+        
+        // Fonctions de calcul pour GMT
+        // Calculer les différences entre les valeurs attendues et mesurées
+        function calculateGMTDifferences() {
+            const diffA = gmtAttenduA - gmtMesureA;
+            const diffB = gmtAttenduB - gmtMesureB;
+            return { a: diffA, b: diffB };
+        }
+        
+        // Déterminer si un ajustement de mise en angle est nécessaire
+        function gmtNeedsAngleAdjustment() {
+            const sommeAttendu = gmtAttenduA + gmtAttenduB;
+            const sommeMesure = gmtMesureA + gmtMesureB;
+            return Math.abs(sommeMesure - sommeAttendu) > 0.2; // Seuil de tolérance
+        }
+        
+        // Calculer l'ajustement de mise en angle en nombre de dents
+        function calculateGMTAngleAdjustment() {
+            const sommeAttendu = gmtAttenduA + gmtAttenduB;
+            const sommeMesure = gmtMesureA + gmtMesureB;
+            const difference = sommeAttendu - sommeMesure;
+            
+            // Convertir la différence en nombre de dents (complètes ou demi-dents)
+            let dents = Math.round(difference / GMT_DENT_COMPLETE * 2) / 2; // Arrondir au 0.5 le plus proche
+            
+            return dents;
+        }
+        
+        // Calculer l'ajustement du centrage après ajustement de mise en angle
+        function calculateGMTCentrage(angleAdjustment) {
+            // Calculer l'effet de l'ajustement d'angle sur les deux côtés
+            const angleEffectPerSide = (angleAdjustment * GMT_DENT_COMPLETE) / 2;
+            
+            // Nouvelles mesures après ajustement d'angle
+            const newMesureA = gmtMesureA + angleEffectPerSide;
+            const newMesureB = gmtMesureB + angleEffectPerSide;
+            
+            // Calculer les écarts par rapport aux valeurs attendues
+            const ecartA = gmtAttenduA - newMesureA;
+            const ecartB = gmtAttenduB - newMesureB;
+            
+            // Différence entre les écarts (déséquilibre)
+            const desequilibre = ecartA - ecartB;
+            
+            // Calcul du décalage nécessaire (la moitié du déséquilibre)
+            const decalageNecessaire = desequilibre / 2;
+            
+            // Conversion selon le ratio de centrage (5mm de centrage = 1mm de déplacement)
+            const ajustement = Math.round(decalageNecessaire * GMT_RATIO_CENTRAGE);
+            
+            return ajustement;
+        }
+        
+        // Vérifier si les ajustements dépassent les limites
+        function gmtVerifierLimites(ajustementAngle, ajustementCentrage) {
+            return Math.abs(ajustementAngle) > 4 || Math.abs(ajustementCentrage) > 40;
+        }
+        
+        // Formater l'affichage de l'ajustement d'angle
+        function formatAngleAdjustment(angleAdjustment) {
+            if (angleAdjustment === 0) {
+                return "Aucun ajustement";
+            }
+            
+            const absValue = Math.abs(angleAdjustment);
+            const sign = angleAdjustment > 0 ? "+" : "-";
+            
+            if (absValue === 0.5) {
+                return `${sign}1/2 dent`;
+            } else if (absValue === 1) {
+                return `${sign}1 dent`;
+            } else if (absValue === 1.5) {
+                return `${sign}1.5 dents`;
+            } else {
+                return `${sign}${absValue} dents`;
+            }
+        }
+        
+        // Générer un message de résultat plus précis
+        function generateGMTResultMessage(needsAngleAdjustment, angleAdjustment, centrageAdjustment) {
+            let message = '';
+            
+            // Calcul des sommes
+            const sommeAttendu = gmtAttenduA + gmtAttenduB;
+            const sommeMesure = gmtMesureA + gmtMesureB;
+            const difference = sommeAttendu - sommeMesure;
+            
+            if (needsAngleAdjustment) {
+                const angleEffectTotal = Math.abs(angleAdjustment * GMT_DENT_COMPLETE);
+                const angleEffectPerSide = angleEffectTotal / 2;
+                
+                const formattedAngle = formatAngleAdjustment(angleAdjustment);
+                message += `<strong>1. ${angleAdjustment > 0 ? "Ajouter" : "Retirer"} ${formattedAngle} à la mise en angle</strong><br>`;
+                
+                // Nouvelles mesures après ajustement d'angle
+                const newMesureA = gmtMesureA + angleEffectPerSide;
+                const newMesureB = gmtMesureB + angleEffectPerSide;
+                
+                message += `<br>Nouvelle mesure estimée après ajustement: ${gmtMesureA.toFixed(1)} + ${angleEffectPerSide.toFixed(2)} = ${newMesureA.toFixed(2)}mm sur chaque côté<br><br>`;
+                message += `Longueur totale après mise en angle: ${(newMesureA + newMesureB).toFixed(2)}mm (${difference > 0 ? "plus proche" : "plus éloignée"} des ${sommeAttendu.toFixed(1)}mm attendus)<br>`;
+                
+                if (Math.abs(centrageAdjustment) > 2) {
+                    const decalageNecessaire = Math.abs(centrageAdjustment / GMT_RATIO_CENTRAGE);
+                    
+                    message += `<strong>2. ${centrageAdjustment > 0 ? "Déplacer" : "Déplacer"} le centrage de ${Math.abs(centrageAdjustment)}mm vers le côté ${centrageAdjustment > 0 ? "A" : "B"}</strong><br>`;
+                    message += `<br>Effet: déplacement de ${decalageNecessaire.toFixed(1)}mm vers côté ${centrageAdjustment > 0 ? "A" : "B"}<br>`;
+                } else {
+                    message += `<strong>2. Aucun ajustement de centrage nécessaire</strong> après correction de la mise en angle.<br>`;
+                }
+            } else {
+                if (Math.abs(centrageAdjustment) < 2) {
+                    message += "<strong>Aucun ajustement nécessaire.</strong> Les mesures sont déjà correctes.";
+                } else {
+                    const decalageNecessaire = Math.abs(centrageAdjustment / GMT_RATIO_CENTRAGE);
+                    
+                    message += `<strong>Déplacer le centrage de ${Math.abs(centrageAdjustment)}mm vers le côté ${centrageAdjustment > 0 ? "A" : "B"}</strong><br>`;
+                    message += `<br>Effet: déplacement de ${decalageNecessaire.toFixed(1)}mm vers côté ${centrageAdjustment > 0 ? "A" : "B"}<br>`;
+                }
+            }
+            
+            return message;
+        }
+        
+        // Mettre à jour l'affichage des écarts
+        function updateGMTEcartDisplay() {
+            const differences = calculateGMTDifferences();
+            
+            // Écart côté A
+            if (differences.a < -0.5) {
+                gmtEcartAElement.textContent = `${differences.a.toFixed(1)} mm (trop grand)`;
+                gmtEcartAElement.classList.remove('bg-green-100', 'text-green-700', 'bg-blue-100', 'text-blue-700');
+                gmtEcartAElement.classList.add('bg-red-100', 'text-red-700');
+            } else if (differences.a > 0.5) {
+                gmtEcartAElement.textContent = `${differences.a.toFixed(1)} mm (trop petit)`;
+                gmtEcartAElement.classList.remove('bg-red-100', 'text-red-700', 'bg-blue-100', 'text-blue-700');
+                gmtEcartAElement.classList.add('bg-green-100', 'text-green-700');
+            } else {
+                gmtEcartAElement.textContent = `${differences.a.toFixed(1)} mm (OK)`;
+                gmtEcartAElement.classList.remove('bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700');
+                gmtEcartAElement.classList.add('bg-blue-100', 'text-blue-700');
+            }
+            
+            // Écart côté B
+            if (differences.b < -0.5) {
+                gmtEcartBElement.textContent = `${differences.b.toFixed(1)} mm (trop grand)`;
+                gmtEcartBElement.classList.remove('bg-green-100', 'text-green-700', 'bg-blue-100', 'text-blue-700');
+                gmtEcartBElement.classList.add('bg-red-100', 'text-red-700');
+            } else if (differences.b > 0.5) {
+                gmtEcartBElement.textContent = `${differences.b.toFixed(1)} mm (trop petit)`;
+                gmtEcartBElement.classList.remove('bg-red-100', 'text-red-700', 'bg-blue-100', 'text-blue-700');
+                gmtEcartBElement.classList.add('bg-green-100', 'text-green-700');
+            } else {
+                gmtEcartBElement.textContent = `${differences.b.toFixed(1)} mm (OK)`;
+                gmtEcartBElement.classList.remove('bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700');
+                gmtEcartBElement.classList.add('bg-blue-100', 'text-blue-700');
+            }
+        }
+        
+        // Mettre à jour l'affichage du type d'ajustement
+        function updateGMTTypeAjustement(needsAngleAdjustment, centrageAdjustment) {
+            if (needsAngleAdjustment && Math.abs(centrageAdjustment) > 2) {
+                gmtTypeAjustementElement.textContent = "Mise en angle + Centrage";
+                gmtTypeAjustementElement.classList.remove('bg-blue-100', 'text-blue-800', 'bg-green-100', 'text-green-800');
+                gmtTypeAjustementElement.classList.add('bg-yellow-100', 'text-yellow-800');
+                gmtAngleContainer.classList.remove('hidden');
+                gmtCentragePrefixe.textContent = "2. ";
+            } else if (needsAngleAdjustment) {
+                gmtTypeAjustementElement.textContent = "Mise en angle uniquement";
+                gmtTypeAjustementElement.classList.remove('bg-blue-100', 'text-blue-800', 'bg-yellow-100', 'text-yellow-800');
+                gmtTypeAjustementElement.classList.add('bg-green-100', 'text-green-800');
+                gmtAngleContainer.classList.remove('hidden');
+                gmtCentragePrefixe.textContent = "";
+            } else if (Math.abs(centrageAdjustment) > 2) {
+                gmtTypeAjustementElement.textContent = "Centrage uniquement";
+                gmtTypeAjustementElement.classList.remove('bg-green-100', 'text-green-800', 'bg-yellow-100', 'text-yellow-800');
+                gmtTypeAjustementElement.classList.add('bg-blue-100', 'text-blue-800');
+                gmtAngleContainer.classList.add('hidden');
+                gmtCentragePrefixe.textContent = "";
+            } else {
+                gmtTypeAjustementElement.textContent = "Aucun ajustement nécessaire";
+                gmtTypeAjustementElement.classList.remove('bg-yellow-100', 'text-yellow-800', 'bg-blue-100', 'text-blue-800');
+                gmtTypeAjustementElement.classList.add('bg-green-100', 'text-green-800');
+                gmtAngleContainer.classList.add('hidden');
+                gmtCentragePrefixe.textContent = "";
+            }
+        }
+        
+        // Mettre à jour l'affichage des ajustements
+        function updateGMTAdjustementDisplay(angleAdjustment, centrageAdjustment) {
+            // Affichage de l'ajustement de mise en angle
+            const formattedAngle = formatAngleAdjustment(angleAdjustment);
+            gmtAjustementAngleElement.textContent = formattedAngle;
+            
+            if (angleAdjustment < 0) {
+                gmtAjustementAngleElement.classList.remove('text-green-600');
+                gmtAjustementAngleElement.classList.add('text-red-600');
+            } else if (angleAdjustment > 0) {
+                gmtAjustementAngleElement.classList.remove('text-red-600');
+                gmtAjustementAngleElement.classList.add('text-green-600');
+            } else {
+                gmtAjustementAngleElement.classList.remove('text-red-600', 'text-green-600');
+                gmtAjustementAngleElement.classList.add('text-gray-600');
+            }
+            
+            // Affichage de l'ajustement centrage
+            gmtAjustementCentrageElement.textContent = `${centrageAdjustment > 0 ? '+' : ''}${centrageAdjustment} mm`;
+            
+            if (centrageAdjustment < 0) {
+                gmtAjustementCentrageElement.classList.remove('text-green-600');
+                gmtAjustementCentrageElement.classList.add('text-red-600');
+            } else if (centrageAdjustment > 0) {
+                gmtAjustementCentrageElement.classList.remove('text-red-600');
+                gmtAjustementCentrageElement.classList.add('text-green-600');
+            } else {
+                gmtAjustementCentrageElement.classList.remove('text-red-600', 'text-green-600');
+                gmtAjustementCentrageElement.classList.add('text-gray-600');
+            }
+        }
+        
+        // Calculer les ajustements GMT
+        function calculateGMTAdjustments() {
+            // Mise à jour des écarts affichés
+            updateGMTEcartDisplay();
+            
+            // Déterminer si un ajustement de mise en angle est nécessaire
+            const needAngleAdjustment = gmtNeedsAngleAdjustment();
+            
+            // Calculer les ajustements nécessaires
+            const ajustementAngle = needAngleAdjustment ? calculateGMTAngleAdjustment() : 0;
+            const ajustementCentrage = calculateGMTCentrage(ajustementAngle);
+            
+            // Mettre à jour l'affichage du type d'ajustement
+            updateGMTTypeAjustement(needAngleAdjustment, ajustementCentrage);
+            
+            // Mettre à jour l'affichage des ajustements
+            updateGMTAdjustementDisplay(ajustementAngle, ajustementCentrage);
+            
+            // Vérifier si les ajustements dépassent les limites
+            if (gmtVerifierLimites(ajustementAngle, ajustementCentrage)) {
+                gmtAlertHorsLimites.classList.remove('hidden');
+                gmtResultatContainer.classList.add('hidden');
+                gmtHorsLimitesMessage.classList.remove('hidden');
+            } else {
+                gmtAlertHorsLimites.classList.add('hidden');
+                gmtResultatContainer.classList.remove('hidden');
+                gmtHorsLimitesMessage.classList.add('hidden');
+            }
+            
+            // Générer le message de résultat
+            const message = generateGMTResultMessage(needAngleAdjustment, ajustementAngle, ajustementCentrage);
+            gmtResultMessageElement.innerHTML = message;
+            
+            // Mettre à jour l'affichage des valeurs attendues après ajustement
+            gmtAttenduADisplay.textContent = `${gmtAttenduA.toFixed(1)} mm`;
+            gmtAttenduBDisplay.textContent = `${gmtAttenduB.toFixed(1)} mm`;
+            
+            // Mise à jour de la hauteur des instructions si visibles
+            if (document.getElementById('gmt-instructionsContent').classList.contains('open')) {
+                document.getElementById('gmt-instructionsContent').style.maxHeight = document.getElementById('gmt-instructionsContent').scrollHeight + "px";
+            }
+            
+            // Mise à jour de la hauteur des explications si visibles
+            if (document.getElementById('gmt-explanationContent').classList.contains('open')) {
+                document.getElementById('gmt-explanationContent').style.maxHeight = document.getElementById('gmt-explanationContent').scrollHeight + "px";
+            }
+        }
+        
+        // ===== LOGIQUE SPRINT FLASH =====
+        // Variables d'état
+        let sfAttenduFreins = 145;
+        let sfAttenduCoupe = 145;
+        let sfMesureFreins = 149;
+        let sfMesureCoupe = 142;
+        let sfLongueurRatio = 1.5; // Ratio configurable
+        
+        // Éléments DOM
+        const sfInputAttenduFreins = document.getElementById('sf-attenduFreins');
+        const sfInputAttenduCoupe = document.getElementById('sf-attenduCoupe');
+        const sfInputMesureFreins = document.getElementById('sf-mesureFreins');
+        const sfInputMesureCoupe = document.getElementById('sf-mesureCoupe');
+        const sfEcartFreinsElement = document.getElementById('sf-ecartFreins');
+        const sfEcartCoupeElement = document.getElementById('sf-ecartCoupe');
+        const sfTypeAjustementElement = document.getElementById('sf-typeAjustement');
+        const sfAjustementLongueurFilElement = document.getElementById('sf-ajustementLongueurFil');
+        const sfAjustementCentrageElement = document.getElementById('sf-ajustementCentrage');
+        const sfResultMessageElement = document.getElementById('sf-resultMessage');
+        const sfAttenduFreinsDisplay = document.getElementById('sf-attenduFreinsDisplay');
+        const sfAttenduCoupeDisplay = document.getElementById('sf-attenduCoupeDisplay');
+        const sfAlertHorsLimites = document.getElementById('sf-alertHorsLimites');
+        const sfResultatContainer = document.getElementById('sf-resultatContainer');
+        const sfHorsLimitesMessage = document.getElementById('sf-horsLimitesMessage');
+        const sfLongueurFilContainer = document.getElementById('sf-longueurFilContainer');
+        const sfCentragePrefixe = document.getElementById('sf-centragePrefixe');
+        
+        // Gestion du ratio de longueur fil
+        const editRatioBtn = document.getElementById('sf-editRatioBtn');
+        const saveRatioBtn = document.getElementById('sf-saveRatioBtn');
+        const ratioDisplay = document.getElementById('sf-ratioDisplay');
+        const ratioEdit = document.getElementById('sf-ratioEdit');
+        const longueurRatioInput = document.getElementById('sf-longueurRatio');
+        const ratioValueDisplay = document.getElementById('sf-ratioValue');
+        const ratioValueDisplay2 = document.getElementById('sf-ratioValue2');
+        
+        // Écouteurs d'événements pour SPRINT FLASH
+        sfInputAttenduFreins.addEventListener('input', () => {
+            sfAttenduFreins = Number(sfInputAttenduFreins.value);
+            calculateSFAdjustments();
+        });
+        
+        sfInputAttenduCoupe.addEventListener('input', () => {
+            sfAttenduCoupe = Number(sfInputAttenduCoupe.value);
+            calculateSFAdjustments();
+        });
+        
+        sfInputMesureFreins.addEventListener('input', () => {
+            sfMesureFreins = Number(sfInputMesureFreins.value);
+            calculateSFAdjustments();
+        });
+        
+        sfInputMesureCoupe.addEventListener('input', () => {
+            sfMesureCoupe = Number(sfInputMesureCoupe.value);
+            calculateSFAdjustments();
+        });
+        
+        // Configuration des boutons d'édition du ratio
+        editRatioBtn.addEventListener('click', () => {
+            ratioDisplay.classList.add('hidden');
+            ratioEdit.classList.remove('hidden');
+        });
+        
+        saveRatioBtn.addEventListener('click', () => {
+            const newRatio = parseFloat(longueurRatioInput.value);
+            if (!isNaN(newRatio) && newRatio > 0) {
+                sfLongueurRatio = newRatio;
+                ratioValueDisplay.textContent = newRatio.toFixed(1);
+                ratioValueDisplay2.textContent = newRatio.toFixed(1);
+                ratioDisplay.classList.remove('hidden');
+                ratioEdit.classList.add('hidden');
+                calculateSFAdjustments(); // Recalculer avec le nouveau ratio
+            }
+        });
+        
+        // Fonction pour calculer les différences entre attendu et mesuré
+        function calculateSFDifferences() {
+            const diffFreins = sfAttenduFreins - sfMesureFreins;
+            const diffCoupe = sfAttenduCoupe - sfMesureCoupe;
+            return { frein: diffFreins, coupe: diffCoupe };
+        }
+        
+        // Détermine si un ajustement de longueur fil est nécessaire
+        function sfNeedsLongueurFilAdjustment() {
+            const sommeAttendu = sfAttenduFreins + sfAttenduCoupe;
+            const sommeMesure = sfMesureFreins + sfMesureCoupe;
+            return Math.abs(sommeMesure - sommeAttendu) > 0.5;
+        }
+        
+        // Calcule l'ajustement de longueur fil nécessaire
+        function calculateSFLongueurFilAdjustment() {
+            const sommeAttendu = sfAttenduFreins + sfAttenduCoupe;
+            const sommeMesure = sfMesureFreins + sfMesureCoupe;
+            const difference = sommeMesure - sommeAttendu;
+            // Conversion selon le ratio configurable
+            const adjustment = Math.round(-difference * sfLongueurRatio * 10) / 10;
+            return adjustment;
+        }
+        
+        // Calcule l'ajustement du centrage
+        function calculateSFCentrage(longueurFilAdjustment) {
+            // Effet de l'ajustement de longueur fil en mm
+            const longueurFilEffectInMm = longueurFilAdjustment / sfLongueurRatio;
+            // Nouvelle mesure après ajustement longueur fil
+            const newMesureFreins = sfMesureFreins + longueurFilEffectInMm;
+            
+            // Calcul des écarts
+            const ecartFreins = newMesureFreins - sfAttenduFreins;
+            const ecartCoupe = sfMesureCoupe - sfAttenduCoupe;
+            
+            // Différence entre les écarts
+            const difference = ecartFreins - ecartCoupe;
+            
+            // Décalage nécessaire (moitié de la différence)
+            const decalageNecessaire = difference / 2;
+            
+            // Conversion selon la règle:
+            // Décalage 1mm vers Freins = +0.2 au centrage
+            // Décalage 1mm vers Coupe = -0.2 au centrage
+            const ajustement = Math.round(-decalageNecessaire * 0.2 * 10) / 10;
+            
+            return ajustement;
+        }
+        
+        // Vérifie si les ajustements dépassent les limites
+        function sfVerifierLimites(ajustementLongueur, ajustementCentrage) {
+            return Math.abs(ajustementLongueur) > 10 || Math.abs(ajustementCentrage) > 10;
+        }
+        
+        // Génère les instructions détaillées
+        function generateSFResultMessage(needsLongueurAdjustment, longueurAdjustment, centrageAdjustment) {
+            let message = '';
+            
+            // Calcul des mesures et effets
+            const longueurFilEffectInMm = longueurAdjustment / sfLongueurRatio;
+            const newMesureFreins = sfMesureFreins + longueurFilEffectInMm;
+            const decalageNecessaire = Math.abs(centrageAdjustment / 0.2);
+            
+            if (needsLongueurAdjustment) {
+                if (longueurAdjustment < 0) {
+                    message += `<strong>1. Réduire la longueur fil de ${Math.abs(longueurFilEffectInMm).toFixed(1)}mm côté Freins:</strong> Enlever ${Math.abs(longueurAdjustment).toFixed(1)} à la longueur fil<br><br>`;
+                } else {
+                    message += `<strong>1. Augmenter la longueur fil de ${Math.abs(longueurFilEffectInMm).toFixed(1)}mm côté Freins:</strong> Ajouter ${longueurAdjustment.toFixed(1)} à la longueur fil<br><br>`;
+                }
+                
+                message += `Nouvelle mesure estimée côté Freins après ajustement: ${newMesureFreins.toFixed(1)}mm<br><br>`;
+                
+                if (Math.abs(centrageAdjustment) > 0.05) {
+                    if (centrageAdjustment > 0) {
+                        message += `<strong>2. Décaler de ${decalageNecessaire.toFixed(1)}mm vers côté Freins:</strong> Ajouter ${centrageAdjustment > 0 ? '+' : ''}${centrageAdjustment.toFixed(1)} au centrage`;
+                    } else {
+                        message += `<strong>2. Décaler de ${decalageNecessaire.toFixed(1)}mm vers côté Coupe:</strong> Enlever ${Math.abs(centrageAdjustment).toFixed(1)} au centrage`;
+                    }
+                } else {
+                    message += "<strong>2. Aucun ajustement de centrage nécessaire</strong> après correction de la longueur fil.";
+                }
+            } else if (Math.abs(centrageAdjustment) > 0.05) {
+                if (centrageAdjustment > 0) {
+                    message += `<strong>Décaler de ${decalageNecessaire.toFixed(1)}mm vers côté Freins:</strong> Ajouter ${centrageAdjustment > 0 ? '+' : ''}${centrageAdjustment.toFixed(1)} au centrage`;
+                } else {
+                    message += `<strong>Décaler de ${decalageNecessaire.toFixed(1)}mm vers côté Coupe:</strong> Enlever ${Math.abs(centrageAdjustment).toFixed(1)} au centrage`;
+                }
+            } else {
+                message += "<strong>Aucun ajustement nécessaire.</strong> Les mesures sont déjà correctes.";
+            }
+            
+            return message;
+        }
+        
+        // Met à jour l'affichage des écarts
+        function updateSFEcartDisplay() {
+            const differences = calculateSFDifferences();
+            
+            // Écart côté freins
+            if (differences.frein < -0.5) {
+                sfEcartFreinsElement.textContent = `${differences.frein.toFixed(1)} mm (trop grand)`;
+                sfEcartFreinsElement.classList.remove('bg-green-100', 'text-green-700', 'bg-blue-100', 'text-blue-700');
+                sfEcartFreinsElement.classList.add('bg-red-100', 'text-red-700');
+            } else if (differences.frein > 0.5) {
+                sfEcartFreinsElement.textContent = `${differences.frein.toFixed(1)} mm (trop petit)`;
+                sfEcartFreinsElement.classList.remove('bg-red-100', 'text-red-700', 'bg-blue-100', 'text-blue-700');
+                sfEcartFreinsElement.classList.add('bg-green-100', 'text-green-700');
+            } else {
+                sfEcartFreinsElement.textContent = `${differences.frein.toFixed(1)} mm (OK)`;
+                sfEcartFreinsElement.classList.remove('bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700');
+                sfEcartFreinsElement.classList.add('bg-blue-100', 'text-blue-700');
+            }
+            
+            // Écart côté coupe
+            if (differences.coupe < -0.5) {
+                sfEcartCoupeElement.textContent = `${differences.coupe.toFixed(1)} mm (trop grand)`;
+                sfEcartCoupeElement.classList.remove('bg-green-100', 'text-green-700', 'bg-blue-100', 'text-blue-700');
+                sfEcartCoupeElement.classList.add('bg-red-100', 'text-red-700');
+            } else if (differences.coupe > 0.5) {
+                sfEcartCoupeElement.textContent = `${differences.coupe.toFixed(1)} mm (trop petit)`;
+                sfEcartCoupeElement.classList.remove('bg-red-100', 'text-red-700', 'bg-blue-100', 'text-blue-700');
+                sfEcartCoupeElement.classList.add('bg-green-100', 'text-green-700');
+            } else {
+                sfEcartCoupeElement.textContent = `${differences.coupe.toFixed(1)} mm (OK)`;
+                sfEcartCoupeElement.classList.remove('bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700');
+                sfEcartCoupeElement.classList.add('bg-blue-100', 'text-blue-700');
+            }
+        }
+        
+        // Met à jour l'affichage du type d'ajustement
+        function updateSFTypeAjustement(needsLongueurAdjustment, centrageAdjustment) {
+            if (needsLongueurAdjustment && Math.abs(centrageAdjustment) > 0.05) {
+                sfTypeAjustementElement.textContent = "Longueur fil + Centrage";
+                sfTypeAjustementElement.classList.remove('bg-blue-100', 'text-blue-800', 'bg-green-100', 'text-green-800');
+                sfTypeAjustementElement.classList.add('bg-yellow-100', 'text-yellow-800');
+                sfLongueurFilContainer.classList.remove('hidden');
+                sfCentragePrefixe.textContent = "2. ";
+            } else if (needsLongueurAdjustment) {
+                sfTypeAjustementElement.textContent = "Longueur fil uniquement";
+                sfTypeAjustementElement.classList.remove('bg-blue-100', 'text-blue-800', 'bg-yellow-100', 'text-yellow-800');
+                sfTypeAjustementElement.classList.add('bg-green-100', 'text-green-800');
+                sfLongueurFilContainer.classList.remove('hidden');
+                sfCentragePrefixe.textContent = "";
+            } else if (Math.abs(centrageAdjustment) > 0.05) {
+                sfTypeAjustementElement.textContent = "Centrage uniquement";
+                sfTypeAjustementElement.classList.remove('bg-green-100', 'text-green-800', 'bg-yellow-100', 'text-yellow-800');
+                sfTypeAjustementElement.classList.add('bg-blue-100', 'text-blue-800');
+                sfLongueurFilContainer.classList.add('hidden');
+                sfCentragePrefixe.textContent = "";
+            } else {
+                sfTypeAjustementElement.textContent = "Aucun ajustement nécessaire";
+                sfTypeAjustementElement.classList.remove('bg-yellow-100', 'text-yellow-800', 'bg-blue-100', 'text-blue-800');
+                sfTypeAjustementElement.classList.add('bg-green-100', 'text-green-800');
+                sfLongueurFilContainer.classList.add('hidden');
+                sfCentragePrefixe.textContent = "";
+            }
+        }
+        
+        // Met à jour l'affichage des ajustements
+        function updateSFAdjustementDisplay(longueurAdjustment, centrageAdjustment) {
+            // Affichage de l'ajustement longueur fil
+            sfAjustementLongueurFilElement.textContent = `${longueurAdjustment.toFixed(1)}`;
+            if (longueurAdjustment < 0) {
+                sfAjustementLongueurFilElement.classList.remove('text-green-600');
+                sfAjustementLongueurFilElement.classList.add('text-red-600');
+            } else {
+                sfAjustementLongueurFilElement.classList.remove('text-red-600');
+                sfAjustementLongueurFilElement.classList.add('text-green-600');
+            }
+            
+            // Affichage de l'ajustement centrage
+            sfAjustementCentrageElement.textContent = `${centrageAdjustment > 0 ? '+' : ''}${centrageAdjustment.toFixed(1)}`;
+            if (centrageAdjustment < 0) {
+                sfAjustementCentrageElement.classList.remove('text-green-600');
+                sfAjustementCentrageElement.classList.add('text-red-600');
+            } else {
+                sfAjustementCentrageElement.classList.remove('text-red-600');
+                sfAjustementCentrageElement.classList.add('text-green-600');
+            }
+        }
+        
+        // Fonction principale de calcul pour SPRINT FLASH
+        function calculateSFAdjustments() {
+            // Mise à jour des écarts affichés
+            updateSFEcartDisplay();
+            
+            // Déterminer si un ajustement de longueur fil est nécessaire
+            const needLongueurAdjustment = sfNeedsLongueurFilAdjustment();
+            
+            // Calculer les ajustements nécessaires
+            const ajustementLongueur = needLongueurAdjustment ? calculateSFLongueurFilAdjustment() : 0;
+            const ajustementCentrage = calculateSFCentrage(ajustementLongueur);
+            
+            // Mettre à jour l'affichage du type d'ajustement
+            updateSFTypeAjustement(needLongueurAdjustment, ajustementCentrage);
+            
+            // Mettre à jour l'affichage des ajustements
+            updateSFAdjustementDisplay(ajustementLongueur, ajustementCentrage);
+            
+            // Vérifier si les ajustements dépassent les limites
+            if (sfVerifierLimites(ajustementLongueur, ajustementCentrage)) {
+                sfAlertHorsLimites.classList.remove('hidden');
+                sfResultatContainer.classList.add('hidden');
+                sfHorsLimitesMessage.classList.remove('hidden');
+            } else {
+                sfAlertHorsLimites.classList.add('hidden');
+                sfResultatContainer.classList.remove('hidden');
+                sfHorsLimitesMessage.classList.add('hidden');
+            }
+            
+            // Générer le message de résultat
+            const message = generateSFResultMessage(needLongueurAdjustment, ajustementLongueur, ajustementCentrage);
+            sfResultMessageElement.innerHTML = message;
+            
+            // Mettre à jour l'affichage des valeurs attendues après ajustement
+            sfAttenduFreinsDisplay.textContent = `${sfAttenduFreins.toFixed(1)} mm`;
+            sfAttenduCoupeDisplay.textContent = `${sfAttenduCoupe.toFixed(1)} mm`;
+            
+            // Mise à jour de la hauteur des instructions si visibles
+            if (document.getElementById('sf-instructionsContent').classList.contains('open')) {
+                document.getElementById('sf-instructionsContent').style.maxHeight = document.getElementById('sf-instructionsContent').scrollHeight + "px";
+            }
+            
+            // Mise à jour de la hauteur des explications si visibles
+            if (document.getElementById('sf-explanationContent').classList.contains('open')) {
+                document.getElementById('sf-explanationContent').style.maxHeight = document.getElementById('sf-explanationContent').scrollHeight + "px";
+            }
+        }
+        
+        // Initialisation au chargement de la page
+        document.addEventListener('DOMContentLoaded', () => {
+            // Configurer les sections pliables
+            setupCollapsibleSection('gmt-instructionsToggle', 'gmt-instructionsContent', false); // Instructions cachées par défaut
+            setupCollapsibleSection('gmt-explanationToggle', 'gmt-explanationContent', false); // Explications cachées par défaut
+            setupCollapsibleSection('sf-explanationToggle', 'sf-explanationContent', false); // Explications cachées par défaut
+            setupCollapsibleSection('sf-instructionsToggle', 'sf-instructionsContent', false); // Instructions cachées par défaut
+            
+            // Initialiser les calculs
+            calculateGMTAdjustments();
+            calculateSFAdjustments();
+            
+            // Initialisation du thème
+            initTheme();
+        });
+        
+        // Fonction pour initialiser le thème
+        function initTheme() {
+            const themeToggle = document.getElementById('theme-toggle');
+            const sunIcon = document.getElementById('sun-icon');
+            const moonIcon = document.getElementById('moon-icon');
+            
+            // Utiliser la préférence du système par défaut
+            try {
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    document.documentElement.classList.add('dark-mode');
+                    sunIcon.classList.add('hidden');
+                    moonIcon.classList.remove('hidden');
+                }
+            } catch (e) {
+                // En cas d'erreur, utiliser le thème clair par défaut
+                console.log("Impossible de détecter les préférences de thème du système");
+            }
+            
+            // Ajouter l'écouteur d'événement pour le bouton de bascule
+            themeToggle.addEventListener('click', () => {
+                if (document.documentElement.classList.contains('dark-mode')) {
+                    // Passer en mode clair
+                    document.documentElement.classList.remove('dark-mode');
+                    sunIcon.classList.remove('hidden');
+                    moonIcon.classList.add('hidden');
+                } else {
+                    // Passer en mode sombre
+                    document.documentElement.classList.add('dark-mode');
+                    sunIcon.classList.add('hidden');
+                    moonIcon.classList.remove('hidden');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
