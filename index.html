@@ -966,11 +966,12 @@
         // Calculer l'ajustement du centrage après ajustement de mise en angle
         function calculateGMTCentrage(angleAdjustment) {
             // Calculer l'effet de l'ajustement d'angle sur les deux côtés
-            const angleEffectPerSide = (angleAdjustment * GMT_DENT_COMPLETE) / 2;
+            const angleEffectTotal = Math.abs(angleAdjustment * GMT_DENT_COMPLETE);
+            const angleEffectPerSide = angleEffectTotal / 2;
             
-            // Nouvelles mesures après ajustement d'angle
-            const newMesureA = gmtMesureA + angleEffectPerSide;
-            const newMesureB = gmtMesureB + angleEffectPerSide;
+            // Nouvelles mesures après ajustement d'angle - CORRECTION DE LA LOGIQUE
+            const newMesureA = gmtMesureA + (angleAdjustment > 0 ? angleEffectPerSide : -angleEffectPerSide);
+            const newMesureB = gmtMesureB + (angleAdjustment > 0 ? angleEffectPerSide : -angleEffectPerSide);
             
             // Calculer les écarts par rapport aux valeurs attendues
             const ecartA = gmtAttenduA - newMesureA;
@@ -1013,7 +1014,7 @@
             }
         }
         
-        // Générer un message de résultat plus précis
+        // Générer un message de résultat plus précis avec explications
         function generateGMTResultMessage(needsAngleAdjustment, angleAdjustment, centrageAdjustment) {
             let message = '';
             
@@ -1022,36 +1023,110 @@
             const sommeMesure = gmtMesureA + gmtMesureB;
             const difference = sommeAttendu - sommeMesure;
             
+            // Explication de base de la situation
+            message += `<div class="p-2 bg-blue-50 dark:bg-blue-900 rounded-lg mb-3">`;
+            message += `<strong>Analyse de situation:</strong><br>`;
+            message += `• Longueur attendue: ${sommeAttendu}mm au total (${gmtAttenduA}mm + ${gmtAttenduB}mm)<br>`;
+            message += `• Longueur mesurée: ${sommeMesure}mm au total (${gmtMesureA}mm + ${gmtMesureB}mm)<br>`;
+            message += `• Écart total: ${difference.toFixed(1)}mm ${difference > 0 ? "(trop court)" : "(trop long)"}<br>`;
+            
+            // Écarts détaillés par côté
+            const ecartA = gmtAttenduA - gmtMesureA;
+            const ecartB = gmtAttenduB - gmtMesureB;
+            message += `• Déséquilibre entre les côtés: ${Math.abs(ecartA - ecartB).toFixed(1)}mm<br>`;
+            message += `</div>`;
+            
             if (needsAngleAdjustment) {
                 const angleEffectTotal = Math.abs(angleAdjustment * GMT_DENT_COMPLETE);
                 const angleEffectPerSide = angleEffectTotal / 2;
                 
                 const formattedAngle = formatAngleAdjustment(angleAdjustment);
                 message += `<strong>1. ${angleAdjustment > 0 ? "Ajouter" : "Retirer"} ${formattedAngle} à la mise en angle</strong><br>`;
+                message += `<div class="ml-4 mt-1 mb-3">`;
+                message += `→ La mise en angle modifie la longueur totale du fil.<br>`;
+                message += `→ Chaque dent ajoute 2.78mm au total (1.39mm par côté).<br>`;
+                message += `→ Cet ajustement va ${angleAdjustment > 0 ? "allonger" : "raccourcir"} le fil de ${angleEffectTotal.toFixed(2)}mm au total.<br>`;
+                message += `→ L'effet est réparti également: ${angleEffectPerSide.toFixed(2)}mm ${angleAdjustment > 0 ? "en plus" : "en moins"} sur chaque côté.<br>`;
+                message += `</div>`;
                 
-                // Nouvelles mesures après ajustement d'angle
-                const newMesureA = gmtMesureA + angleEffectPerSide;
-                const newMesureB = gmtMesureB + angleEffectPerSide;
+                // Nouvelles mesures après ajustement d'angle - CORRECTION DE LA LOGIQUE ICI
+                // Si on ajoute des dents (angleAdjustment > 0), on ajoute de la longueur
+                // Si on retire des dents (angleAdjustment < 0), on soustrait de la longueur
+                const newMesureA = gmtMesureA + (angleAdjustment > 0 ? angleEffectPerSide : -angleEffectPerSide);
+                const newMesureB = gmtMesureB + (angleAdjustment > 0 ? angleEffectPerSide : -angleEffectPerSide);
+                const newSomme = newMesureA + newMesureB;
                 
-                message += `<br>Nouvelle mesure estimée après ajustement: ${gmtMesureA.toFixed(1)} + ${angleEffectPerSide.toFixed(2)} = ${newMesureA.toFixed(2)}mm sur chaque côté<br><br>`;
-                message += `Longueur totale après mise en angle: ${(newMesureA + newMesureB).toFixed(2)}mm (${difference > 0 ? "plus proche" : "plus éloignée"} des ${sommeAttendu.toFixed(1)}mm attendus)<br>`;
+                message += `<div class="p-2 bg-green-50 dark:bg-green-900 rounded-lg mb-3">`;
+                message += `<strong>Effet prévu:</strong><br>`;
+                message += `• Nouvelle mesure côté A: ${gmtMesureA.toFixed(1)} ${angleAdjustment > 0 ? "+" : "-"} ${angleEffectPerSide.toFixed(2)} = ${newMesureA.toFixed(2)}mm<br>`;
+                message += `• Nouvelle mesure côté B: ${gmtMesureB.toFixed(1)} ${angleAdjustment > 0 ? "+" : "-"} ${angleEffectPerSide.toFixed(2)} = ${newMesureB.toFixed(2)}mm<br>`;
+                message += `• Nouvelle longueur totale: ${newSomme.toFixed(2)}mm (cible: ${sommeAttendu}mm)<br>`;
+                message += `• Écart résiduel: ${(sommeAttendu - newSomme).toFixed(2)}mm<br>`;
+                message += `</div>`;
                 
                 if (Math.abs(centrageAdjustment) > 2) {
                     const decalageNecessaire = Math.abs(centrageAdjustment / GMT_RATIO_CENTRAGE);
                     
                     message += `<strong>2. ${centrageAdjustment > 0 ? "Déplacer" : "Déplacer"} le centrage de ${Math.abs(centrageAdjustment)}mm vers le côté ${centrageAdjustment > 0 ? "A" : "B"}</strong><br>`;
-                    message += `<br>Effet: déplacement de ${decalageNecessaire.toFixed(1)}mm vers côté ${centrageAdjustment > 0 ? "A" : "B"}<br>`;
+                    message += `<div class="ml-4 mt-1 mb-3">`;
+                    message += `→ Le centrage déplace le fil d'un côté à l'autre sans changer sa longueur totale.<br>`;
+                    message += `→ Pour déplacer le fil de 1mm, on ajoute ${GMT_RATIO_CENTRAGE}mm au centrage.<br>`;
+                    message += `→ Cet ajustement va déplacer le fil de ${decalageNecessaire.toFixed(1)}mm vers le côté ${centrageAdjustment > 0 ? "A" : "B"}.<br>`;
+                    message += `→ Le côté ${centrageAdjustment > 0 ? "A" : "B"} gagne ${decalageNecessaire.toFixed(1)}mm, le côté ${centrageAdjustment > 0 ? "B" : "A"} perd ${decalageNecessaire.toFixed(1)}mm.<br>`;
+                    message += `</div>`;
+                    
+                    // Mesures finales après les deux ajustements
+                    const finalA = newMesureA + (centrageAdjustment > 0 ? decalageNecessaire : -decalageNecessaire);
+                    const finalB = newMesureB + (centrageAdjustment > 0 ? -decalageNecessaire : decalageNecessaire);
+                    
+                    message += `<div class="p-2 bg-yellow-50 dark:bg-yellow-900 rounded-lg">`;
+                    message += `<strong>Résultat final attendu:</strong><br>`;
+                    message += `• Côté A: ${finalA.toFixed(2)}mm (cible: ${gmtAttenduA}mm)<br>`;
+                    message += `• Côté B: ${finalB.toFixed(2)}mm (cible: ${gmtAttenduB}mm)<br>`;
+                    message += `• Total: ${(finalA + finalB).toFixed(2)}mm<br>`;
+                    message += `</div>`;
                 } else {
-                    message += `<strong>2. Aucun ajustement de centrage nécessaire</strong> après correction de la mise en angle.<br>`;
+                    message += `<strong>2. Aucun ajustement de centrage nécessaire</strong><br>`;
+                    message += `<div class="ml-4 mt-1 mb-3">`;
+                    message += `→ Les côtés sont suffisamment équilibrés après la mise en angle.<br>`;
+                    message += `→ Aucun déplacement latéral du fil n'est nécessaire.<br>`;
+                    message += `</div>`;
+                    
+                    message += `<div class="p-2 bg-yellow-50 dark:bg-yellow-900 rounded-lg">`;
+                    message += `<strong>Résultat final attendu:</strong><br>`;
+                    message += `• Côté A: ${newMesureA.toFixed(2)}mm (cible: ${gmtAttenduA}mm)<br>`;
+                    message += `• Côté B: ${newMesureB.toFixed(2)}mm (cible: ${gmtAttenduB}mm)<br>`;
+                    message += `• Total: ${newSomme.toFixed(2)}mm<br>`;
+                    message += `</div>`;
                 }
             } else {
                 if (Math.abs(centrageAdjustment) < 2) {
-                    message += "<strong>Aucun ajustement nécessaire.</strong> Les mesures sont déjà correctes.";
+                    message += `<strong>Aucun ajustement nécessaire.</strong><br>`;
+                    message += `<div class="ml-4 mt-1 mb-3">`;
+                    message += `→ La longueur totale est déjà correcte (écart: ${difference.toFixed(1)}mm).<br>`;
+                    message += `→ Les côtés sont déjà bien équilibrés (déséquilibre: ${Math.abs(ecartA - ecartB).toFixed(1)}mm).<br>`;
+                    message += `</div>`;
                 } else {
                     const decalageNecessaire = Math.abs(centrageAdjustment / GMT_RATIO_CENTRAGE);
                     
                     message += `<strong>Déplacer le centrage de ${Math.abs(centrageAdjustment)}mm vers le côté ${centrageAdjustment > 0 ? "A" : "B"}</strong><br>`;
-                    message += `<br>Effet: déplacement de ${decalageNecessaire.toFixed(1)}mm vers côté ${centrageAdjustment > 0 ? "A" : "B"}<br>`;
+                    message += `<div class="ml-4 mt-1 mb-3">`;
+                    message += `→ La longueur totale est déjà correcte mais les côtés sont déséquilibrés.<br>`;
+                    message += `→ Pour déplacer le fil de 1mm, on ajoute ${GMT_RATIO_CENTRAGE}mm au centrage.<br>`;
+                    message += `→ Cet ajustement va déplacer le fil de ${decalageNecessaire.toFixed(1)}mm vers le côté ${centrageAdjustment > 0 ? "A" : "B"}.<br>`;
+                    message += `→ Le côté ${centrageAdjustment > 0 ? "A" : "B"} gagne ${decalageNecessaire.toFixed(1)}mm, le côté ${centrageAdjustment > 0 ? "B" : "A"} perd ${decalageNecessaire.toFixed(1)}mm.<br>`;
+                    message += `</div>`;
+                    
+                    // Mesures finales après centrage
+                    const finalA = gmtMesureA + (centrageAdjustment > 0 ? decalageNecessaire : -decalageNecessaire);
+                    const finalB = gmtMesureB + (centrageAdjustment > 0 ? -decalageNecessaire : decalageNecessaire);
+                    
+                    message += `<div class="p-2 bg-yellow-50 dark:bg-yellow-900 rounded-lg">`;
+                    message += `<strong>Résultat final attendu:</strong><br>`;
+                    message += `• Côté A: ${finalA.toFixed(2)}mm (cible: ${gmtAttenduA}mm)<br>`;
+                    message += `• Côté B: ${finalB.toFixed(2)}mm (cible: ${gmtAttenduB}mm)<br>`;
+                    message += `• Total: ${(finalA + finalB).toFixed(2)}mm<br>`;
+                    message += `</div>`;
                 }
             }
             
@@ -1331,9 +1406,27 @@
             return Math.abs(ajustementLongueur) > 10 || Math.abs(ajustementCentrage) > 10;
         }
         
-        // Génère les instructions détaillées
+        // Génère les instructions détaillées pour SPRINT FLASH
         function generateSFResultMessage(needsLongueurAdjustment, longueurAdjustment, centrageAdjustment) {
             let message = '';
+            
+            // Calcul des sommes
+            const sommeAttendu = sfAttenduFreins + sfAttenduCoupe;
+            const sommeMesure = sfMesureFreins + sfMesureCoupe;
+            const difference = sommeAttendu - sommeMesure;
+            
+            // Explication de base de la situation
+            message += `<div class="p-2 bg-blue-50 dark:bg-blue-900 rounded-lg mb-3">`;
+            message += `<strong>Analyse de situation:</strong><br>`;
+            message += `• Longueur attendue: ${sommeAttendu}mm au total (${sfAttenduFreins}mm + ${sfAttenduCoupe}mm)<br>`;
+            message += `• Longueur mesurée: ${sommeMesure}mm au total (${sfMesureFreins}mm + ${sfMesureCoupe}mm)<br>`;
+            message += `• Écart total: ${difference.toFixed(1)}mm ${difference > 0 ? "(trop court)" : "(trop long)"}<br>`;
+            
+            // Écarts détaillés par côté
+            const ecartFreins = sfAttenduFreins - sfMesureFreins;
+            const ecartCoupe = sfAttenduCoupe - sfMesureCoupe;
+            message += `• Déséquilibre entre les côtés: ${Math.abs(ecartFreins - ecartCoupe).toFixed(1)}mm<br>`;
+            message += `</div>`;
             
             // Calcul des mesures et effets
             const longueurFilEffectInMm = longueurAdjustment / sfLongueurRatio;
@@ -1342,30 +1435,115 @@
             
             if (needsLongueurAdjustment) {
                 if (longueurAdjustment < 0) {
-                    message += `<strong>1. Réduire la longueur fil de ${Math.abs(longueurFilEffectInMm).toFixed(1)}mm côté Freins:</strong> Enlever ${Math.abs(longueurAdjustment).toFixed(1)} à la longueur fil<br><br>`;
+                    message += `<strong>1. Réduire la longueur fil de ${Math.abs(longueurFilEffectInMm).toFixed(1)}mm côté Freins</strong><br>`;
+                    message += `<div class="ml-4 mt-1 mb-3">`;
+                    message += `→ Ajustement à appliquer: <span class="font-bold">${longueurAdjustment.toFixed(1)}</span> à la longueur fil<br>`;
+                    message += `→ Pour chaque 1mm de réduction physique, on ajuste de ${sfLongueurRatio} sur la machine.<br>`;
+                    message += `→ Cet ajustement va raccourcir le fil côté Freins uniquement.<br>`;
+                    message += `→ La longueur totale sera réduite pour correspondre à l'attendu.<br>`;
+                    message += `</div>`;
                 } else {
-                    message += `<strong>1. Augmenter la longueur fil de ${Math.abs(longueurFilEffectInMm).toFixed(1)}mm côté Freins:</strong> Ajouter ${longueurAdjustment.toFixed(1)} à la longueur fil<br><br>`;
+                    message += `<strong>1. Augmenter la longueur fil de ${Math.abs(longueurFilEffectInMm).toFixed(1)}mm côté Freins</strong><br>`;
+                    message += `<div class="ml-4 mt-1 mb-3">`;
+                    message += `→ Ajustement à appliquer: <span class="font-bold">+${longueurAdjustment.toFixed(1)}</span> à la longueur fil<br>`;
+                    message += `→ Pour chaque 1mm d'augmentation physique, on ajuste de ${sfLongueurRatio} sur la machine.<br>`;
+                    message += `→ Cet ajustement va allonger le fil côté Freins uniquement.<br>`;
+                    message += `→ La longueur totale sera augmentée pour correspondre à l'attendu.<br>`;
+                    message += `</div>`;
                 }
                 
-                message += `Nouvelle mesure estimée côté Freins après ajustement: ${newMesureFreins.toFixed(1)}mm<br><br>`;
+                message += `<div class="p-2 bg-green-50 dark:bg-green-900 rounded-lg mb-3">`;
+                message += `<strong>Effet prévu après ajustement de longueur:</strong><br>`;
+                message += `• Nouvelle mesure côté Freins: ${sfMesureFreins.toFixed(1)} ${longueurFilEffectInMm >= 0 ? '+' : ''}${longueurFilEffectInMm.toFixed(1)} = ${newMesureFreins.toFixed(1)}mm<br>`;
+                message += `• Mesure côté Coupe: ${sfMesureCoupe.toFixed(1)}mm (inchangée)<br>`;
+                message += `• Nouvelle longueur totale: ${(newMesureFreins + sfMesureCoupe).toFixed(1)}mm<br>`;
+                message += `</div>`;
                 
                 if (Math.abs(centrageAdjustment) > 0.05) {
                     if (centrageAdjustment > 0) {
-                        message += `<strong>2. Décaler de ${decalageNecessaire.toFixed(1)}mm vers côté Freins:</strong> Ajouter ${centrageAdjustment > 0 ? '+' : ''}${centrageAdjustment.toFixed(1)} au centrage`;
+                        message += `<strong>2. Décaler de ${decalageNecessaire.toFixed(1)}mm vers côté Freins</strong><br>`;
+                        message += `<div class="ml-4 mt-1 mb-3">`;
+                        message += `→ Ajustement à appliquer: <span class="font-bold">+${centrageAdjustment.toFixed(1)}</span> au centrage<br>`;
+                        message += `→ Pour déplacer de 1mm vers côté Freins, on ajoute 0.2 au centrage.<br>`;
+                        message += `→ Cet ajustement va équilibrer la répartition du fil entre les deux côtés.<br>`;
+                        message += `→ Le côté Freins gagne ${decalageNecessaire.toFixed(1)}mm, le côté Coupe perd ${decalageNecessaire.toFixed(1)}mm.<br>`;
+                        message += `</div>`;
                     } else {
-                        message += `<strong>2. Décaler de ${decalageNecessaire.toFixed(1)}mm vers côté Coupe:</strong> Enlever ${Math.abs(centrageAdjustment).toFixed(1)} au centrage`;
+                        message += `<strong>2. Décaler de ${decalageNecessaire.toFixed(1)}mm vers côté Coupe</strong><br>`;
+                        message += `<div class="ml-4 mt-1 mb-3">`;
+                        message += `→ Ajustement à appliquer: <span class="font-bold">${centrageAdjustment.toFixed(1)}</span> au centrage<br>`;
+                        message += `→ Pour déplacer de 1mm vers côté Coupe, on retire 0.2 au centrage.<br>`;
+                        message += `→ Cet ajustement va équilibrer la répartition du fil entre les deux côtés.<br>`;
+                        message += `→ Le côté Coupe gagne ${decalageNecessaire.toFixed(1)}mm, le côté Freins perd ${decalageNecessaire.toFixed(1)}mm.<br>`;
+                        message += `</div>`;
                     }
+                    
+                    // Calculer les mesures finales après les deux ajustements
+                    const finalFreins = newMesureFreins + (centrageAdjustment > 0 ? decalageNecessaire : -decalageNecessaire);
+                    const finalCoupe = sfMesureCoupe + (centrageAdjustment > 0 ? -decalageNecessaire : decalageNecessaire);
+                    
+                    message += `<div class="p-2 bg-yellow-50 dark:bg-yellow-900 rounded-lg">`;
+                    message += `<strong>Résultat final attendu:</strong><br>`;
+                    message += `• Côté Freins: ${finalFreins.toFixed(1)}mm (cible: ${sfAttenduFreins}mm)<br>`;
+                    message += `• Côté Coupe: ${finalCoupe.toFixed(1)}mm (cible: ${sfAttenduCoupe}mm)<br>`;
+                    message += `• Total: ${(finalFreins + finalCoupe).toFixed(1)}mm<br>`;
+                    message += `</div>`;
                 } else {
-                    message += "<strong>2. Aucun ajustement de centrage nécessaire</strong> après correction de la longueur fil.";
+                    message += `<strong>2. Aucun ajustement de centrage nécessaire</strong><br>`;
+                    message += `<div class="ml-4 mt-1 mb-3">`;
+                    message += `→ Après l'ajustement de longueur, les côtés seront suffisamment équilibrés.<br>`;
+                    message += `→ Aucun déplacement latéral du fil n'est nécessaire.<br>`;
+                    message += `</div>`;
+                    
+                    message += `<div class="p-2 bg-yellow-50 dark:bg-yellow-900 rounded-lg">`;
+                    message += `<strong>Résultat final attendu:</strong><br>`;
+                    message += `• Côté Freins: ${newMesureFreins.toFixed(1)}mm (cible: ${sfAttenduFreins}mm)<br>`;
+                    message += `• Côté Coupe: ${sfMesureCoupe.toFixed(1)}mm (cible: ${sfAttenduCoupe}mm)<br>`;
+                    message += `• Total: ${(newMesureFreins + sfMesureCoupe).toFixed(1)}mm<br>`;
+                    message += `</div>`;
                 }
             } else if (Math.abs(centrageAdjustment) > 0.05) {
                 if (centrageAdjustment > 0) {
-                    message += `<strong>Décaler de ${decalageNecessaire.toFixed(1)}mm vers côté Freins:</strong> Ajouter ${centrageAdjustment > 0 ? '+' : ''}${centrageAdjustment.toFixed(1)} au centrage`;
+                    message += `<strong>Décaler de ${decalageNecessaire.toFixed(1)}mm vers côté Freins</strong><br>`;
+                    message += `<div class="ml-4 mt-1 mb-3">`;
+                    message += `→ Ajustement à appliquer: <span class="font-bold">+${centrageAdjustment.toFixed(1)}</span> au centrage<br>`;
+                    message += `→ Pour déplacer de 1mm vers côté Freins, on ajoute 0.2 au centrage.<br>`;
+                    message += `→ La longueur totale est déjà correcte, mais les côtés sont déséquilibrés.<br>`;
+                    message += `→ Le côté Freins gagne ${decalageNecessaire.toFixed(1)}mm, le côté Coupe perd ${decalageNecessaire.toFixed(1)}mm.<br>`;
+                    message += `</div>`;
                 } else {
-                    message += `<strong>Décaler de ${decalageNecessaire.toFixed(1)}mm vers côté Coupe:</strong> Enlever ${Math.abs(centrageAdjustment).toFixed(1)} au centrage`;
+                    message += `<strong>Décaler de ${decalageNecessaire.toFixed(1)}mm vers côté Coupe</strong><br>`;
+                    message += `<div class="ml-4 mt-1 mb-3">`;
+                    message += `→ Ajustement à appliquer: <span class="font-bold">${centrageAdjustment.toFixed(1)}</span> au centrage<br>`;
+                    message += `→ Pour déplacer de 1mm vers côté Coupe, on retire 0.2 au centrage.<br>`;
+                    message += `→ La longueur totale est déjà correcte, mais les côtés sont déséquilibrés.<br>`;
+                    message += `→ Le côté Coupe gagne ${decalageNecessaire.toFixed(1)}mm, le côté Freins perd ${decalageNecessaire.toFixed(1)}mm.<br>`;
+                    message += `</div>`;
                 }
+                
+                // Calculer les mesures finales après centrage
+                const finalFreins = sfMesureFreins + (centrageAdjustment > 0 ? decalageNecessaire : -decalageNecessaire);
+                const finalCoupe = sfMesureCoupe + (centrageAdjustment > 0 ? -decalageNecessaire : decalageNecessaire);
+                
+                message += `<div class="p-2 bg-yellow-50 dark:bg-yellow-900 rounded-lg">`;
+                message += `<strong>Résultat final attendu:</strong><br>`;
+                message += `• Côté Freins: ${finalFreins.toFixed(1)}mm (cible: ${sfAttenduFreins}mm)<br>`;
+                message += `• Côté Coupe: ${finalCoupe.toFixed(1)}mm (cible: ${sfAttenduCoupe}mm)<br>`;
+                message += `• Total: ${(finalFreins + finalCoupe).toFixed(1)}mm<br>`;
+                message += `</div>`;
             } else {
-                message += "<strong>Aucun ajustement nécessaire.</strong> Les mesures sont déjà correctes.";
+                message += `<strong>Aucun ajustement nécessaire.</strong><br>`;
+                message += `<div class="ml-4 mt-1 mb-3">`;
+                message += `→ La longueur totale est déjà correcte (écart: ${difference.toFixed(1)}mm).<br>`;
+                message += `→ Les côtés sont déjà bien équilibrés (déséquilibre: ${Math.abs(ecartFreins - ecartCoupe).toFixed(1)}mm).<br>`;
+                message += `</div>`;
+                
+                message += `<div class="p-2 bg-green-50 dark:bg-green-900 rounded-lg">`;
+                message += `<strong>Mesures actuelles:</strong><br>`;
+                message += `• Côté Freins: ${sfMesureFreins.toFixed(1)}mm (cible: ${sfAttenduFreins}mm)<br>`;
+                message += `• Côté Coupe: ${sfMesureCoupe.toFixed(1)}mm (cible: ${sfAttenduCoupe}mm)<br>`;
+                message += `• Total: ${sommeMesure.toFixed(1)}mm<br>`;
+                message += `</div>`;
             }
             
             return message;
