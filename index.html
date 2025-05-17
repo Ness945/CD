@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculateur NST Unifié</title>
+    <title>Mesure NST</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <style>
         .animate-pulse {
@@ -73,7 +73,50 @@
             line-height: 1.6;
         }
         
-        /* Mode sombre */
+        /* Styles pour l'édition des ratios */
+        .ratio-container {
+            position: relative;
+            min-height: 120px; /* Hauteur minimale pour éviter les sauts */
+        }
+        
+        .ratio-display, .ratio-edit {
+            position: absolute;
+            width: 100%;
+            top: 0;
+            left: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        
+        .ratio-display.hidden, .ratio-edit.hidden {
+            opacity: 0;
+            transform: translateY(10px);
+            pointer-events: none;
+        }
+        
+        .ratio-display {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .ratio-edit {
+            background-color: #EFF6FF;
+            border-radius: 0.375rem;
+            padding: 0.75rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Amélioration pour les listes de règles */
+        .rules-list li {
+            margin-bottom: 8px;
+            line-height: 1.4;
+            padding-right: 8px;
+            word-break: break-word;
+            hyphens: auto;
+            max-width: 100%;
+            overflow-wrap: break-word;
+        }
+        
+        /* Mode sombre - Améliorations de contraste */
         .dark-mode {
             color-scheme: dark;
         }
@@ -94,46 +137,61 @@
             color: #F9FAFB;
         }
         
+        /* Couleurs d'arrière-plan pour les sections */
         .dark-mode .bg-blue-50 {
             background-color: #1E3A8A;
-            color: #F9FAFB;
         }
         
         .dark-mode .bg-blue-100 {
             background-color: #1E40AF;
-            color: #F9FAFB;
         }
         
         .dark-mode .bg-indigo-50 {
             background-color: #312E81;
-            color: #F9FAFB;
         }
         
         .dark-mode .bg-indigo-100 {
             background-color: #3730A3;
-            color: #F9FAFB;
         }
         
         .dark-mode .bg-yellow-50 {
             background-color: #78350F;
-            color: #F9FAFB;
         }
         
         .dark-mode .bg-yellow-100 {
             background-color: #92400E;
-            color: #F9FAFB;
         }
         
-        .dark-mode .bg-green-100 {
+        .dark-mode .bg-green-50 {
             background-color: #064E3B;
-            color: #F9FAFB;
         }
         
         .dark-mode .bg-red-100 {
             background-color: #7F1D1D;
-            color: #F9FAFB;
         }
         
+        /* Couleurs de texte pour tout le contenu en mode sombre */
+        .dark-mode .bg-blue-50, 
+        .dark-mode .bg-blue-100,
+        .dark-mode .bg-indigo-50,
+        .dark-mode .bg-indigo-100,
+        .dark-mode .bg-yellow-50,
+        .dark-mode .bg-yellow-100,
+        .dark-mode .bg-green-50,
+        .dark-mode .bg-red-100,
+        .dark-mode .bg-blue-900,
+        .dark-mode .bg-green-900,
+        .dark-mode .bg-yellow-900 {
+            color: #F3F4F6 !important; /* Blanc cassé pour un fort contraste */
+        }
+        
+        /* Amélioration du contraste pour les titres et textes importants */
+        .dark-mode strong {
+            color: #FFFFFF;
+            font-weight: 700;
+        }
+        
+        /* Textes dans les cellules */
         .dark-mode .text-gray-700,
         .dark-mode .text-gray-600 {
             color: #F3F4F6;
@@ -142,31 +200,32 @@
         .dark-mode .text-blue-700,
         .dark-mode .text-blue-800,
         .dark-mode .text-blue-600 {
-            color: #93C5FD; /* Plus clair pour meilleur contraste */
+            color: #93C5FD;
         }
         
         .dark-mode .text-indigo-700,
         .dark-mode .text-indigo-800 {
-            color: #A5B4FC; /* Plus clair pour meilleur contraste */
+            color: #A5B4FC;
         }
         
         .dark-mode .text-yellow-700,
         .dark-mode .text-yellow-800 {
-            color: #FCD34D; /* Plus clair pour meilleur contraste */
+            color: #FCD34D;
         }
         
         .dark-mode .text-green-700,
         .dark-mode .text-green-800,
         .dark-mode .text-green-600 {
-            color: #6EE7B7; /* Plus clair pour meilleur contraste */
+            color: #6EE7B7;
         }
         
         .dark-mode .text-red-700,
         .dark-mode .text-red-800,
         .dark-mode .text-red-600 {
-            color: #FCA5A5; /* Plus clair pour meilleur contraste */
+            color: #FCA5A5;
         }
         
+        /* Bordures plus visibles en mode sombre */
         .dark-mode .border,
         .dark-mode .border-gray-200,
         .dark-mode .border-blue-200,
@@ -180,6 +239,7 @@
             border-color: #6B7280;
         }
         
+        /* Amélioration du contraste pour les champs de saisie */
         .dark-mode input,
         .dark-mode select {
             background-color: #374151;
@@ -192,11 +252,13 @@
             border-color: #60A5FA;
         }
         
+        /* Ombres plus prononcées en mode sombre */
         .dark-mode .shadow-lg,
         .dark-mode .shadow-sm {
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.7), 0 4px 6px -2px rgba(0, 0, 0, 0.6);
         }
         
+        /* Onglets en mode sombre */
         .dark-mode .tab-button.active {
             background-color: #1E3A8A;
             color: #F9FAFB;
@@ -207,6 +269,12 @@
             color: #F9FAFB;
         }
         
+        /* Style spécifique pour améliorer le contraste des instructions */
+        .dark-mode #gmt-resultMessage,
+        .dark-mode #sf-resultMessage {
+            color: #F3F4F6;
+        }
+        
         /* Style pour les spans de résultats en mode sombre */
         .dark-mode #gmt-ecartA,
         .dark-mode #gmt-ecartB,
@@ -215,6 +283,11 @@
         .dark-mode #gmt-typeAjustement,
         .dark-mode #sf-typeAjustement {
             border: 1px solid #6B7280;
+        }
+        
+        /* Amélioration de la visibilité des flèches et symboles utilisés dans les instructions */
+        .dark-mode .ml-4 {
+            color: #E5E7EB;
         }
         
         /* Amélioration de la visibilité des chiffres et du contraste */
@@ -239,6 +312,15 @@
             color: #FBBF24 !important; /* Jaune clair */
         }
         
+        /* Couleurs de fond pour les sections d'explication */
+        .dark-mode .bg-blue-900 strong,
+        .dark-mode .bg-green-900 strong,
+        .dark-mode .bg-yellow-900 strong {
+            color: #FFFFFF;
+            font-weight: 700;
+        }
+        
+        /* Style du bouton de changement de thème */
         .theme-toggle {
             position: absolute;
             top: 1rem;
@@ -270,7 +352,7 @@
         
         <!-- En-tête avec titre principal -->
         <div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-4 rounded-t-xl">
-            <h1 class="text-xl sm:text-2xl font-bold text-center">Calculateur NST Unifié</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-center">Mesure NST</h1>
         </div>
         
         <!-- Navigation à onglets améliorée -->
@@ -483,7 +565,7 @@
             <!-- Rappel des règles -->
             <div class="p-4 bg-gray-50 rounded-lg text-sm mb-6">
                 <h3 class="font-semibold mb-3 flex items-center gap-1 text-gray-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     Rappel des règles (GMT):
@@ -491,18 +573,42 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                     <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
                         <h4 class="font-semibold text-blue-800 mb-2 border-b pb-1">Règles de centrage:</h4>
-                        <ul class="list-disc list-inside space-y-1">
+                        <ul class="rules-list list-disc list-inside space-y-1">
                             <li>Décalage 1mm vers côté A: <span class="font-bold text-blue-600">+5</span> au centrage</li>
                             <li>Décalage 1mm vers côté B: <span class="font-bold text-red-600">-5</span> au centrage</li>
                         </ul>
                     </div>
                     <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
                         <h4 class="font-semibold text-blue-800 mb-2 border-b pb-1">Règles de mise en angle:</h4>
-                        <ul class="list-disc list-inside space-y-1">
-                            <li>1 dent complète = <span class="font-bold text-blue-600">+2.78 mm</span> (total)</li>
-                            <li>1/2 dent = <span class="font-bold text-blue-600">+1.39 mm</span> (total)</li>
-                            <li>Répartition: <span class="font-bold text-blue-600">50%</span> sur chaque côté</li>
-                        </ul>
+                        <div class="ratio-container">
+                            <div id="gmt-ratioDisplay" class="ratio-display">
+                                <ul class="rules-list list-disc list-inside space-y-1 mb-3">
+                                    <li>1 dent complète = <span class="font-bold text-blue-600">+<span id="gmt-ratioValue">2.78</span> mm</span> (total)</li>
+                                    <li>1/2 dent = <span class="font-bold text-blue-600">+<span id="gmt-ratioValue2">1.39</span> mm</span> (total)</li>
+                                    <li>Répartition: <span class="font-bold text-blue-600">50%</span> sur chaque côté</li>
+                                </ul>
+                                <div class="flex justify-end">
+                                    <button id="gmt-editRatioBtn" class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded hover:bg-blue-200">
+                                        Modifier
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="gmt-ratioEdit" class="ratio-edit hidden">
+                                <label class="block text-sm font-medium text-blue-800 mb-1">Valeur d'une dent complète (mm)</label>
+                                <div class="flex items-center gap-2">
+                                    <input 
+                                        type="number" 
+                                        id="gmt-dentCompleteInput" 
+                                        value="2.78" 
+                                        step="0.01"
+                                        class="w-full px-2 py-1 border border-blue-300 rounded text-sm"
+                                    />
+                                    <button id="gmt-saveRatioBtn" class="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 text-sm">
+                                        OK
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -739,9 +845,9 @@
             </div>
             
             <!-- Rappel des règles -->
-            <div class="p-4 bg-gray-50 rounded-lg text-sm mb-6">
+                            <div class="p-4 bg-gray-50 rounded-lg text-sm mb-6">
                 <h3 class="font-semibold mb-3 flex items-center gap-1 text-gray-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     Rappel des règles (SPRINT FLASH):
@@ -749,42 +855,44 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                     <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
                         <h4 class="font-semibold text-blue-800 mb-2 border-b pb-1">Règles de centrage:</h4>
-                        <ul class="list-disc list-inside space-y-1">
+                        <ul class="rules-list list-disc list-inside space-y-1">
                             <li>Décalage 1mm vers côté Freins: <span class="font-bold text-green-600">+0.2</span> au centrage</li>
                             <li>Décalage 1mm vers côté Coupe: <span class="font-bold text-red-600">-0.2</span> au centrage</li>
                         </ul>
                     </div>
                     <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
-                        <h4 class="font-semibold text-blue-800 mb-2 border-b pb-1 flex justify-between items-center">
-                            <span>Règles de longueur fil:</span>
-                            <button id="sf-editRatioBtn" class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded hover:bg-blue-200">
-                                Modifier
-                            </button>
-                        </h4>
-                        <div id="sf-ratioDisplay">
-                            <ul class="list-disc list-inside space-y-1">
-                                <li>Réduire longueur fil 1mm côté Freins: <span class="font-bold text-red-600">-<span id="sf-ratioValue">1.5</span></span> à la longueur</li>
-                                <li>Augmenter longueur fil 1mm côté Freins: <span class="font-bold text-green-600">+<span id="sf-ratioValue2">1.5</span></span> à la longueur</li>
-                            </ul>
-                        </div>
-                        <div id="sf-ratioEdit" class="hidden mt-2 bg-blue-50 p-2 rounded">
-                            <label class="block text-sm font-medium text-blue-800 mb-1">Ratio longueur (1mm = ?)</label>
-                            <div class="flex items-center gap-2">
-                                <input 
-                                    type="number" 
-                                    id="sf-longueurRatio" 
-                                    value="1.5" 
-                                    step="0.1"
-                                    class="w-full px-2 py-1 border border-blue-300 rounded text-sm"
-                                />
-                                <button id="sf-saveRatioBtn" class="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 text-sm">
-                                    OK
-                                </button>
+                        <h4 class="font-semibold text-blue-800 mb-2 border-b pb-1">Règles de longueur fil:</h4>
+                        <div class="ratio-container" style="min-height: 140px;">
+                            <div id="sf-ratioDisplay" class="ratio-display">
+                                <ul class="rules-list list-disc list-inside space-y-1 mb-3">
+                                    <li style="hyphens: auto;">Réduire longueur fil 1mm côté Freins: <span class="font-bold text-red-600">-<span id="sf-ratioValue">1.5</span></span> à la longueur</li>
+                                    <li style="hyphens: auto;">Augmenter longueur fil 1mm côté Freins: <span class="font-bold text-green-600">+<span id="sf-ratioValue2">1.5</span></span> à la longueur</li>
+                                </ul>
+                                <div class="flex justify-end">
+                                    <button id="sf-editRatioBtn" class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded hover:bg-blue-200">
+                                        Modifier
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="sf-ratioEdit" class="ratio-edit hidden">
+                                <label class="block text-sm font-medium text-blue-800 mb-1">Ratio longueur (1mm = ?)</label>
+                                <div class="flex items-center gap-2">
+                                    <input 
+                                        type="number" 
+                                        id="sf-longueurRatio" 
+                                        value="1.5" 
+                                        step="0.1"
+                                        class="w-full px-2 py-1 border border-blue-300 rounded text-sm"
+                                    />
+                                    <button id="sf-saveRatioBtn" class="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 text-sm">
+                                        OK
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="mt-3 p-2 bg-yellow-50 rounded-lg border border-yellow-200 text-xs">
+                <div class="mt-3 p-2 bg-yellow-50 rounded-lg border border-yellow-200 text-xs mb-6">
                     <p class="font-semibold flex items-center gap-1">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -890,10 +998,17 @@
         let gmtAttenduB = 110;
         let gmtMesureA = 108.5;
         let gmtMesureB = 108.5;
+        let gmtDentComplete = 2.78; // Valeur modifiable pour une dent complète
         
-        // Constantes pour les règles GMT
-        const GMT_DENT_COMPLETE = 2.78; // Une dent complète ajoute 2.78mm en total
-        const GMT_DEMI_DENT = 1.39;     // Une demi-dent ajoute 1.39mm en total
+        // Définir les anciennes constantes comme des getters pour assurer la compatibilité
+        Object.defineProperty(window, 'GMT_DENT_COMPLETE', {
+            get: function() { return gmtDentComplete; }
+        });
+        Object.defineProperty(window, 'GMT_DEMI_DENT', {
+            get: function() { return gmtDentComplete / 2; }
+        });
+        
+        // Constante pour le ratio de centrage (fixe)
         const GMT_RATIO_CENTRAGE = 5;   // 5mm de centrage = 1mm de déplacement sur la pose
         
         // Éléments DOM pour GMT
@@ -936,6 +1051,34 @@
             calculateGMTAdjustments();
         });
         
+        // Configuration pour l'édition du ratio de dent GMT
+        const gmtEditRatioBtn = document.getElementById('gmt-editRatioBtn');
+        const gmtSaveRatioBtn = document.getElementById('gmt-saveRatioBtn');
+        const gmtRatioDisplay = document.getElementById('gmt-ratioDisplay');
+        const gmtRatioEdit = document.getElementById('gmt-ratioEdit');
+        const gmtDentCompleteInput = document.getElementById('gmt-dentCompleteInput');
+        const gmtRatioValue = document.getElementById('gmt-ratioValue');
+        const gmtRatioValue2 = document.getElementById('gmt-ratioValue2');
+        
+        // Écouteurs d'événements pour l'édition du ratio GMT
+        gmtEditRatioBtn.addEventListener('click', () => {
+            gmtRatioDisplay.classList.add('hidden');
+            gmtRatioEdit.classList.remove('hidden');
+            gmtDentCompleteInput.value = gmtDentComplete.toFixed(2);
+        });
+        
+        gmtSaveRatioBtn.addEventListener('click', () => {
+            const newRatio = parseFloat(gmtDentCompleteInput.value);
+            if (!isNaN(newRatio) && newRatio > 0) {
+                gmtDentComplete = newRatio;
+                gmtRatioValue.textContent = newRatio.toFixed(2);
+                gmtRatioValue2.textContent = (newRatio / 2).toFixed(2);
+                gmtRatioDisplay.classList.remove('hidden');
+                gmtRatioEdit.classList.add('hidden');
+                calculateGMTAdjustments(); // Recalculer avec le nouveau ratio
+            }
+        });
+        
         // Fonctions de calcul pour GMT
         // Calculer les différences entre les valeurs attendues et mesurées
         function calculateGMTDifferences() {
@@ -958,7 +1101,7 @@
             const difference = sommeAttendu - sommeMesure;
             
             // Convertir la différence en nombre de dents (complètes ou demi-dents)
-            let dents = Math.round(difference / GMT_DENT_COMPLETE * 2) / 2; // Arrondir au 0.5 le plus proche
+            let dents = Math.round(difference / gmtDentComplete * 2) / 2; // Arrondir au 0.5 le plus proche
             
             return dents;
         }
@@ -966,7 +1109,7 @@
         // Calculer l'ajustement du centrage après ajustement de mise en angle
         function calculateGMTCentrage(angleAdjustment) {
             // Calculer l'effet de l'ajustement d'angle sur les deux côtés
-            const angleEffectTotal = Math.abs(angleAdjustment * GMT_DENT_COMPLETE);
+            const angleEffectTotal = Math.abs(angleAdjustment * gmtDentComplete);
             const angleEffectPerSide = angleEffectTotal / 2;
             
             // Nouvelles mesures après ajustement d'angle - CORRECTION DE LA LOGIQUE
@@ -1015,123 +1158,51 @@
         }
         
         // Générer un message de résultat plus précis avec explications
-        function generateGMTResultMessage(needsAngleAdjustment, angleAdjustment, centrageAdjustment) {
-            let message = '';
+function generateGMTResultMessage(needsAngleAdjustment, angleAdjustment, centrageAdjustment) {
+    let message = '';
+    
+    // Calcul des sommes
+    const sommeAttendu = gmtAttenduA + gmtAttenduB;
+    const sommeMesure = gmtMesureA + gmtMesureB;
+    const difference = sommeAttendu - sommeMesure;
+    
+    if (needsAngleAdjustment) {
+        const angleEffectTotal = Math.abs(angleAdjustment * GMT_DENT_COMPLETE);
+        const angleEffectPerSide = angleEffectTotal / 2;
+        
+        const formattedAngle = formatAngleAdjustment(angleAdjustment);
+        message += `<strong>1. ${angleAdjustment > 0 ? "Ajouter" : "Retirer"} ${formattedAngle} à la mise en angle</strong><br>`;
+        
+        // Nouvelles mesures après ajustement d'angle
+        const newMesureA = gmtMesureA + angleEffectPerSide;
+        const newMesureB = gmtMesureB + angleEffectPerSide;
+        
+        message += `<br>Nouvelle mesure estimée après ajustement: ${gmtMesureA.toFixed(1)} + ${angleEffectPerSide.toFixed(2)} = ${newMesureA.toFixed(2)}mm sur chaque côté<br><br>`;
+        message += `Longueur totale après mise en angle: ${(newMesureA + newMesureB).toFixed(2)}mm (${difference > 0 ? "plus proche" : "plus éloignée"} des ${sommeAttendu.toFixed(1)}mm attendus)<br>`;
+        
+        if (Math.abs(centrageAdjustment) > 2) {
+            const decalageNecessaire = Math.abs(centrageAdjustment / GMT_RATIO_CENTRAGE);
+            const direction = centrageAdjustment > 0 ? "A" : "B";
             
-            // Calcul des sommes
-            const sommeAttendu = gmtAttenduA + gmtAttenduB;
-            const sommeMesure = gmtMesureA + gmtMesureB;
-            const difference = sommeAttendu - sommeMesure;
-            
-            // Explication de base de la situation
-            message += `<div class="p-2 bg-blue-50 dark:bg-blue-900 rounded-lg mb-3">`;
-            message += `<strong>Analyse de situation:</strong><br>`;
-            message += `• Longueur attendue: ${sommeAttendu}mm au total (${gmtAttenduA}mm + ${gmtAttenduB}mm)<br>`;
-            message += `• Longueur mesurée: ${sommeMesure}mm au total (${gmtMesureA}mm + ${gmtMesureB}mm)<br>`;
-            message += `• Écart total: ${difference.toFixed(1)}mm ${difference > 0 ? "(trop court)" : "(trop long)"}<br>`;
-            
-            // Écarts détaillés par côté
-            const ecartA = gmtAttenduA - gmtMesureA;
-            const ecartB = gmtAttenduB - gmtMesureB;
-            message += `• Déséquilibre entre les côtés: ${Math.abs(ecartA - ecartB).toFixed(1)}mm<br>`;
-            message += `</div>`;
-            
-            if (needsAngleAdjustment) {
-                const angleEffectTotal = Math.abs(angleAdjustment * GMT_DENT_COMPLETE);
-                const angleEffectPerSide = angleEffectTotal / 2;
-                
-                const formattedAngle = formatAngleAdjustment(angleAdjustment);
-                message += `<strong>1. ${angleAdjustment > 0 ? "Ajouter" : "Retirer"} ${formattedAngle} à la mise en angle</strong><br>`;
-                message += `<div class="ml-4 mt-1 mb-3">`;
-                message += `→ La mise en angle modifie la longueur totale du fil.<br>`;
-                message += `→ Chaque dent ajoute 2.78mm au total (1.39mm par côté).<br>`;
-                message += `→ Cet ajustement va ${angleAdjustment > 0 ? "allonger" : "raccourcir"} le fil de ${angleEffectTotal.toFixed(2)}mm au total.<br>`;
-                message += `→ L'effet est réparti également: ${angleEffectPerSide.toFixed(2)}mm ${angleAdjustment > 0 ? "en plus" : "en moins"} sur chaque côté.<br>`;
-                message += `</div>`;
-                
-                // Nouvelles mesures après ajustement d'angle - CORRECTION DE LA LOGIQUE ICI
-                // Si on ajoute des dents (angleAdjustment > 0), on ajoute de la longueur
-                // Si on retire des dents (angleAdjustment < 0), on soustrait de la longueur
-                const newMesureA = gmtMesureA + (angleAdjustment > 0 ? angleEffectPerSide : -angleEffectPerSide);
-                const newMesureB = gmtMesureB + (angleAdjustment > 0 ? angleEffectPerSide : -angleEffectPerSide);
-                const newSomme = newMesureA + newMesureB;
-                
-                message += `<div class="p-2 bg-green-50 dark:bg-green-900 rounded-lg mb-3">`;
-                message += `<strong>Effet prévu:</strong><br>`;
-                message += `• Nouvelle mesure côté A: ${gmtMesureA.toFixed(1)} ${angleAdjustment > 0 ? "+" : "-"} ${angleEffectPerSide.toFixed(2)} = ${newMesureA.toFixed(2)}mm<br>`;
-                message += `• Nouvelle mesure côté B: ${gmtMesureB.toFixed(1)} ${angleAdjustment > 0 ? "+" : "-"} ${angleEffectPerSide.toFixed(2)} = ${newMesureB.toFixed(2)}mm<br>`;
-                message += `• Nouvelle longueur totale: ${newSomme.toFixed(2)}mm (cible: ${sommeAttendu}mm)<br>`;
-                message += `• Écart résiduel: ${(sommeAttendu - newSomme).toFixed(2)}mm<br>`;
-                message += `</div>`;
-                
-                if (Math.abs(centrageAdjustment) > 2) {
-                    const decalageNecessaire = Math.abs(centrageAdjustment / GMT_RATIO_CENTRAGE);
-                    
-                    message += `<strong>2. ${centrageAdjustment > 0 ? "Déplacer" : "Déplacer"} le centrage de ${Math.abs(centrageAdjustment)}mm vers le côté ${centrageAdjustment > 0 ? "A" : "B"}</strong><br>`;
-                    message += `<div class="ml-4 mt-1 mb-3">`;
-                    message += `→ Le centrage déplace le fil d'un côté à l'autre sans changer sa longueur totale.<br>`;
-                    message += `→ Pour déplacer le fil de 1mm, on ajoute ${GMT_RATIO_CENTRAGE}mm au centrage.<br>`;
-                    message += `→ Cet ajustement va déplacer le fil de ${decalageNecessaire.toFixed(1)}mm vers le côté ${centrageAdjustment > 0 ? "A" : "B"}.<br>`;
-                    message += `→ Le côté ${centrageAdjustment > 0 ? "A" : "B"} gagne ${decalageNecessaire.toFixed(1)}mm, le côté ${centrageAdjustment > 0 ? "B" : "A"} perd ${decalageNecessaire.toFixed(1)}mm.<br>`;
-                    message += `</div>`;
-                    
-                    // Mesures finales après les deux ajustements
-                    const finalA = newMesureA + (centrageAdjustment > 0 ? decalageNecessaire : -decalageNecessaire);
-                    const finalB = newMesureB + (centrageAdjustment > 0 ? -decalageNecessaire : decalageNecessaire);
-                    
-                    message += `<div class="p-2 bg-yellow-50 dark:bg-yellow-900 rounded-lg">`;
-                    message += `<strong>Résultat final attendu:</strong><br>`;
-                    message += `• Côté A: ${finalA.toFixed(2)}mm (cible: ${gmtAttenduA}mm)<br>`;
-                    message += `• Côté B: ${finalB.toFixed(2)}mm (cible: ${gmtAttenduB}mm)<br>`;
-                    message += `• Total: ${(finalA + finalB).toFixed(2)}mm<br>`;
-                    message += `</div>`;
-                } else {
-                    message += `<strong>2. Aucun ajustement de centrage nécessaire</strong><br>`;
-                    message += `<div class="ml-4 mt-1 mb-3">`;
-                    message += `→ Les côtés sont suffisamment équilibrés après la mise en angle.<br>`;
-                    message += `→ Aucun déplacement latéral du fil n'est nécessaire.<br>`;
-                    message += `</div>`;
-                    
-                    message += `<div class="p-2 bg-yellow-50 dark:bg-yellow-900 rounded-lg">`;
-                    message += `<strong>Résultat final attendu:</strong><br>`;
-                    message += `• Côté A: ${newMesureA.toFixed(2)}mm (cible: ${gmtAttenduA}mm)<br>`;
-                    message += `• Côté B: ${newMesureB.toFixed(2)}mm (cible: ${gmtAttenduB}mm)<br>`;
-                    message += `• Total: ${newSomme.toFixed(2)}mm<br>`;
-                    message += `</div>`;
-                }
-            } else {
-                if (Math.abs(centrageAdjustment) < 2) {
-                    message += `<strong>Aucun ajustement nécessaire.</strong><br>`;
-                    message += `<div class="ml-4 mt-1 mb-3">`;
-                    message += `→ La longueur totale est déjà correcte (écart: ${difference.toFixed(1)}mm).<br>`;
-                    message += `→ Les côtés sont déjà bien équilibrés (déséquilibre: ${Math.abs(ecartA - ecartB).toFixed(1)}mm).<br>`;
-                    message += `</div>`;
-                } else {
-                    const decalageNecessaire = Math.abs(centrageAdjustment / GMT_RATIO_CENTRAGE);
-                    
-                    message += `<strong>Déplacer le centrage de ${Math.abs(centrageAdjustment)}mm vers le côté ${centrageAdjustment > 0 ? "A" : "B"}</strong><br>`;
-                    message += `<div class="ml-4 mt-1 mb-3">`;
-                    message += `→ La longueur totale est déjà correcte mais les côtés sont déséquilibrés.<br>`;
-                    message += `→ Pour déplacer le fil de 1mm, on ajoute ${GMT_RATIO_CENTRAGE}mm au centrage.<br>`;
-                    message += `→ Cet ajustement va déplacer le fil de ${decalageNecessaire.toFixed(1)}mm vers le côté ${centrageAdjustment > 0 ? "A" : "B"}.<br>`;
-                    message += `→ Le côté ${centrageAdjustment > 0 ? "A" : "B"} gagne ${decalageNecessaire.toFixed(1)}mm, le côté ${centrageAdjustment > 0 ? "B" : "A"} perd ${decalageNecessaire.toFixed(1)}mm.<br>`;
-                    message += `</div>`;
-                    
-                    // Mesures finales après centrage
-                    const finalA = gmtMesureA + (centrageAdjustment > 0 ? decalageNecessaire : -decalageNecessaire);
-                    const finalB = gmtMesureB + (centrageAdjustment > 0 ? -decalageNecessaire : decalageNecessaire);
-                    
-                    message += `<div class="p-2 bg-yellow-50 dark:bg-yellow-900 rounded-lg">`;
-                    message += `<strong>Résultat final attendu:</strong><br>`;
-                    message += `• Côté A: ${finalA.toFixed(2)}mm (cible: ${gmtAttenduA}mm)<br>`;
-                    message += `• Côté B: ${finalB.toFixed(2)}mm (cible: ${gmtAttenduB}mm)<br>`;
-                    message += `• Total: ${(finalA + finalB).toFixed(2)}mm<br>`;
-                    message += `</div>`;
-                }
-            }
-            
-            return message;
+            message += `<strong>2. Ajuster le centrage de ${Math.abs(centrageAdjustment)}mm vers le côté ${direction}</strong><br>`;
+            message += `<br>Effet: déplacement de ${decalageNecessaire.toFixed(1)}mm vers côté ${direction}<br>`;
+        } else {
+            message += `<strong>2. Aucun ajustement de centrage nécessaire</strong> après correction de la mise en angle.<br>`;
         }
+    } else {
+        if (Math.abs(centrageAdjustment) < 2) {
+            message += "<strong>Aucun ajustement nécessaire.</strong> Les mesures sont déjà correctes.";
+        } else {
+            const decalageNecessaire = Math.abs(centrageAdjustment / GMT_RATIO_CENTRAGE);
+            const direction = centrageAdjustment > 0 ? "A" : "B";
+            
+            message += `<strong>Ajuster le centrage de ${Math.abs(centrageAdjustment)}mm vers le côté ${direction}</strong><br>`;
+            message += `<br>Effet: déplacement de ${decalageNecessaire.toFixed(1)}mm vers côté ${direction}<br>`;
+        }
+    }
+    
+    return message;
+}
         
         // Mettre à jour l'affichage des écarts
         function updateGMTEcartDisplay() {
@@ -1198,36 +1269,36 @@
         }
         
         // Mettre à jour l'affichage des ajustements
-        function updateGMTAdjustementDisplay(angleAdjustment, centrageAdjustment) {
-            // Affichage de l'ajustement de mise en angle
-            const formattedAngle = formatAngleAdjustment(angleAdjustment);
-            gmtAjustementAngleElement.textContent = formattedAngle;
-            
-            if (angleAdjustment < 0) {
-                gmtAjustementAngleElement.classList.remove('text-green-600');
-                gmtAjustementAngleElement.classList.add('text-red-600');
-            } else if (angleAdjustment > 0) {
-                gmtAjustementAngleElement.classList.remove('text-red-600');
-                gmtAjustementAngleElement.classList.add('text-green-600');
-            } else {
-                gmtAjustementAngleElement.classList.remove('text-red-600', 'text-green-600');
-                gmtAjustementAngleElement.classList.add('text-gray-600');
-            }
-            
-            // Affichage de l'ajustement centrage
-            gmtAjustementCentrageElement.textContent = `${centrageAdjustment > 0 ? '+' : ''}${centrageAdjustment} mm`;
-            
-            if (centrageAdjustment < 0) {
-                gmtAjustementCentrageElement.classList.remove('text-green-600');
-                gmtAjustementCentrageElement.classList.add('text-red-600');
-            } else if (centrageAdjustment > 0) {
-                gmtAjustementCentrageElement.classList.remove('text-red-600');
-                gmtAjustementCentrageElement.classList.add('text-green-600');
-            } else {
-                gmtAjustementCentrageElement.classList.remove('text-red-600', 'text-green-600');
-                gmtAjustementCentrageElement.classList.add('text-gray-600');
-            }
-        }
+function updateGMTAdjustementDisplay(angleAdjustment, centrageAdjustment) {
+    // Code existant pour l'affichage de l'ajustement de mise en angle
+    const formattedAngle = formatAngleAdjustment(angleAdjustment);
+    gmtAjustementAngleElement.textContent = formattedAngle;
+    
+    if (angleAdjustment < 0) {
+        gmtAjustementAngleElement.classList.remove('text-green-600');
+        gmtAjustementAngleElement.classList.add('text-red-600');
+    } else if (angleAdjustment > 0) {
+        gmtAjustementAngleElement.classList.remove('text-red-600');
+        gmtAjustementAngleElement.classList.add('text-green-600');
+    } else {
+        gmtAjustementAngleElement.classList.remove('text-red-600', 'text-green-600');
+        gmtAjustementAngleElement.classList.add('text-gray-600');
+    }
+    
+    // Nouvelle façon d'afficher l'ajustement centrage (toujours positif et directionnel)
+    if (centrageAdjustment === 0) {
+        gmtAjustementCentrageElement.textContent = "0 mm (aucun)";
+        gmtAjustementCentrageElement.classList.remove('text-red-600', 'text-green-600');
+        gmtAjustementCentrageElement.classList.add('text-gray-600');
+    } else {
+        const absValue = Math.abs(centrageAdjustment);
+        // Si centrageAdjustment est positif, déplacer vers côté A, sinon vers côté B
+        const direction = centrageAdjustment > 0 ? "A" : "B";
+        gmtAjustementCentrageElement.textContent = `${absValue} mm vers ${direction}`;
+        gmtAjustementCentrageElement.classList.remove('text-red-600', 'text-gray-600');
+        gmtAjustementCentrageElement.classList.add('text-green-600');
+    }
+}
         
         // Calculer les ajustements GMT
         function calculateGMTAdjustments() {
