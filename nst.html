@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mesure Sprint Flash</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <style>
         .animate-pulse {
             animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -26,6 +27,27 @@
         @keyframes highlight {
             0%, 100% { background-color: inherit; }
             50% { background-color: #93c5fd; }
+        }
+        .direction-indicator {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.5rem;
+            margin-left: 0.5rem;
+        }
+        .direction-positive {
+            background-color: #15803d;
+            color: white;
+        }
+        .direction-negative {
+            background-color: #dc2626;
+            color: white;
+        }
+        .direction-neutral {
+            background-color: #e5e7eb;
+            color: #4b5563;
         }
     </style>
 </head>
@@ -65,21 +87,37 @@
         
         <!-- Résultats des ajustements -->
         <div class="p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <h2 class="text-lg font-semibold mb-4 text-blue-800">Ajustements</h2>
-            <div class="space-y-3 bg-white p-3 rounded-lg shadow-sm">
+            <h2 class="text-lg font-semibold mb-4 text-blue-800">Ajustements à Réaliser</h2>
+            <div class="space-y-4 bg-white p-3 rounded-lg shadow-sm">
                 <div class="flex justify-between items-center">
-                    <p class="font-medium">Centrage Ajusté (OffSet 29 - 31) :</p>
-                    <span id="centrageResultat" class="result-highlight px-2 py-1 rounded-full bg-blue-100 text-blue-700 font-bold">0 mm</span>
+                    <div>
+                        <p class="font-medium">Centrage (OffSet 29 - 31) :</p>
+                        <p class="text-xs text-gray-500">Déplace la position entre côté coupe et freins</p>
+                    </div>
+                    <div class="flex items-center">
+                        <span id="centrageResultat" class="result-highlight px-2 py-1 rounded-lg bg-blue-100 text-blue-700 font-bold">0 mm</span>
+                        <div id="centrageDirection" class="direction-indicator direction-neutral">
+                            <i class="fas fa-minus"></i>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="flex justify-between items-center">
-                    <p class="font-medium">Longueur du Fil Ajustée (OffSet 114 - 115) :</p>
-                    <span id="longueurFilResultat" class="result-highlight px-2 py-1 rounded-full bg-green-100 text-green-700 font-bold">0 mm</span>
+                    <div>
+                        <p class="font-medium">Longueur du Fil (OffSet 114 - 115) :</p>
+                        <p class="text-xs text-gray-500">Augmente ou diminue les deux côtés simultanément</p>
+                    </div>
+                    <div class="flex items-center">
+                        <span id="longueurFilResultat" class="result-highlight px-2 py-1 rounded-lg bg-green-100 text-green-700 font-bold">0 mm</span>
+                        <div id="longueurDirection" class="direction-indicator direction-neutral">
+                            <i class="fas fa-minus"></i>
+                        </div>
+                    </div>
                 </div>
                 
                 <details class="mt-4 p-2 bg-gray-50 rounded text-sm">
                     <summary class="font-medium text-gray-600 cursor-pointer">Voir détails du calcul</summary>
-                    <div id="calculDetails" class="mt-2 text-xs text-gray-700">
+                    <div id="calculDetails" class="mt-2 text-xs text-gray-700 space-y-1">
                         <!-- Détails du calcul seront affichés ici -->
                     </div>
                 </details>
@@ -100,7 +138,7 @@
             // Calculer les écarts (valeur attendue - valeur mesurée)
             // Écart positif signifie que la valeur mesurée est trop petite
             const ecartFreins = attenduFreins - mesureFreins; 
-            const ecartCoupe = attenduCoupe - mesureCoupe;   
+            const ecartCoupe = attenduCoupe - mesureCoupe;
             
             // 1. Correction du centrage pour corriger le côté coupe d'abord
             // Pour chaque -0.2 d'offset de centrage:
@@ -123,18 +161,46 @@
             // Mettre à jour les résultats dans l'interface avec un effet visuel
             const centrageElement = document.getElementById('centrageResultat');
             const longueurElement = document.getElementById('longueurFilResultat');
+            const centrageDirection = document.getElementById('centrageDirection');
+            const longueurDirection = document.getElementById('longueurDirection');
             
-            centrageElement.textContent = `${ajustementCentrage.toFixed(1)} mm`;
-            longueurElement.textContent = `${ajustementLongueurFil.toFixed(1)} mm`;
+            centrageElement.textContent = `${Math.abs(ajustementCentrage).toFixed(1)} mm`;
+            longueurElement.textContent = `${Math.abs(ajustementLongueurFil).toFixed(1)} mm`;
+            
+            // Mise à jour des indicateurs de direction
+            if (ajustementCentrage > 0) {
+                centrageDirection.className = "direction-indicator direction-positive";
+                centrageDirection.innerHTML = '<i class="fas fa-plus"></i>';
+            } else if (ajustementCentrage < 0) {
+                centrageDirection.className = "direction-indicator direction-negative";
+                centrageDirection.innerHTML = '<i class="fas fa-minus"></i>';
+            } else {
+                centrageDirection.className = "direction-indicator direction-neutral";
+                centrageDirection.innerHTML = '<i class="fas fa-minus"></i>';
+            }
+            
+            if (ajustementLongueurFil > 0) {
+                longueurDirection.className = "direction-indicator direction-positive";
+                longueurDirection.innerHTML = '<i class="fas fa-plus"></i>';
+            } else if (ajustementLongueurFil < 0) {
+                longueurDirection.className = "direction-indicator direction-negative"; 
+                longueurDirection.innerHTML = '<i class="fas fa-minus"></i>';
+            } else {
+                longueurDirection.className = "direction-indicator direction-neutral";
+                longueurDirection.innerHTML = '<i class="fas fa-minus"></i>';
+            }
             
             // Mettre à jour la partie diagnostic
             const detailsContainer = document.getElementById('calculDetails');
             detailsContainer.innerHTML = `
-                <p>• Écart côté freins: ${ecartFreins.toFixed(1)} mm</p>
-                <p>• Écart côté coupe: ${ecartCoupe.toFixed(1)} mm</p>
+                <p>• Écart côté freins: ${ecartFreins.toFixed(1)} mm (${ecartFreins < 0 ? 'trop grand' : ecartFreins > 0 ? 'trop petit' : 'parfait'})</p>
+                <p>• Écart côté coupe: ${ecartCoupe.toFixed(1)} mm (${ecartCoupe < 0 ? 'trop grand' : ecartCoupe > 0 ? 'trop petit' : 'parfait'})</p>
                 <p>• Centrage pour corriger côté coupe: ${ajustementCentrage.toFixed(1)} mm</p>
                 <p>• Écart résiduel côté frein à corriger: ${ecartFreinsResiduel.toFixed(1)} mm</p>
                 <p>• Longueur fil: ${ajustementLongueurFil.toFixed(1)} mm</p>
+                <p class="mt-2 font-medium text-blue-600">Explication:</p>
+                <p>• ${ajustementCentrage > 0 ? 'Augmenter' : 'Diminuer'} le centrage de ${Math.abs(ajustementCentrage).toFixed(1)} mm ${ajustementCentrage > 0 ? 'vers le côté coupe' : 'vers le côté freins'}</p>
+                <p>• ${ajustementLongueurFil > 0 ? 'Augmenter' : 'Diminuer'} la longueur du fil de ${Math.abs(ajustementLongueurFil).toFixed(1)} mm</p>
             `;
             
             // Appliquer l'effet visuel pour indiquer un changement
