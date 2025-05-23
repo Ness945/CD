@@ -52,21 +52,22 @@
     }
     details[open] summary::after { content: "▲"; float: right;}
     details summary::after { content: "▼"; float: right;}
-@media (prefers-color-scheme: dark) {
-  body { background: #1a2131; color: #f1f3f8;}
-  .card { background: #222b3a; border-color: #2c3344; color: #f1f3f8; box-shadow: 0 2px 18px 0 #0009;}
-  .input-main { background: #182032; color: #f1f3f8; border-color: #3b82f6;}
-  .btn { background: #29304a; color: #f1f3f8; border-color: #29304a;}
-  .btn:hover { background: #344060;}
-  .chip { background: #1a3a6e; color: #3b82f6; }
-  .chipB { background: #164e3b; color: #10b981;}
-  .tolerance-chip-ok { background: #11351d; color: #22e47c;}
-  .tolerance-chip-bad { background: #39171a; color: #ff6c6c;}
-  .borderA { border-left: 4px solid #3b82f6;}
-  .borderB { border-left: 4px solid #10b981;}
-  .accentA { color: #3b82f6; }
-  .accentB { color: #10b981; }
-}
+    @media (prefers-color-scheme: dark) { ... 
+.dark body { background: #1a2131; color: #f1f3f8;}
+.dark .card { background: #222b3a; border-color: #2c3344; color: #f1f3f8; box-shadow: 0 2px 18px 0 #0009;}
+.dark .input-main { background: #182032; color: #f1f3f8; border-color: #3b82f6;}
+.dark .btn { background: #29304a; color: #f1f3f8; border-color: #29304a;}
+.dark .btn:hover { background: #344060;}
+.dark .chip { background: #1a3a6e; color: #3b82f6; }
+.dark .chipB { background: #164e3b; color: #10b981;}
+.dark .tolerance-chip-ok { background: #11351d; color: #22e47c;}
+.dark .tolerance-chip-bad { background: #39171a; color: #ff6c6c;}
+.dark .borderA { border-left: 4px solid #3b82f6;}
+.dark .borderB { border-left: 4px solid #10b981;}
+.dark .accentA { color: #3b82f6; }
+.dark .accentB { color: #10b981; }
+
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col items-center justify-start p-3 sm:p-8">
@@ -74,13 +75,15 @@
     <div class="flex flex-col sm:flex-row sm:justify-between items-center mb-7">
       <h1 class="text-3xl font-extrabold tracking-tight mb-2 sm:mb-0 titleA">Mesure Sprint Flash</h1>
       <div class="flex items-center gap-2 mt-1">
-        <label for="machineType" class="text-sm mr-1">Type :</label>
         <select id="machineType" onchange="majLibellesAB(); recalculerAjustements();" class="input-main px-2 py-1" style="width:auto;">
           <option value="NST1">NST1 (Coupe = A, Frein = B)</option>
           <option value="NST2">NST2 (Coupe = B, Frein = A)</option>
+          
         </select>
+          <button id="themeToggleBtn" class="btn" type="button" title="Changer le thème">🌙</button>
       </div>
     </div>
+    
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
       <div class="card">
         <div class="section-title accentA">Valeurs attendues</div>
@@ -322,6 +325,35 @@
     document.addEventListener('keydown', function(e) {
       if (e.ctrlKey && e.key === 'r') { e.preventDefault(); resetValues(); }
     });
+    // Theme switch
+function setTheme(theme) {
+  if (theme === 'dark') {
+    document.documentElement.classList.add('dark');
+    localStorage.setItem('theme', 'dark');
+    document.getElementById('themeToggleBtn').innerText = "☀️";
+  } else {
+    document.documentElement.classList.remove('dark');
+    localStorage.setItem('theme', 'light');
+    document.getElementById('themeToggleBtn').innerText = "🌙";
+  }
+}
+// Init theme from localStorage or system
+(function() {
+  const userTheme = localStorage.getItem('theme');
+  if (userTheme) {
+    setTheme(userTheme);
+  } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    setTheme('dark');
+  } else {
+    setTheme('light');
+  }
+})();
+document.getElementById('themeToggleBtn').onclick = function() {
+  setTheme(document.documentElement.classList.contains('dark') ? 'light' : 'dark');
+};
+
   </script>
+  
 </body>
+
 </html>
