@@ -6,263 +6,236 @@
     <title>Mesure Sprint Flash - Calculateur d'Ajustements</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <style>
-        .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        @media (prefers-color-scheme: dark) {
+            body.gradient-bg {
+                background: linear-gradient(135deg, #23272f 0%, #181823 100%);
+            }
+            .glass-effect {
+                background: rgba(34, 40, 49, 0.92) !important;
+                color: #e3e6ec !important;
+                border-color: rgba(255,255,255,0.05);
+            }
+            label, .text-gray-700, .text-gray-600, .text-blue-800, .text-green-800, .text-purple-800 {
+                color: #e3e6ec !important;
+            }
+            input, .bg-white, .bg-blue-50, .bg-green-50, .bg-purple-50, .bg-pink-50, .bg-gradient-to-r, .bg-gray-50 {
+                background: #23272f !important;
+                color: #e3e6ec !important;
+                border-color: #23272f !important;
+            }
+            .border-blue-200, .border-green-200, .border-purple-200, .border-pink-50, .border-gray-200 {
+                border-color: #40495c !important;
+            }
         }
-        
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+        .badge-tolerance {
+            display: inline-block; padding: 2px 8px; border-radius: 10px;
+            font-weight: bold; font-size: 0.9em;
+            background: #ececec;
         }
-        
-        .input-focus {
-            transition: all 0.3s ease;
-        }
-        
-        .input-focus:focus {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-        }
-        
-        .result-card {
-            transition: all 0.3s ease;
-            border-left: 4px solid transparent;
-        }
-        
-        .result-card.positive {
-            border-left-color: #10b981;
-            background: linear-gradient(135deg, #ecfdf5, #d1fae5);
-        }
-        
-        .result-card.negative {
-            border-left-color: #ef4444;
-            background: linear-gradient(135deg, #fef2f2, #fecaca);
-        }
-        
-        .result-card.neutral {
-            border-left-color: #6b7280;
-            background: linear-gradient(135deg, #f9fafb, #e5e7eb);
-        }
-        
-        .animate-bounce-in {
-            animation: bounceIn 0.6s ease-out;
-        }
-        
-        @keyframes bounceIn {
-            0% { transform: scale(0.3) rotate(-10deg); opacity: 0; }
-            50% { transform: scale(1.05) rotate(2deg); }
-            70% { transform: scale(0.9) rotate(-1deg); }
-            100% { transform: scale(1) rotate(0deg); opacity: 1; }
-        }
-        
-        .status-indicator {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            margin-right: 8px;
-        }
-        
-        .status-ok { background-color: #10b981; }
-        .status-warning { background-color: #f59e0b; }
-        .status-error { background-color: #ef4444; }
-        
-        .tooltip {
-            position: relative;
-            cursor: help;
-        }
-        
-        .tooltip:hover::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: 125%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #1f2937;
-            color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            white-space: nowrap;
-            z-index: 1000;
-            opacity: 1;
-            transition: opacity 0.3s;
-        }
-        
-        .precision-badge {
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 12px;
-            font-weight: 600;
-        }
-        
-        .fade-in {
-            animation: fadeIn 0.5s ease-in;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .badge-tolerance.in { background: #e4ffe4; color: #12af5a; }
+        .badge-tolerance.out { background: #ffeaea; color: #ce1414; }
+        .input-focus { transition: all 0.3s ease; }
+        .input-focus:focus { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.15);}
+        .result-card { transition: all 0.3s ease; border-left: 4px solid transparent; }
+        .result-card.positive { border-left-color: #10b981; background: linear-gradient(135deg, #ecfdf5, #d1fae5);}
+        .result-card.negative { border-left-color: #ef4444; background: linear-gradient(135deg, #fef2f2, #fecaca);}
+        .result-card.neutral { border-left-color: #6b7280; background: linear-gradient(135deg, #f9fafb, #e5e7eb);}
+        .animate-bounce-in { animation: bounceIn 0.6s ease-out;}
+        @keyframes bounceIn { 0% {transform: scale(0.3) rotate(-10deg); opacity: 0;} 50% {transform: scale(1.05) rotate(2deg);} 70% {transform: scale(0.9) rotate(-1deg);} 100% {transform: scale(1) rotate(0deg); opacity: 1;} }
+        .status-indicator {display: inline-block;width: 8px;height: 8px;border-radius: 50%;margin-right: 8px;}
+        .status-ok { background-color: #10b981;}
+        .status-warning { background-color: #f59e0b;}
+        .status-error { background-color: #ef4444;}
+        .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100vw; height: 100vh; overflow: auto; background: rgba(0,0,0,0.40);}
+        .modal-content { background: #fff; margin: 10% auto; padding: 24px; border-radius: 12px; max-width: 430px; box-shadow: 0 8px 32px rgba(0,0,0,0.22);}
+        @media (prefers-color-scheme: dark) {.modal-content { background: #181823; color: #e3e6ec;}}
+        .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;}
+        .close:hover { color: #ce1414;}
+        .calcbox {
+            background: #fff;
+            border-radius: 0.75rem;
+            border-left-width: 4px;
+            min-height: 240px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
     </style>
 </head>
 <body class="gradient-bg min-h-screen flex flex-col items-center justify-center p-4">
     <div class="glass-effect p-6 max-w-2xl mx-auto rounded-2xl shadow-2xl w-full">
-        <!-- En-tête avec indicateur de statut -->
         <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-800 mb-2">⚡ Mesure Sprint Flash</h1>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2 flex items-center justify-center gap-2">
+                ⚡ Mesure Sprint Flash
+            </h1>
             <p class="text-gray-600">Calculateur d'ajustements automatique</p>
             <div class="mt-2 flex justify-center items-center">
                 <span id="statusIndicator" class="status-indicator status-ok"></span>
                 <span id="statusText" class="text-sm text-gray-600">Prêt pour calcul</span>
             </div>
         </div>
-        
+        <!-- Sélecteur de type de machine -->
+        <div class="mb-6 flex flex-col sm:flex-row gap-2 items-center justify-center">
+            <label for="machineType" class="font-semibold text-gray-700">Type de machine :</label>
+            <select id="machineType" onchange="majLibellesAB(); recalculerAjustements();" class="border rounded px-2 py-1">
+                <option value="NST1">NST1 (Coupe = A, Frein = B)</option>
+                <option value="NST2">NST2 (Coupe = B, Frein = A)</option>
+            </select>
+        </div>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Valeurs Attendues -->
-            <div class="space-y-4">
-                <div class="bg-blue-50 p-4 rounded-xl border-l-4 border-blue-400">
-                    <h2 class="text-lg font-semibold mb-4 text-blue-800 flex items-center">
-                        🎯 Valeurs Attendues
-                        <span class="ml-2 precision-badge bg-blue-200 text-blue-800">Référence</span>
-                    </h2>
-                    <div class="space-y-4">
-                        <div>
-                            <label for="attenduFreins" class="block text-gray-700 font-medium mb-2">
-                                Côté Freins (mm) :
-                                <span class="tooltip text-blue-500 ml-1" data-tooltip="Valeur cible pour le côté freins">ℹ️</span>
-                            </label>
-                            <input type="number" id="attenduFreins" value="142" step="0.1" 
-                                   class="input-focus w-full px-4 py-3 border-2 border-blue-200 rounded-lg text-lg font-semibold text-center hover:border-blue-400 focus:border-blue-500 focus:outline-none">
+            <div class="calcbox border-blue-500 shadow-lg bg-blue-50 transition-all duration-200">
+                <h2 class="text-lg font-semibold mb-4 text-blue-800 flex items-center">
+                    🎯 Valeurs Attendues
+                    <span class="ml-2 precision-badge bg-blue-200 text-blue-800">Référence</span>
+                </h2>
+                <div class="space-y-4 flex-1">
+                    <!-- Côté A (toujours en premier) -->
+                    <div>
+                        <label id="lblAttenduA" for="attenduA" class="block text-gray-700 font-medium mb-2">Côté A (Coupe) :</label>
+                        <div class="flex items-center space-x-2">
+                            <button type="button" aria-label="Diminuer de 0,5" onclick="stepValue('attenduA', -0.5)" class="px-2 py-1 bg-gray-300 rounded font-bold">-</button>
+                            <input type="text" id="attenduA" value="145" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
+                                class="input-focus w-28 px-4 py-3 border-2 border-blue-200 rounded-lg text-lg font-semibold text-center hover:border-blue-400 focus:border-blue-500 focus:outline-none"
+                                min="0" aria-label="Valeur attendue côté A">
+                            <button type="button" aria-label="Augmenter de 0,5" onclick="stepValue('attenduA', 0.5)" class="px-2 py-1 bg-gray-300 rounded font-bold">+</button>
                         </div>
-                        <div>
-                            <label for="attenduCoupe" class="block text-gray-700 font-medium mb-2">
-                                Côté Coupe (mm) :
-                                <span class="tooltip text-blue-500 ml-1" data-tooltip="Valeur cible pour le côté coupe">ℹ️</span>
-                            </label>
-                            <input type="number" id="attenduCoupe" value="145" step="0.1"
-                                   class="input-focus w-full px-4 py-3 border-2 border-blue-200 rounded-lg text-lg font-semibold text-center hover:border-blue-400 focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <!-- Côté B (toujours en second) -->
+                    <div>
+                        <label id="lblAttenduB" for="attenduB" class="block text-gray-700 font-medium mb-2">Côté B (Frein) :</label>
+                        <div class="flex items-center space-x-2">
+                            <button type="button" aria-label="Diminuer de 0,5" onclick="stepValue('attenduB', -0.5)" class="px-2 py-1 bg-gray-300 rounded font-bold">-</button>
+                            <input type="text" id="attenduB" value="142" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
+                                class="input-focus w-28 px-4 py-3 border-2 border-blue-200 rounded-lg text-lg font-semibold text-center hover:border-blue-400 focus:border-blue-500 focus:outline-none"
+                                min="0" aria-label="Valeur attendue côté B">
+                            <button type="button" aria-label="Augmenter de 0,5" onclick="stepValue('attenduB', 0.5)" class="px-2 py-1 bg-gray-300 rounded font-bold">+</button>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Valeurs Mesurées -->
-            <div class="space-y-4">
-                <div class="bg-green-50 p-4 rounded-xl border-l-4 border-green-400">
-                    <h2 class="text-lg font-semibold mb-4 text-green-800 flex items-center">
-                        📏 Valeurs Mesurées
-                        <span class="ml-2 precision-badge bg-green-200 text-green-800">Réel</span>
-                    </h2>
-                    <div class="space-y-4">
-                        <div>
-                            <label for="mesureFreins" class="block text-gray-700 font-medium mb-2">
-                                Côté Freins (mm) :
-                                <span class="tooltip text-green-500 ml-1" data-tooltip="Mesure réelle côté freins">ℹ️</span>
-                            </label>
-                            <input type="number" id="mesureFreins" value="147" step="0.1"
-                                   class="input-focus w-full px-4 py-3 border-2 border-green-200 rounded-lg text-lg font-semibold text-center hover:border-green-400 focus:border-green-500 focus:outline-none">
+            <div class="calcbox border-green-500 shadow-lg bg-green-50 transition-all duration-200">
+                <h2 class="text-lg font-semibold mb-4 text-green-800 flex items-center">
+                    📏 Valeurs Mesurées
+                    <span class="ml-2 precision-badge bg-green-200 text-green-800">Réel</span>
+                </h2>
+                <div class="space-y-4 flex-1">
+                    <!-- Côté A (toujours en premier) -->
+                    <div>
+                        <label id="lblMesureA" for="mesureA" class="block text-gray-700 font-medium mb-2">Côté A (Coupe) :</label>
+                        <div class="flex items-center space-x-2">
+                            <button type="button" aria-label="Diminuer de 0,5" onclick="stepValue('mesureA', -0.5)" class="px-2 py-1 bg-gray-300 rounded font-bold">-</button>
+                            <input type="text" id="mesureA" value="141" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
+                                class="input-focus w-28 px-4 py-3 border-2 border-green-200 rounded-lg text-lg font-semibold text-center hover:border-green-400 focus:border-green-500 focus:outline-none"
+                                min="0" aria-label="Valeur mesurée côté A">
+                            <button type="button" aria-label="Augmenter de 0,5" onclick="stepValue('mesureA', 0.5)" class="px-2 py-1 bg-gray-300 rounded font-bold">+</button>
                         </div>
-                        <div>
-                            <label for="mesureCoupe" class="block text-gray-700 font-medium mb-2">
-                                Côté Coupe (mm) :
-                                <span class="tooltip text-green-500 ml-1" data-tooltip="Mesure réelle côté coupe">ℹ️</span>
-                            </label>
-                            <input type="number" id="mesureCoupe" value="141" step="0.1"
-                                   class="input-focus w-full px-4 py-3 border-2 border-green-200 rounded-lg text-lg font-semibold text-center hover:border-green-400 focus:border-green-500 focus:outline-none">
+                    </div>
+                    <!-- Côté B (toujours en second) -->
+                    <div>
+                        <label id="lblMesureB" for="mesureB" class="block text-gray-700 font-medium mb-2">Côté B (Frein) :</label>
+                        <div class="flex items-center space-x-2">
+                            <button type="button" aria-label="Diminuer de 0,5" onclick="stepValue('mesureB', -0.5)" class="px-2 py-1 bg-gray-300 rounded font-bold">-</button>
+                            <input type="text" id="mesureB" value="147" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
+                                class="input-focus w-28 px-4 py-3 border-2 border-green-200 rounded-lg text-lg font-semibold text-center hover:border-green-400 focus:border-green-500 focus:outline-none"
+                                min="0" aria-label="Valeur mesurée côté B">
+                            <button type="button" aria-label="Augmenter de 0,5" onclick="stepValue('mesureB', 0.5)" class="px-2 py-1 bg-gray-300 rounded font-bold">+</button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <!-- Résultats des ajustements -->
+        <!-- Paramètres avancés -->
+        <details class="mt-4 mb-4">
+            <summary class="font-semibold text-gray-700 cursor-pointer hover:text-purple-600 transition-colors">⚙️ Paramètres avancés</summary>
+            <div class="mt-2 flex flex-col gap-4 text-sm text-gray-600">
+                <label for="facteurCentrage" class="block">
+                    <b>Centrage</b>
+                    <input type="text" id="facteurCentrage" value="-0,2" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
+                        class="input-focus w-20 px-2 py-1 border rounded ml-2" aria-label="Facteur de centrage"
+                        oninput="updateParamExplanation()">
+                    <div id="explicationCentrage" class="ml-1 text-xs text-gray-400 mt-1"></div>
+                </label>
+                <label for="facteurLongueurFil" class="block mt-1">
+                    <b>Longueur fil</b>
+                    <input type="text" id="facteurLongueurFil" value="1,5" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
+                        class="input-focus w-20 px-2 py-1 border rounded ml-2" aria-label="Facteur longueur fil"
+                        oninput="updateParamExplanation()">
+                    <div id="explicationLongueurFil" class="ml-1 text-xs text-gray-400 mt-1"></div>
+                </label>
+            </div>
+        </details>
         <div class="mt-8 p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200">
             <h2 class="text-xl font-bold mb-6 text-purple-800 flex items-center justify-center">
                 🔧 Ajustements Recommandés
             </h2>
-            
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div id="centrageCard" class="result-card p-4 rounded-xl shadow-lg">
+                <div id="centrageCard" class="result-card p-4 rounded-xl shadow-lg" aria-live="polite">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="font-semibold text-gray-700">Centrage</p>
                             <p class="text-xs text-gray-500">OffSet 29-31</p>
                         </div>
                         <div class="text-right">
-                            <span id="centrageResultat" class="text-2xl font-bold">0.0 mm</span>
-                            <div id="centrageStatus" class="text-xs mt-1"></div>
+                            <span id="centrageResultat" class="text-2xl font-bold">0,0 mm</span>
                         </div>
                     </div>
                 </div>
-                
-                <div id="longueurCard" class="result-card p-4 rounded-xl shadow-lg">
+                <div id="longueurCard" class="result-card p-4 rounded-xl shadow-lg" aria-live="polite">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="font-semibold text-gray-700">Longueur Fil</p>
                             <p class="text-xs text-gray-500">OffSet 114-115</p>
                         </div>
                         <div class="text-right">
-                            <span id="longueurFilResultat" class="text-2xl font-bold">0.0 mm</span>
-                            <div id="longueurStatus" class="text-xs mt-1"></div>
+                            <span id="longueurFilResultat" class="text-2xl font-bold">0,0 mm</span>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Prédiction des résultats -->
             <div class="mt-6 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-xl border border-green-200">
                 <h3 class="text-lg font-semibold mb-4 text-green-800 flex items-center justify-center">
                     🎯 Résultats Théoriques Après Ajustements
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-green-400">
+                    <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-green-400" aria-live="polite">
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="font-semibold text-gray-700">Côté Freins</p>
                                 <p class="text-xs text-gray-500">Après ajustements</p>
                             </div>
                             <div class="text-right">
-                                <span id="predictionFreins" class="text-xl font-bold text-green-600">0.0 mm</span>
+                                <span id="predictionFreins" class="text-xl font-bold text-green-600">0,0 mm</span>
                                 <div id="ecartFreinsFinal" class="text-xs mt-1"></div>
+                                <span id="toleranceFreins" class="badge-tolerance ml-1"></span>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-blue-400">
+                    <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-blue-400" aria-live="polite">
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="font-semibold text-gray-700">Côté Coupe</p>
                                 <p class="text-xs text-gray-500">Après ajustements</p>
                             </div>
                             <div class="text-right">
-                                <span id="predictionCoupe" class="text-xl font-bold text-blue-600">0.0 mm</span>
+                                <span id="predictionCoupe" class="text-xl font-bold text-blue-600">0,0 mm</span>
                                 <div id="ecartCoupeFinal" class="text-xs mt-1"></div>
+                                <span id="toleranceCoupe" class="badge-tolerance ml-1"></span>
                             </div>
                         </div>
                     </div>
                 </div>
-                
                 <div class="mt-4 p-3 bg-white rounded-lg border border-gray-200">
                     <h4 class="font-medium text-gray-700 mb-2">📝 Détail des Corrections</h4>
-                    <div id="detailCorrections" class="text-sm space-y-1">
-                        <!-- Détail des corrections sera affiché ici -->
-                    </div>
+                    <div id="detailCorrections" class="text-sm space-y-1"></div>
                 </div>
             </div>
-            
-            <!-- Analyse détaillée -->
             <details class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
                 <summary class="font-semibold text-gray-700 cursor-pointer hover:text-purple-600 transition-colors">
                     📊 Analyse Détaillée du Calcul
                 </summary>
-                <div id="calculDetails" class="mt-4 space-y-2 text-sm">
-                    <!-- Détails du calcul seront affichés ici -->
-                </div>
+                <div id="calculDetails" class="mt-4 space-y-2 text-sm"></div>
             </details>
-            
-            <!-- Bouton de réinitialisation -->
             <div class="mt-6 text-center">
                 <button id="resetBtn" class="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors font-semibold">
                     🔄 Réinitialiser
@@ -270,236 +243,248 @@
             </div>
         </div>
     </div>
-
+    <!-- Modale explication des formules (si besoin) -->
+    <div id="modalExplication" class="modal" tabindex="-1" aria-modal="true" role="dialog" aria-labelledby="modalLabel">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modalLabel" class="font-bold text-xl mb-3">Principe de calcul & tolérance</h2>
+            <ul class="mb-2 list-disc ml-4 text-base">
+                <li><b>Centrage</b>&nbsp;: chaque -0,2 mm d’offset = +1 mm côté coupe, -1 mm côté frein (modifiable dans les paramètres)</li>
+                <li><b>Longueur fil</b>&nbsp;: chaque +1,5 mm d’offset = +1 mm sur la pose réelle côté frein (modifiable)</li>
+                <li><b>Tolérance</b>&nbsp;: la différence entre la valeur attendue et la valeur théorique doit être ≤ <b>±0,5 mm</b></li>
+                <li>Les ajustements sont arrondis au 0,5 mm le plus proche.</li>
+            </ul>
+            <p class="mt-2 text-sm text-gray-700">Pour plus d’explications, passe la souris sur les sections ou consulte la section “Analyse détaillée”.</p>
+        </div>
+    </div>
     <script>
-        // Configuration par défaut
-        const DEFAULT_VALUES = {
-            attenduFreins: 142,
-            attenduCoupe: 145,
-            mesureFreins: 147,
-            mesureCoupe: 141
-        };
-
-        // Fonction pour déterminer le statut basé sur la valeur
-        function getStatus(value, threshold = 1) {
-            const abs = Math.abs(value);
-            if (abs <= 0.1) return 'perfect';
-            if (abs <= threshold) return 'good';
-            if (abs <= threshold * 2) return 'warning';
-            return 'error';
+        // Utilitaires pour conversion décimales françaises <-> JS
+        function frToFloat(val) {
+            if (typeof val === "string") {
+                return parseFloat(val.replace(",", "."));
+            }
+            return Number(val) || 0;
         }
-
-        // Fonction pour appliquer le style de carte selon le statut
+        function floatToFr(val) {
+            return (Math.round(val * 10) / 10).toLocaleString('fr-FR', { minimumFractionDigits: (val % 1) ? 1 : 0, maximumFractionDigits: 1 });
+        }
+        function stepValue(id, step) {
+            const input = document.getElementById(id);
+            let current = frToFloat(input.value) || 0;
+            current += step;
+            current = Math.round(current * 2) / 2; // arrondi au 0.5
+            if (current < 0) current = 0;
+            input.value = floatToFr(current);
+            input.dispatchEvent(new Event('input'));
+        }
+        function getToleranceLabel(ecart) {
+            return Math.abs(ecart) <= 0.5 ? {txt: 'Dans tolérance', cls: 'in'} : {txt: 'Hors tolérance', cls: 'out'};
+        }
         function updateCardStyle(cardElement, value) {
             cardElement.classList.remove('positive', 'negative', 'neutral');
-            if (Math.abs(value) <= 0.1) {
-                cardElement.classList.add('neutral');
-            } else if (value > 0) {
-                cardElement.classList.add('positive');
-            } else {
-                cardElement.classList.add('negative');
-            }
+            if (Math.abs(value) <= 0.1) cardElement.classList.add('neutral');
+            else if (value > 0) cardElement.classList.add('positive');
+            else cardElement.classList.add('negative');
         }
-
-        // Fonction pour mettre à jour l'indicateur de statut général
         function updateGlobalStatus(centrageValue, longueurValue) {
             const statusIndicator = document.getElementById('statusIndicator');
             const statusText = document.getElementById('statusText');
-            
-            const maxError = Math.max(Math.abs(centrageValue), Math.abs(longueurValue));
-            
             statusIndicator.classList.remove('status-ok', 'status-warning', 'status-error');
-            
-            if (maxError <= 0.1) {
+            let actions = [];
+            if (Math.abs(centrageValue) > 0.1) actions.push('Centrage');
+            if (Math.abs(longueurValue) > 0.1) actions.push('Longueur fil');
+            let message = '';
+            if (actions.length === 0) {
                 statusIndicator.classList.add('status-ok');
-                statusText.textContent = 'Valeurs parfaites ✓';
-            } else if (maxError <= 1) {
-                statusIndicator.classList.add('status-warning');
-                statusText.textContent = 'Ajustements mineurs requis';
+                message = 'Valeurs parfaites ✓';
             } else {
                 statusIndicator.classList.add('status-error');
-                statusText.textContent = 'Ajustements importants nécessaires';
+                message = 'Ajustement à prévoir : ' + actions.join(' + ');
             }
+            statusText.textContent = message;
         }
-
-        // Fonction pour calculer les prédictions après ajustements
-        function calculatePredictions(mesureFreins, mesureCoupe, ajustementCentrage, ajustementLongueurFil, attenduFreins, attenduCoupe) {
-            // Calcul des effets du centrage
-            // Centrage: chaque -0.2mm offset = +1mm côté coupe, -1mm côté frein
-            const effetCentrageSurCoupe = (ajustementCentrage / -0.2); // +1mm par -0.2mm offset
-            const effetCentrageSurFrein = -(ajustementCentrage / -0.2); // -1mm par -0.2mm offset
-            
-            // Calcul des effets de la longueur fil
-            // Longueur fil: chaque +1.5mm offset = +1mm côté frein uniquement
-            const effetLongueurSurFrein = ajustementLongueurFil * 1.5;
-            
-            // Valeurs finales théoriques
-            const nouvelleValeurCoupe = mesureCoupe + effetCentrageSurCoupe;
-            const nouvelleValeurFrein = mesureFreins + effetCentrageSurFrein + effetLongueurSurFrein;
-            
-            // Calcul des écarts finaux
-            const ecartFinalCoupe = attenduCoupe - nouvelleValeurCoupe;
-            const ecartFinalFrein = attenduFreins - nouvelleValeurFrein;
-            
-            // Mise à jour de l'affichage
-            document.getElementById('predictionFreins').textContent = `${nouvelleValeurFrein.toFixed(1)} mm`;
-            document.getElementById('predictionCoupe').textContent = `${nouvelleValeurCoupe.toFixed(1)} mm`;
-            
-            // Mise à jour des écarts finaux
-            const ecartFreinsElement = document.getElementById('ecartFreinsFinal');
-            const ecartCoupeElement = document.getElementById('ecartCoupeFinal');
-            
-            ecartFreinsElement.textContent = Math.abs(ecartFinalFrein) <= 0.1 ? 'Parfait ✓' : 
-                `Écart: ${ecartFinalFrein.toFixed(1)}mm`;
-            ecartFreinsElement.className = `text-xs mt-1 ${Math.abs(ecartFinalFrein) <= 0.5 ? 'text-green-600' : 'text-orange-600'}`;
-            
-            ecartCoupeElement.textContent = Math.abs(ecartFinalCoupe) <= 0.1 ? 'Parfait ✓' : 
-                `Écart: ${ecartFinalCoupe.toFixed(1)}mm`;
-            ecartCoupeElement.className = `text-xs mt-1 ${Math.abs(ecartFinalCoupe) <= 0.5 ? 'text-green-600' : 'text-orange-600'}`;
-            
-            // Détail des corrections
-            document.getElementById('detailCorrections').innerHTML = `
-                <div class="text-xs text-gray-600 space-y-1">
-                    <p><strong>Étape 1 - Centrage (${ajustementCentrage.toFixed(1)}mm):</strong></p>
-                    <p class="ml-4">• Côté coupe: ${mesureCoupe.toFixed(1)} + ${effetCentrageSurCoupe.toFixed(1)} = ${(mesureCoupe + effetCentrageSurCoupe).toFixed(1)}mm</p>
-                    <p class="ml-4">• Côté frein: ${mesureFreins.toFixed(1)} + ${effetCentrageSurFrein.toFixed(1)} = ${(mesureFreins + effetCentrageSurFrein).toFixed(1)}mm</p>
-                    <p><strong>Étape 2 - Longueur fil (${ajustementLongueurFil.toFixed(1)}mm):</strong></p>
-                    <p class="ml-4">• Côté frein: ${(mesureFreins + effetCentrageSurFrein).toFixed(1)} + ${effetLongueurSurFrein.toFixed(1)} = ${nouvelleValeurFrein.toFixed(1)}mm</p>
-                </div>
-            `;
-        }
-
-        // Fonction principale de recalcul
         function recalculerAjustements() {
             try {
-                // Récupérer les valeurs des entrées avec validation
-                const attenduFreins = parseFloat(document.getElementById('attenduFreins').value) || 0;
-                const attenduCoupe = parseFloat(document.getElementById('attenduCoupe').value) || 0;
-                const mesureFreins = parseFloat(document.getElementById('mesureFreins').value) || 0;
-                const mesureCoupe = parseFloat(document.getElementById('mesureCoupe').value) || 0;
-                
-                // Validation des entrées
+                // --- Récupère selon le type de machine ---
+                const type = document.getElementById('machineType').value;
+                let attenduCoupe, attenduFreins, mesureCoupe, mesureFreins;
+                if (type === "NST1") {
+                    // NST1 : A = Coupe, B = Frein
+                    attenduCoupe = frToFloat(document.getElementById('attenduA').value);
+                    attenduFreins = frToFloat(document.getElementById('attenduB').value);
+                    mesureCoupe = frToFloat(document.getElementById('mesureA').value);
+                    mesureFreins = frToFloat(document.getElementById('mesureB').value);
+                } else {
+                    // NST2 : A = Frein, B = Coupe
+                    attenduCoupe = frToFloat(document.getElementById('attenduB').value);
+                    attenduFreins = frToFloat(document.getElementById('attenduA').value);
+                    mesureCoupe = frToFloat(document.getElementById('mesureB').value);
+                    mesureFreins = frToFloat(document.getElementById('mesureA').value);
+                }
+                const facteurCentrage = frToFloat(document.getElementById('facteurCentrage').value) || -0.2;
+                const facteurLongueur = frToFloat(document.getElementById('facteurLongueurFil').value) || 1.5;
                 if ([attenduFreins, attenduCoupe, mesureFreins, mesureCoupe].some(val => val <= 0)) {
                     throw new Error('Toutes les valeurs doivent être positives');
                 }
-                
-                // Calculer les écarts (valeur attendue - valeur mesurée)
                 const ecartFreins = attenduFreins - mesureFreins; 
                 const ecartCoupe = attenduCoupe - mesureCoupe;   
-                
-                // Calculs d'ajustement
-                let ajustementCentrage = -0.2 * ecartCoupe;
+                let ajustementCentrage = facteurCentrage * ecartCoupe;
                 let ecartFreinsResiduel = ecartFreins + ecartCoupe;
-                // Correction: +1.5mm d'offset = +1mm réel, donc offset = écart / 1.5
-                let ajustementLongueurFilBrut = ecartFreinsResiduel / 1.5;
-                
-                // Arrondir le centrage à 1 décimale
+                let ajustementLongueurFilBrut = ecartFreinsResiduel / facteurLongueur;
                 ajustementCentrage = Math.round(ajustementCentrage * 10) / 10;
-                
-                // Arrondir la longueur du fil au 0.5 le plus proche
                 let ajustementLongueurFil = Math.round(ajustementLongueurFilBrut * 2) / 2;
-                
-                // Mettre à jour l'interface
-                const centrageElement = document.getElementById('centrageResultat');
-                const longueurElement = document.getElementById('longueurFilResultat');
-                const centrageCard = document.getElementById('centrageCard');
-                const longueurCard = document.getElementById('longueurCard');
-                
-                // Animation de mise à jour
-                [centrageElement, longueurElement].forEach(el => {
-                    el.classList.add('animate-bounce-in');
-                    setTimeout(() => el.classList.remove('animate-bounce-in'), 600);
-                });
-                
-                // Mise à jour des valeurs
-                centrageElement.textContent = `${ajustementCentrage.toFixed(1)} mm`;
-                longueurElement.textContent = `${ajustementLongueurFil.toFixed(1)} mm`;
-                
-                // Mise à jour des styles de cartes
-                updateCardStyle(centrageCard, ajustementCentrage);
-                updateCardStyle(longueurCard, ajustementLongueurFil);
-                
-                // Mise à jour des statuts individuels
-                document.getElementById('centrageStatus').textContent = 
-                    getStatus(ajustementCentrage) === 'perfect' ? 'Parfait ✓' : 
-                    Math.abs(ajustementCentrage) <= 1 ? 'Acceptable' : 'Critique';
-                    
-                document.getElementById('longueurStatus').textContent = 
-                    getStatus(ajustementLongueurFil) === 'perfect' ? 'Parfait ✓' : 
-                    Math.abs(ajustementLongueurFil) <= 1 ? 'Acceptable' : 'Critique';
-                
-                // Mise à jour du statut global
+                document.getElementById('centrageResultat').textContent = floatToFr(ajustementCentrage) + " mm";
+                document.getElementById('longueurFilResultat').textContent = floatToFr(ajustementLongueurFil) + " mm";
+                updateCardStyle(document.getElementById('centrageCard'), ajustementCentrage);
+                updateCardStyle(document.getElementById('longueurCard'), ajustementLongueurFil);
                 updateGlobalStatus(ajustementCentrage, ajustementLongueurFil);
-                
                 // Calcul des valeurs théoriques après ajustements
-                calculatePredictions(mesureFreins, mesureCoupe, ajustementCentrage, ajustementLongueurFil, attenduFreins, attenduCoupe);
-                
-                // Mise à jour des détails
+                const effetCentrage = ajustementCentrage / facteurCentrage;
+                const nouvelleValeurCoupe = mesureCoupe + effetCentrage;
+                const nouvelleValeurFrein = mesureFreins - effetCentrage + (ajustementLongueurFil * facteurLongueur);
+                const ecartFinalCoupe = attenduCoupe - nouvelleValeurCoupe;
+                const ecartFinalFrein = attenduFreins - nouvelleValeurFrein;
+                document.getElementById('predictionFreins').textContent = floatToFr(nouvelleValeurFrein) + " mm";
+                document.getElementById('predictionCoupe').textContent = floatToFr(nouvelleValeurCoupe) + " mm";
+                const tolFreins = getToleranceLabel(ecartFinalFrein);
+                const tolCoupe = getToleranceLabel(ecartFinalCoupe);
+                document.getElementById('ecartFreinsFinal').textContent = Math.abs(ecartFinalFrein) <= 0.1 ? 'Parfait ✓' : `Écart: ${floatToFr(ecartFinalFrein)}mm`;
+                document.getElementById('ecartCoupeFinal').textContent = Math.abs(ecartFinalCoupe) <= 0.1 ? 'Parfait ✓' : `Écart: ${floatToFr(ecartFinalCoupe)}mm`;
+                document.getElementById('toleranceFreins').textContent = tolFreins.txt;
+                document.getElementById('toleranceFreins').className = `badge-tolerance ${tolFreins.cls} ml-1`;
+                document.getElementById('toleranceCoupe').textContent = tolCoupe.txt;
+                document.getElementById('toleranceCoupe').className = `badge-tolerance ${tolCoupe.cls} ml-1`;
+                document.getElementById('detailCorrections').innerHTML = `
+                    <div class="text-xs text-gray-600 space-y-1">
+                        <p><strong>Étape 1 - Centrage (${floatToFr(ajustementCentrage)}mm)&nbsp;:</strong></p>
+                        <p class="ml-4">• Côté coupe: ${floatToFr(mesureCoupe)} + ${floatToFr(effetCentrage)} = ${floatToFr(mesureCoupe + effetCentrage)}mm</p>
+                        <p class="ml-4">• Côté frein: ${floatToFr(mesureFreins)} - ${floatToFr(effetCentrage)} = ${floatToFr(mesureFreins - effetCentrage)}mm</p>
+                        <p><strong>Étape 2 - Longueur fil (${floatToFr(ajustementLongueurFil)}mm)&nbsp;:</strong></p>
+                        <p class="ml-4">• Côté frein: ${floatToFr(mesureFreins - effetCentrage)} + ${floatToFr(ajustementLongueurFil * facteurLongueur)} = ${floatToFr(nouvelleValeurFrein)}mm</p>
+                    </div>
+                `;
                 const detailsContainer = document.getElementById('calculDetails');
                 detailsContainer.innerHTML = `
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="space-y-2">
                             <h4 class="font-semibold text-purple-700">📊 Écarts Mesurés</h4>
-                            <p>• Côté freins: <span class="font-mono ${ecartFreins >= 0 ? 'text-red-600' : 'text-green-600'}">${ecartFreins.toFixed(1)} mm</span></p>
-                            <p>• Côté coupe: <span class="font-mono ${ecartCoupe >= 0 ? 'text-red-600' : 'text-green-600'}">${ecartCoupe.toFixed(1)} mm</span></p>
+                            <p>• Côté freins: <span class="font-mono ${ecartFreins >= 0 ? 'text-red-600' : 'text-green-600'}">${floatToFr(ecartFreins)} mm</span></p>
+                            <p>• Côté coupe: <span class="font-mono ${ecartCoupe >= 0 ? 'text-red-600' : 'text-green-600'}">${floatToFr(ecartCoupe)} mm</span></p>
                         </div>
                         <div class="space-y-2">
                             <h4 class="font-semibold text-purple-700">🔧 Corrections Calculées</h4>
-                            <p>• Centrage: <span class="font-mono font-bold">${ajustementCentrage.toFixed(1)} mm</span></p>
-                            <p>• Écart résiduel freins: <span class="font-mono">${ecartFreinsResiduel.toFixed(1)} mm</span></p>
-                            <p>• Longueur fil (brut): <span class="font-mono">${ajustementLongueurFilBrut.toFixed(2)} mm</span></p>
-                            <p>• Longueur fil (arrondi 0.5): <span class="font-mono font-bold">${ajustementLongueurFil.toFixed(1)} mm</span></p>
+                            <p>• Centrage: <span class="font-mono font-bold">${floatToFr(ajustementCentrage)} mm</span></p>
+                            <p>• Écart résiduel freins: <span class="font-mono">${floatToFr(ecartFreinsResiduel)} mm</span></p>
+                            <p>• Longueur fil (brut): <span class="font-mono">${floatToFr(ajustementLongueurFilBrut)} mm</span></p>
+                            <p>• Longueur fil (arrondi 0.5): <span class="font-mono font-bold">${floatToFr(ajustementLongueurFil)} mm</span></p>
                         </div>
                     </div>
                     <div class="mt-4 p-3 bg-gray-50 rounded-lg">
                         <h4 class="font-semibold text-gray-700 mb-2">💡 Principe de Calcul</h4>
                         <p class="text-xs text-gray-600">
-                            1. Centrage: -0.2mm d'offset = +1mm côté coupe, -1mm côté freins<br>
-                            2. Longueur fil: +1.5mm d'offset = +1mm sur la pose réelle<br>
-                            3. <strong>Longueur fil arrondie au 0.5mm le plus proche</strong>
+                            1. Centrage: valeur configurable dans paramètres<br>
+                            2. Longueur fil: valeur configurable dans paramètres<br>
+                            3. <strong>Longueur fil arrondie au 0,5 mm le plus proche</strong>
                         </p>
                     </div>
                 `;
-                
             } catch (error) {
-                console.error('Erreur de calcul:', error);
                 document.getElementById('statusText').textContent = 'Erreur de calcul';
                 document.getElementById('statusIndicator').className = 'status-indicator status-error';
             }
         }
+        // Modifie dynamiquement les libellés en fonction du type de machine
+        function majLibellesAB() {
+            const type = document.getElementById('machineType').value;
+            let labelA, labelB;
+            if (type === "NST1") {
+                labelA = "Côté A (Coupe)";
+                labelB = "Côté B (Frein)";
+            } else {
+                labelA = "Côté A (Frein)";
+                labelB = "Côté B (Coupe)";
+            }
+            document.getElementById('lblAttenduA').textContent = labelA + " :";
+            document.getElementById('lblAttenduB').textContent = labelB + " :";
+            document.getElementById('lblMesureA').textContent = labelA + " :";
+            document.getElementById('lblMesureB').textContent = labelB + " :";
+        }
+        // Explication dynamique des paramètres avancés
+        function updateParamExplanation() {
+            function frToFloat(val) {
+                if (typeof val === "string") return parseFloat(val.replace(",", "."));
+                return Number(val) || 0;
+            }
+            // CENTRAGE
+            const facteurCentrage = frToFloat(document.getElementById('facteurCentrage').value);
+            let centrageTxt = "";
+            if (facteurCentrage !== 0) {
+                const abs = Math.abs(facteurCentrage);
+                const signe = facteurCentrage > 0 ? "+" : "-";
+                const op1 = facteurCentrage > 0 ? "-" : "+";
+                const op2 = facteurCentrage > 0 ? "+" : "-";
+                centrageTxt =
+                    `${signe}${abs.toLocaleString('fr-FR', {minimumFractionDigits:1})} : ` +
+                    `${op1}1 mm sur coupe, ${op2}1 mm sur freins`;
+            } else {
+                centrageTxt = "0 : aucun effet";
+            }
+            document.getElementById('explicationCentrage').textContent = centrageTxt;
 
-        // Fonction de réinitialisation
+            // LONGUEUR FIL
+            const facteurLongueur = frToFloat(document.getElementById('facteurLongueurFil').value);
+            let longueurTxt = "";
+            if (facteurLongueur !== 0) {
+                const abs = Math.abs(facteurLongueur);
+                const signe = facteurLongueur > 0 ? "+" : "-";
+                const op = facteurLongueur > 0 ? "+" : "-";
+                longueurTxt =
+                    `${signe}${abs.toLocaleString('fr-FR', {minimumFractionDigits:1})} : ${op}1 mm sur freins`;
+            } else {
+                longueurTxt = "0 : aucun effet";
+            }
+            document.getElementById('explicationLongueurFil').textContent = longueurTxt;
+        }
+        // Reset par défaut
+        const DEFAULT_VALUES = {
+            attenduA: "145",
+            attenduB: "142",
+            mesureA: "141",
+            mesureB: "147",
+            facteurCentrage: "-0,2",
+            facteurLongueurFil: "1,5"
+        };
         function resetValues() {
             Object.entries(DEFAULT_VALUES).forEach(([id, value]) => {
-                document.getElementById(id).value = value;
+                if(document.getElementById(id)) document.getElementById(id).value = value;
             });
             recalculerAjustements();
+            updateParamExplanation();
+            majLibellesAB();
         }
-
-        // Événements
         document.addEventListener('DOMContentLoaded', function() {
-            // Ajout des événements sur les inputs
-            document.querySelectorAll('#attenduFreins, #attenduCoupe, #mesureFreins, #mesureCoupe').forEach(input => {
-                input.addEventListener('input', recalculerAjustements);
-                input.addEventListener('focus', function() {
-                    this.select();
+            document.querySelectorAll('#attenduA, #attenduB, #mesureA, #mesureB, #facteurCentrage, #facteurLongueurFil')
+                .forEach(input => {
+                    input.addEventListener('input', recalculerAjustements);
+                    input.addEventListener('focus', function() { this.select(); });
                 });
-            });
-
-            // Événement pour le bouton de réinitialisation
             document.getElementById('resetBtn').addEventListener('click', resetValues);
-
-            // Calcul initial
             recalculerAjustements();
+            updateParamExplanation();
+            majLibellesAB();
         });
-
-        // Gestion des raccourcis clavier
         document.addEventListener('keydown', function(e) {
-            if (e.ctrlKey && e.key === 'r') {
-                e.preventDefault();
-                resetValues();
-            }
+            if (e.ctrlKey && e.key === 'r') { e.preventDefault(); resetValues(); }
+            if (e.key === "Escape") { closeModal(); }
         });
+        // Modale explication interactive
+        function showModal() { document.getElementById("modalExplication").style.display = "block"; }
+        function closeModal() { document.getElementById("modalExplication").style.display = "none"; }
+        window.onclick = function(event) {
+            if (event.target == document.getElementById("modalExplication")) {
+                closeModal();
+            }
+        }
     </script>
 </body>
 </html>
