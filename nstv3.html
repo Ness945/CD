@@ -52,17 +52,21 @@
     }
     details[open] summary::after { content: "▲"; float: right;}
     details summary::after { content: "▼"; float: right;}
-    @media (prefers-color-scheme: dark) {
-      body { background: #202533; color: #e3e8ee;}
-      .card { background: #262c3a; border-color: #30395b; color: #e3e8ee;}
-      .input-main { background: #212739; color: #e3e8ee; border-color: #30395b;}
-      .btn { background: #323952; color: #e3e8ee;}
-      .btn:hover { background: #2a3148;}
-      .chip { background: #25395b; color: #60a5fa;}
-      .chipB { background: #18483f; color: #34d399;}
-      .tolerance-chip-ok { background: #2d4731; color: #16e16b;}
-      .tolerance-chip-bad { background: #452c33; color: #ff7f7f;}
-    }
+@media (prefers-color-scheme: dark) {
+  body { background: #1a2131; color: #f1f3f8;}
+  .card { background: #222b3a; border-color: #2c3344; color: #f1f3f8; box-shadow: 0 2px 18px 0 #0009;}
+  .input-main { background: #182032; color: #f1f3f8; border-color: #3b82f6;}
+  .btn { background: #29304a; color: #f1f3f8; border-color: #29304a;}
+  .btn:hover { background: #344060;}
+  .chip { background: #1a3a6e; color: #3b82f6; }
+  .chipB { background: #164e3b; color: #10b981;}
+  .tolerance-chip-ok { background: #11351d; color: #22e47c;}
+  .tolerance-chip-bad { background: #39171a; color: #ff6c6c;}
+  .borderA { border-left: 4px solid #3b82f6;}
+  .borderB { border-left: 4px solid #10b981;}
+  .accentA { color: #3b82f6; }
+  .accentB { color: #10b981; }
+}
   </style>
 </head>
 <body class="min-h-screen flex flex-col items-center justify-start p-3 sm:p-8">
