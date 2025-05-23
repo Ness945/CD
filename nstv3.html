@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mesure Sprint Flash - Moderne Pro</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: #f6f8fa;
+    }
+    .card {
+      background: #fff;
+      border-radius: 1rem;
+      box-shadow: 0 2px 16px 0 rgba(30, 50, 110, 0.08);
+      padding: 2rem 1.5rem 1.5rem 1.5rem;
+      margin-bottom: 2rem;
+      border: 1px solid #e8ebf0;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+    .accentA { color: #2563eb; background: #eff6ff;}
+    .accentB { color: #059669; background: #ecfdf5;}
+    .accentA-b { border-color: #2563eb;}
+    .accentB-b { border-color: #059669;}
+    .input-main {
+      border-radius: 0.5rem;
+      border: 1.5px solid #d1d5db;
+      padding: 0.5rem 1.2rem;
+      font-size: 1.2rem;
+      font-weight: 500;
+      width: 7rem;
+      text-align: center;
+      outline: none;
+      transition: border 0.2s, box-shadow 0.2s;
+    }
+    .input-main:focus { border-color: #2563eb; box-shadow: 0 0 0 2px #60a5fa22;}
+    .btn { border-radius: 0.5rem; background: #f3f4f6; color: #374151; padding: 0.5rem 1.1rem; font-weight: bold; border: none; transition: background 0.18s;}
+    .btn:hover { background: #e0e7ef; }
+    .chip {
+      display: inline-block; padding: 3px 12px; border-radius: 1rem; font-size: 0.95em;
+      background: #f1f5f9; color: #2563eb; font-weight: 500;
+    }
+    .chipB { color: #059669; background: #e0f7ec;}
+    .tolerance-chip-ok { background: #e4ffe4; color: #12af5a;}
+    .tolerance-chip-bad { background: #fff0ef; color: #ce1414;}
+    .titleA { color: #2563eb;}
+    .titleB { color: #059669;}
+    .borderA { border-left: 4px solid #2563eb;}
+    .borderB { border-left: 4px solid #059669;}
+    .section-title {
+      font-weight: bold; font-size: 1.1em; letter-spacing: 0.5px; margin-bottom: 0.8em;
+    }
+    details[open] summary::after { content: "▲"; float: right;}
+    details summary::after { content: "▼"; float: right;}
+    @media (prefers-color-scheme: dark) {
+      body { background: #202533; color: #e3e8ee;}
+      .card { background: #262c3a; border-color: #30395b; color: #e3e8ee;}
+      .input-main { background: #212739; color: #e3e8ee; border-color: #30395b;}
+      .btn { background: #323952; color: #e3e8ee;}
+      .btn:hover { background: #2a3148;}
+      .chip { background: #25395b; color: #60a5fa;}
+      .chipB { background: #18483f; color: #34d399;}
+      .tolerance-chip-ok { background: #2d4731; color: #16e16b;}
+      .tolerance-chip-bad { background: #452c33; color: #ff7f7f;}
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-start p-3 sm:p-8">
+  <div class="w-full max-w-2xl">
+    <div class="flex flex-col sm:flex-row sm:justify-between items-center mb-7">
+      <h1 class="text-3xl font-extrabold tracking-tight mb-2 sm:mb-0 titleA">Mesure Sprint Flash</h1>
+      <div class="flex items-center gap-2 mt-1">
+        <label for="machineType" class="text-sm mr-1">Type :</label>
+        <select id="machineType" onchange="majLibellesAB(); recalculerAjustements();" class="input-main px-2 py-1" style="width:auto;">
+          <option value="NST1">NST1 (Coupe = A, Frein = B)</option>
+          <option value="NST2">NST2 (Coupe = B, Frein = A)</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+      <div class="card">
+        <div class="section-title accentA">Valeurs attendues</div>
+        <div>
+          <div>
+            <label id="lblAttenduA" for="attenduA" class="block mb-1 font-medium accentA">Côté A <span class="chip">Coupe</span></label>
+            <div class="flex items-center gap-2 mb-4">
+              <button type="button" aria-label="Diminuer de 0,5" onclick="stepValue('attenduA', -0.5)" class="btn">-</button>
+              <input type="text" id="attenduA" value="145" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" class="input-main borderA" aria-label="Valeur attendue côté A">
+              <button type="button" aria-label="Augmenter de 0,5" onclick="stepValue('attenduA', 0.5)" class="btn">+</button>
+            </div>
+          </div>
+          <div>
+            <label id="lblAttenduB" for="attenduB" class="block mb-1 font-medium accentB">Côté B <span class="chipB">Frein</span></label>
+            <div class="flex items-center gap-2">
+              <button type="button" aria-label="Diminuer de 0,5" onclick="stepValue('attenduB', -0.5)" class="btn">-</button>
+              <input type="text" id="attenduB" value="142" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" class="input-main borderB" aria-label="Valeur attendue côté B">
+              <button type="button" aria-label="Augmenter de 0,5" onclick="stepValue('attenduB', 0.5)" class="btn">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title accentA">Valeurs mesurées</div>
+        <div>
+          <div>
+            <label id="lblMesureA" for="mesureA" class="block mb-1 font-medium accentA">Côté A <span class="chip">Coupe</span></label>
+            <div class="flex items-center gap-2 mb-4">
+              <button type="button" aria-label="Diminuer de 0,5" onclick="stepValue('mesureA', -0.5)" class="btn">-</button>
+              <input type="text" id="mesureA" value="141" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" class="input-main borderA" aria-label="Valeur mesurée côté A">
+              <button type="button" aria-label="Augmenter de 0,5" onclick="stepValue('mesureA', 0.5)" class="btn">+</button>
+            </div>
+          </div>
+          <div>
+            <label id="lblMesureB" for="mesureB" class="block mb-1 font-medium accentB">Côté B <span class="chipB">Frein</span></label>
+            <div class="flex items-center gap-2">
+              <button type="button" aria-label="Diminuer de 0,5" onclick="stepValue('mesureB', -0.5)" class="btn">-</button>
+              <input type="text" id="mesureB" value="147" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" class="input-main borderB" aria-label="Valeur mesurée côté B">
+              <button type="button" aria-label="Augmenter de 0,5" onclick="stepValue('mesureB', 0.5)" class="btn">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Ajustements recommandés</div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+        <div>
+          <div class="text-base font-semibold">Centrage</div>
+          <div id="centrageResultat" class="text-2xl font-extrabold accentA mb-1">0,0 mm</div>
+          <div id="statusCentrage" class="text-sm"></div>
+        </div>
+        <div>
+          <div class="text-base font-semibold">Longueur Fil</div>
+          <div id="longueurFilResultat" class="text-2xl font-extrabold accentB mb-1">0,0 mm</div>
+          <div id="statusLongueur" class="text-sm"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Résultats théoriques après ajustements</div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+        <div class="borderA pl-3 py-2 rounded-lg">
+          <div class="text-base font-semibold accentA">Côté A</div>
+          <div id="predictionA" class="text-xl font-bold">0,0 mm</div>
+          <div id="ecartAFinal" class="text-xs"></div>
+          <span id="toleranceA" class="chip tolerance-chip-ok ml-0"></span>
+        </div>
+        <div class="borderB pl-3 py-2 rounded-lg">
+          <div class="text-base font-semibold accentB">Côté B</div>
+          <div id="predictionB" class="text-xl font-bold">0,0 mm</div>
+          <div id="ecartBFinal" class="text-xs"></div>
+          <span id="toleranceB" class="chipB tolerance-chip-ok ml-0"></span>
+        </div>
+      </div>
+    </div>
+
+    <details class="card">
+      <summary class="section-title">Paramètres avancés & Détail calcul</summary>
+      <div class="mb-3 mt-2 flex flex-col gap-4 text-sm">
+        <label for="facteurCentrage" class="block">
+          <b>Centrage</b>
+          <input type="text" id="facteurCentrage" value="-0,2" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
+            class="input-main ml-2" aria-label="Facteur de centrage"
+            oninput="updateParamExplanation()">
+          <div id="explicationCentrage" class="ml-1 text-xs mt-1"></div>
+        </label>
+        <label for="facteurLongueurFil" class="block mt-1">
+          <b>Longueur fil</b>
+          <input type="text" id="facteurLongueurFil" value="1,5" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
+            class="input-main ml-2" aria-label="Facteur longueur fil"
+            oninput="updateParamExplanation()">
+          <div id="explicationLongueurFil" class="ml-1 text-xs mt-1"></div>
+        </label>
+      </div>
+      <div class="mt-2 p-2 bg-gray-50 dark:bg-[#262c3a] rounded-lg text-xs" id="calculDetails"></div>
+    </details>
+
+    <div class="flex justify-center mb-6">
+      <button id="resetBtn" class="btn text-base font-semibold px-7 py-2 shadow">Réinitialiser</button>
+    </div>
+  </div>
+
+  <script>
+    // --- Utils
+    function frToFloat(val) { if (typeof val === "string") return parseFloat(val.replace(",", ".")); return Number(val) || 0;}
+    function floatToFr(val) { return (Math.round(val * 10) / 10).toLocaleString('fr-FR', { minimumFractionDigits: (val % 1) ? 1 : 0, maximumFractionDigits: 1 });}
+    function stepValue(id, step) {
+      const input = document.getElementById(id);
+      let current = frToFloat(input.value) || 0;
+      current += step;
+      current = Math.round(current * 2) / 2; // arrondi au 0.5
+      if (current < 0) current = 0;
+      input.value = floatToFr(current);
+      input.dispatchEvent(new Event('input'));
+    }
+    function getToleranceLabel(ecart) {
+      return Math.abs(ecart) <= 0.5 ? {txt: 'Tolérance OK', cls: 'tolerance-chip-ok'} : {txt: 'Hors tolérance', cls: 'tolerance-chip-bad'};
+    }
+    function recalculerAjustements() {
+      try {
+        // --- Mapping A/B selon machine ---
+        const type = document.getElementById('machineType').value;
+        let attenduCoupe, attenduFreins, mesureCoupe, mesureFreins, labelA, labelB;
+        if (type === "NST1") {
+          attenduCoupe = frToFloat(document.getElementById('attenduA').value);
+          attenduFreins = frToFloat(document.getElementById('attenduB').value);
+          mesureCoupe = frToFloat(document.getElementById('mesureA').value);
+          mesureFreins = frToFloat(document.getElementById('mesureB').value);
+          labelA = "Coupe"; labelB = "Frein";
+        } else {
+          attenduCoupe = frToFloat(document.getElementById('attenduB').value);
+          attenduFreins = frToFloat(document.getElementById('attenduA').value);
+          mesureCoupe = frToFloat(document.getElementById('mesureB').value);
+          mesureFreins = frToFloat(document.getElementById('mesureA').value);
+          labelA = "Frein"; labelB = "Coupe";
+        }
+        document.getElementById('lblAttenduA').innerHTML = `Côté A <span class="chip">${labelA}</span>`;
+        document.getElementById('lblAttenduB').innerHTML = `Côté B <span class="chipB">${labelB}</span>`;
+        document.getElementById('lblMesureA').innerHTML = `Côté A <span class="chip">${labelA}</span>`;
+        document.getElementById('lblMesureB').innerHTML = `Côté B <span class="chipB">${labelB}</span>`;
+
+        const facteurCentrage = frToFloat(document.getElementById('facteurCentrage').value) || -0.2;
+        const facteurLongueur = frToFloat(document.getElementById('facteurLongueurFil').value) || 1.5;
+        if ([attenduFreins, attenduCoupe, mesureFreins, mesureCoupe].some(val => val <= 0)) {
+          throw new Error('Toutes les valeurs doivent être positives');
+        }
+        const ecartFreins = attenduFreins - mesureFreins; 
+        const ecartCoupe = attenduCoupe - mesureCoupe;   
+        let ajustementCentrage = facteurCentrage * ecartCoupe;
+        let ecartFreinsResiduel = ecartFreins + ecartCoupe;
+        let ajustementLongueurFilBrut = ecartFreinsResiduel / facteurLongueur;
+        ajustementCentrage = Math.round(ajustementCentrage * 10) / 10;
+        let ajustementLongueurFil = Math.round(ajustementLongueurFilBrut * 2) / 2;
+        document.getElementById('centrageResultat').textContent = floatToFr(ajustementCentrage) + " mm";
+        document.getElementById('longueurFilResultat').textContent = floatToFr(ajustementLongueurFil) + " mm";
+        document.getElementById('statusCentrage').textContent = Math.abs(ajustementCentrage) <= 0.1 ? "Parfait" : "Ajuster";
+        document.getElementById('statusLongueur').textContent = Math.abs(ajustementLongueurFil) <= 0.1 ? "Parfait" : "Ajuster";
+
+        // Calculs résultats théoriques
+        const effetCentrage = ajustementCentrage / facteurCentrage;
+        const nouvelleValeurCoupe = mesureCoupe + effetCentrage;
+        const nouvelleValeurFrein = mesureFreins - effetCentrage + (ajustementLongueurFil * facteurLongueur);
+        const ecartFinalCoupe = attenduCoupe - nouvelleValeurCoupe;
+        const ecartFinalFrein = attenduFreins - nouvelleValeurFrein;
+
+        // Maj affichage
+        document.getElementById('predictionA').textContent = floatToFr(type==="NST1"?nouvelleValeurCoupe:nouvelleValeurFrein) + " mm";
+        document.getElementById('predictionB').textContent = floatToFr(type==="NST1"?nouvelleValeurFrein:nouvelleValeurCoupe) + " mm";
+        document.getElementById('ecartAFinal').textContent = Math.abs(type==="NST1"?ecartFinalCoupe:ecartFinalFrein) <= 0.1 ? "Parfait" : `Écart: ${floatToFr(type==="NST1"?ecartFinalCoupe:ecartFinalFrein)}mm`;
+        document.getElementById('ecartBFinal').textContent = Math.abs(type==="NST1"?ecartFinalFrein:ecartFinalCoupe) <= 0.1 ? "Parfait" : `Écart: ${floatToFr(type==="NST1"?ecartFinalFrein:ecartFinalCoupe)}mm`;
+        const tolA = getToleranceLabel(type==="NST1"?ecartFinalCoupe:ecartFinalFrein);
+        const tolB = getToleranceLabel(type==="NST1"?ecartFinalFrein:ecartFinalCoupe);
+        document.getElementById('toleranceA').textContent = tolA.txt;
+        document.getElementById('toleranceA').className = `chip ${tolA.cls} ml-0`;
+        document.getElementById('toleranceB').textContent = tolB.txt;
+        document.getElementById('toleranceB').className = `chipB ${tolB.cls} ml-0`;
+
+        // Détail calcul
+        document.getElementById('calculDetails').innerHTML = `
+          <b>Écarts mesurés :</b>
+          <br>• A : <span>${floatToFr(type==="NST1"?ecartCoupe:ecartFreins)} mm</span>
+          <br>• B : <span>${floatToFr(type==="NST1"?ecartFreins:ecartCoupe)} mm</span>
+          <br><br><b>Corrections calculées :</b>
+          <br>• Centrage : <b>${floatToFr(ajustementCentrage)} mm</b>
+          <br>• Longueur fil (arrondi 0.5) : <b>${floatToFr(ajustementLongueurFil)} mm</b>
+        `;
+      } catch (error) {
+        document.getElementById('statusCentrage').textContent = 'Erreur de calcul';
+        document.getElementById('statusLongueur').textContent = '';
+      }
+    }
+    function majLibellesAB() { recalculerAjustements(); }
+    function updateParamExplanation() {
+      function frToFloat(val) { if (typeof val === "string") return parseFloat(val.replace(",", ".")); return Number(val) || 0;}
+      const facteurCentrage = frToFloat(document.getElementById('facteurCentrage').value);
+      let centrageTxt = "";
+      if (facteurCentrage !== 0) {
+        const abs = Math.abs(facteurCentrage);
+        const signe = facteurCentrage > 0 ? "+" : "-";
+        const op1 = facteurCentrage > 0 ? "-" : "+";
+        const op2 = facteurCentrage > 0 ? "+" : "-";
+        centrageTxt = `${signe}${abs.toLocaleString('fr-FR', {minimumFractionDigits:1})} : ${op1}1 mm sur coupe, ${op2}1 mm sur freins`;
+      } else { centrageTxt = "0 : aucun effet"; }
+      document.getElementById('explicationCentrage').textContent = centrageTxt;
+
+      const facteurLongueur = frToFloat(document.getElementById('facteurLongueurFil').value);
+      let longueurTxt = "";
+      if (facteurLongueur !== 0) {
+        const abs = Math.abs(facteurLongueur);
+        const signe = facteurLongueur > 0 ? "+" : "-";
+        const op = facteurLongueur > 0 ? "+" : "-";
+        longueurTxt = `${signe}${abs.toLocaleString('fr-FR', {minimumFractionDigits:1})} : ${op}1 mm sur freins`;
+      } else { longueurTxt = "0 : aucun effet"; }
+      document.getElementById('explicationLongueurFil').textContent = longueurTxt;
+    }
+    const DEFAULT_VALUES = {attenduA: "145", attenduB: "142", mesureA: "141", mesureB: "147", facteurCentrage: "-0,2", facteurLongueurFil: "1,5"};
+    function resetValues() {
+      Object.entries(DEFAULT_VALUES).forEach(([id, value]) => {
+        if(document.getElementById(id)) document.getElementById(id).value = value;
+      });
+      recalculerAjustements();
+      updateParamExplanation();
+      majLibellesAB();
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('#attenduA, #attenduB, #mesureA, #mesureB, #facteurCentrage, #facteurLongueurFil')
+        .forEach(input => {
+          input.addEventListener('input', recalculerAjustements);
+          input.addEventListener('focus', function() { this.select(); });
+        });
+      document.getElementById('resetBtn').addEventListener('click', resetValues);
+      recalculerAjustements();
+      updateParamExplanation();
+      majLibellesAB();
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.ctrlKey && e.key === 'r') { e.preventDefault(); resetValues(); }
+    });
+  </script>
+</body>
+</html>
