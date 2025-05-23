@@ -76,8 +76,8 @@
       <h1 class="text-3xl font-extrabold tracking-tight mb-2 sm:mb-0 titleA">Mesure Sprint Flash</h1>
       <div class="flex items-center gap-2 mt-1">
         <select id="machineType" onchange="majLibellesAB(); recalculerAjustements();" class="input-main px-2 py-1" style="width:auto;">
-          <option value="NST1">NST1 (Coupe = A, Frein = B)</option>
-          <option value="NST2">NST2 (Coupe = B, Frein = A)</option>
+          <option value="NST1">NST1 (Frein = A, Coupe = B)</option>
+          <option value="NST2">NST2 (Coupe = A, Frein = A)</option>
           
         </select>
           <button id="themeToggleBtn" class="btn" type="button" title="Changer le thème">🌙</button>
@@ -210,19 +210,22 @@
         // --- Mapping A/B selon machine ---
         const type = document.getElementById('machineType').value;
         let attenduCoupe, attenduFreins, mesureCoupe, mesureFreins, labelA, labelB;
-        if (type === "NST1") {
-          attenduCoupe = frToFloat(document.getElementById('attenduA').value);
-          attenduFreins = frToFloat(document.getElementById('attenduB').value);
-          mesureCoupe = frToFloat(document.getElementById('mesureA').value);
-          mesureFreins = frToFloat(document.getElementById('mesureB').value);
-          labelA = "Coupe"; labelB = "Frein";
-        } else {
-          attenduCoupe = frToFloat(document.getElementById('attenduB').value);
-          attenduFreins = frToFloat(document.getElementById('attenduA').value);
-          mesureCoupe = frToFloat(document.getElementById('mesureB').value);
-          mesureFreins = frToFloat(document.getElementById('mesureA').value);
-          labelA = "Frein"; labelB = "Coupe";
-        }
+       if (type === "NST1") {
+  // NST1 : Côté A = Frein, Côté B = Coupe
+  attenduFreins = frToFloat(document.getElementById('attenduA').value);
+  attenduCoupe = frToFloat(document.getElementById('attenduB').value);
+  mesureFreins = frToFloat(document.getElementById('mesureA').value);
+  mesureCoupe = frToFloat(document.getElementById('mesureB').value);
+  labelA = "Frein"; labelB = "Coupe";
+} else {
+  // NST2 : Côté A = Coupe, Côté B = Frein
+  attenduCoupe = frToFloat(document.getElementById('attenduA').value);
+  attenduFreins = frToFloat(document.getElementById('attenduB').value);
+  mesureCoupe = frToFloat(document.getElementById('mesureA').value);
+  mesureFreins = frToFloat(document.getElementById('mesureB').value);
+  labelA = "Coupe"; labelB = "Frein";
+}
+
         document.getElementById('lblAttenduA').innerHTML = `Côté A <span class="chip">${labelA}</span>`;
         document.getElementById('lblAttenduB').innerHTML = `Côté B <span class="chipB">${labelB}</span>`;
         document.getElementById('lblMesureA').innerHTML = `Côté A <span class="chip">${labelA}</span>`;
