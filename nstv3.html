@@ -78,9 +78,8 @@
         <select id="machineType" onchange="majLibellesAB(); recalculerAjustements();" class="input-main px-2 py-1" style="width:auto;">
           <option value="NST1">NST1 (Frein = A, Coupe = B)</option>
           <option value="NST2">NST2 (Coupe = A, Frein = B)</option>
-          
         </select>
-          <button id="themeToggleBtn" class="btn" type="button" title="Changer le thème">🌙</button>
+        <button id="themeToggleBtn" class="btn" type="button" title="Changer le thème">🌙</button>
       </div>
     </div>
     
@@ -210,21 +209,21 @@
         // --- Mapping A/B selon machine ---
         const type = document.getElementById('machineType').value;
         let attenduCoupe, attenduFreins, mesureCoupe, mesureFreins, labelA, labelB;
-       if (type === "NST1") {
-  // NST1 : Côté A = Frein, Côté B = Coupe
-  attenduFreins = frToFloat(document.getElementById('attenduA').value);
-  attenduCoupe = frToFloat(document.getElementById('attenduB').value);
-  mesureFreins = frToFloat(document.getElementById('mesureA').value);
-  mesureCoupe = frToFloat(document.getElementById('mesureB').value);
-  labelA = "Frein"; labelB = "Coupe";
-} else {
-  // NST2 : Côté A = Coupe, Côté B = Frein
-  attenduCoupe = frToFloat(document.getElementById('attenduA').value);
-  attenduFreins = frToFloat(document.getElementById('attenduB').value);
-  mesureCoupe = frToFloat(document.getElementById('mesureA').value);
-  mesureFreins = frToFloat(document.getElementById('mesureB').value);
-  labelA = "Coupe"; labelB = "Frein";
-}
+        if (type === "NST1") {
+          // NST1 : Côté A = Frein, Côté B = Coupe
+          attenduFreins = frToFloat(document.getElementById('attenduA').value);
+          attenduCoupe = frToFloat(document.getElementById('attenduB').value);
+          mesureFreins = frToFloat(document.getElementById('mesureA').value);
+          mesureCoupe = frToFloat(document.getElementById('mesureB').value);
+          labelA = "Frein"; labelB = "Coupe";
+        } else {
+          // NST2 : Côté A = Coupe, Côté B = Frein
+          attenduCoupe = frToFloat(document.getElementById('attenduA').value);
+          attenduFreins = frToFloat(document.getElementById('attenduB').value);
+          mesureCoupe = frToFloat(document.getElementById('mesureA').value);
+          mesureFreins = frToFloat(document.getElementById('mesureB').value);
+          labelA = "Coupe"; labelB = "Frein";
+        }
 
         document.getElementById('lblAttenduA').innerHTML = `Côté A <span class="chip">${labelA}</span>`;
         document.getElementById('lblAttenduB').innerHTML = `Côté B <span class="chipB">${labelB}</span>`;
@@ -248,14 +247,17 @@
         document.getElementById('statusCentrage').textContent = Math.abs(ajustementCentrage) <= 0.1 ? "Parfait" : "Ajuster";
         document.getElementById('statusLongueur').textContent = Math.abs(ajustementLongueurFil) <= 0.1 ? "Parfait" : "Ajuster";
 
-        // Calculs résultats théoriques
+        // Calculs résultats théoriques & Détail étape par étape
         const effetCentrage = ajustementCentrage / facteurCentrage;
-        const nouvelleValeurCoupe = mesureCoupe + effetCentrage;
-        const nouvelleValeurFrein = mesureFreins - effetCentrage + (ajustementLongueurFil * facteurLongueur);
+        const valeurCoupeApresCentrage = mesureCoupe + effetCentrage;
+        const valeurFreinApresCentrage = mesureFreins - effetCentrage;
+        const valeurFreinApresLongueur = valeurFreinApresCentrage + (ajustementLongueurFil * facteurLongueur);
+
+        const nouvelleValeurCoupe = valeurCoupeApresCentrage;
+        const nouvelleValeurFrein = valeurFreinApresLongueur;
         const ecartFinalCoupe = attenduCoupe - nouvelleValeurCoupe;
         const ecartFinalFrein = attenduFreins - nouvelleValeurFrein;
 
-        // Maj affichage
         document.getElementById('predictionA').textContent = floatToFr(type==="NST1"?nouvelleValeurCoupe:nouvelleValeurFrein) + " mm";
         document.getElementById('predictionB').textContent = floatToFr(type==="NST1"?nouvelleValeurFrein:nouvelleValeurCoupe) + " mm";
         document.getElementById('ecartAFinal').textContent = Math.abs(type==="NST1"?ecartFinalCoupe:ecartFinalFrein) <= 0.1 ? "Parfait" : `Écart: ${floatToFr(type==="NST1"?ecartFinalCoupe:ecartFinalFrein)}mm`;
@@ -267,14 +269,14 @@
         document.getElementById('toleranceB').textContent = tolB.txt;
         document.getElementById('toleranceB').className = `chipB ${tolB.cls} ml-0`;
 
-        // Détail calcul
+        // Bloc détaillé étape par étape
         document.getElementById('calculDetails').innerHTML = `
-          <b>Écarts mesurés :</b>
-          <br>• A : <span>${floatToFr(type==="NST1"?ecartCoupe:ecartFreins)} mm</span>
-          <br>• B : <span>${floatToFr(type==="NST1"?ecartFreins:ecartCoupe)} mm</span>
-          <br><br><b>Corrections calculées :</b>
-          <br>• Centrage : <b>${floatToFr(ajustementCentrage)} mm</b>
-          <br>• Longueur fil (arrondi 0.5) : <b>${floatToFr(ajustementLongueurFil)} mm</b>
+📝 <b>Détail des Corrections</b><br><br>
+<b>Étape 1 – Centrage (${floatToFr(ajustementCentrage)} mm) :</b><br>
+• Côté ${type==="NST1"?labelB:labelA} : ${floatToFr(mesureCoupe)} + ${floatToFr(effetCentrage)} = <b>${floatToFr(valeurCoupeApresCentrage)}</b> mm<br>
+• Côté ${type==="NST1"?labelA:labelB} : ${floatToFr(mesureFreins)} - ${floatToFr(effetCentrage)} = <b>${floatToFr(valeurFreinApresCentrage)}</b> mm<br><br>
+<b>Étape 2 – Longueur fil (${floatToFr(ajustementLongueurFil)} mm) :</b><br>
+• Côté ${type==="NST1"?labelA:labelB} : ${floatToFr(valeurFreinApresCentrage)} + (${floatToFr(ajustementLongueurFil)} × ${floatToFr(facteurLongueur)}) = <b>${floatToFr(valeurFreinApresLongueur)}</b> mm
         `;
       } catch (error) {
         document.getElementById('statusCentrage').textContent = 'Erreur de calcul';
@@ -329,34 +331,31 @@
       if (e.ctrlKey && e.key === 'r') { e.preventDefault(); resetValues(); }
     });
     // Theme switch
-function setTheme(theme) {
-  if (theme === 'dark') {
-    document.documentElement.classList.add('dark');
-    localStorage.setItem('theme', 'dark');
-    document.getElementById('themeToggleBtn').innerText = "☀️";
-  } else {
-    document.documentElement.classList.remove('dark');
-    localStorage.setItem('theme', 'light');
-    document.getElementById('themeToggleBtn').innerText = "🌙";
-  }
-}
-// Init theme from localStorage or system
-(function() {
-  const userTheme = localStorage.getItem('theme');
-  if (userTheme) {
-    setTheme(userTheme);
-  } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    setTheme('dark');
-  } else {
-    setTheme('light');
-  }
-})();
-document.getElementById('themeToggleBtn').onclick = function() {
-  setTheme(document.documentElement.classList.contains('dark') ? 'light' : 'dark');
-};
-
+    function setTheme(theme) {
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+        document.getElementById('themeToggleBtn').innerText = "☀️";
+      } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+        document.getElementById('themeToggleBtn').innerText = "🌙";
+      }
+    }
+    // Init theme from localStorage or system
+    (function() {
+      const userTheme = localStorage.getItem('theme');
+      if (userTheme) {
+        setTheme(userTheme);
+      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        setTheme('dark');
+      } else {
+        setTheme('light');
+      }
+    })();
+    document.getElementById('themeToggleBtn').onclick = function() {
+      setTheme(document.documentElement.classList.contains('dark') ? 'light' : 'dark');
+    };
   </script>
-  
 </body>
-
 </html>
