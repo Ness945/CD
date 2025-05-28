@@ -127,8 +127,8 @@
       <h1 class="text-3xl font-extrabold tracking-tight mb-2 sm:mb-0 titleA">Mesure Sprint Flash</h1>
       <div class="flex items-center gap-2 mt-1">
         <select id="machineType" onchange="majLibellesAB(); recalculerAjustements();" class="input-main px-2 py-1" style="width:auto;">
-          <option value="NST1">NST1 (Coupe = A, Frein = B)</option>
-          <option value="NST2">NST2 (Frein = A, Coupe = B)</option>
+          <option value="NST1">NST1 (Frein = A, Coupe = B)</option>
+          <option value="NST2">NST2 (Coupe = A, Frein = B)</option>
         </select>
       </div>
     </div>
@@ -261,163 +261,180 @@
       </div>
     </div>
 
-  <script>
-    function frToFloat(val) {
-      if (typeof val === "string") return parseFloat(val.replace(",", "."));
-      return Number(val) || 0;
+<script>
+function frToFloat(val) {
+  if (typeof val === "string") return parseFloat(val.replace(",", "."));
+  return Number(val) || 0;
+}
+function floatToFr(val) {
+  return (Math.round(val * 100) / 100).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function floatToFrSigned(val) {
+  let signe = val > 0 ? "+" : val < 0 ? "−" : "+";
+  return signe + (Math.abs(Math.round(val * 100) / 100)).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function arrondi05(val) {
+  return Math.round(val * 2) / 2;
+}
+function stepValue(id, step) {
+  const input = document.getElementById(id);
+  let current = Number(input.value.replace(',', '.')) || 0;
+  current += step;
+  current = Math.round(current * 100) / 100;
+  if (current < 0) current = 0;
+  input.value = current;
+  input.dispatchEvent(new Event('input'));
+}
+function getToleranceLabel(ecart, tolerance) {
+  return Math.abs(ecart) <= tolerance ? {txt: 'Tolérance OK', cls: 'tolerance-chip-ok'} : {txt: 'Hors tolérance', cls: 'tolerance-chip-bad'};
+}
+function recalculerAjustements() {
+  try {
+    const type = document.getElementById('machineType').value;
+    let attenduCoupe, attenduFreins, mesureCoupe, mesureFreins, labelA, labelB;
+
+    // NST1: Frein = A, Coupe = B
+    // NST2: Frein = B, Coupe = A
+    if (type === "NST1") {
+      attenduFreins = frToFloat(document.getElementById('attenduA').value);
+      attenduCoupe = frToFloat(document.getElementById('attenduB').value);
+      mesureFreins = frToFloat(document.getElementById('mesureA').value);
+      mesureCoupe = frToFloat(document.getElementById('mesureB').value);
+      labelA = "Frein"; labelB = "Coupe";
+    } else {
+      attenduCoupe = frToFloat(document.getElementById('attenduA').value);
+      attenduFreins = frToFloat(document.getElementById('attenduB').value);
+      mesureCoupe = frToFloat(document.getElementById('mesureA').value);
+      mesureFreins = frToFloat(document.getElementById('mesureB').value);
+      labelA = "Coupe"; labelB = "Frein";
     }
-    function floatToFr(val) {
-      return (Math.round(val * 100) / 100).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    document.getElementById('lblAttenduA').innerHTML = `Côté A <span class="chip">${labelA}</span>`;
+    document.getElementById('lblAttenduB').innerHTML = `Côté B <span class="chipB">${labelB}</span>`;
+    document.getElementById('lblMesureA').innerHTML = `Côté A <span class="chip">${labelA}</span>`;
+    document.getElementById('lblMesureB').innerHTML = `Côté B <span class="chipB">${labelB}</span>`;
+
+    const facteurCentrage = 0.2;
+    const facteurLongueur = 1.5;
+    const tolerance = frToFloat(document.getElementById('toleranceValue').value) || 0.5;
+
+    // 1. Correction centrage (ramener Coupe à la consigne)
+    let decalage = mesureCoupe - attenduCoupe;
+    let centrageIHM = 0;
+    if (decalage !== 0) {
+      centrageIHM = decalage * facteurCentrage;
     }
-    function floatToFrSigned(val) {
-      let signe = val > 0 ? "+" : val < 0 ? "−" : "+";
-      return signe + (Math.abs(Math.round(val * 100) / 100)).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
-    function arrondi05(val) {
-      return Math.round(val * 2) / 2;
-    }
-    function stepValue(id, step) {
-      const input = document.getElementById(id);
-      let current = Number(input.value.replace(',', '.')) || 0;
-      current += step;
-      current = Math.round(current * 100) / 100;
-      if (current < 0) current = 0;
-      input.value = current;
-      input.dispatchEvent(new Event('input'));
-    }
-    function getToleranceLabel(ecart, tolerance) {
-      return Math.abs(ecart) <= tolerance ? {txt: 'Tolérance OK', cls: 'tolerance-chip-ok'} : {txt: 'Hors tolérance', cls: 'tolerance-chip-bad'};
-    }
-    function recalculerAjustements() {
-      try {
-        const type = document.getElementById('machineType').value;
-        let attenduCoupe, attenduFreins, mesureCoupe, mesureFreins, labelA, labelB;
 
-        // NST1: Coupe = A, Frein = B
-        // NST2: Frein = A, Coupe = B
-        if (type === "NST1") {
-          attenduCoupe = frToFloat(document.getElementById('attenduA').value);
-          attenduFreins = frToFloat(document.getElementById('attenduB').value);
-          mesureCoupe = frToFloat(document.getElementById('mesureA').value);
-          mesureFreins = frToFloat(document.getElementById('mesureB').value);
-          labelA = "Coupe"; labelB = "Frein";
-        } else {
-          attenduFreins = frToFloat(document.getElementById('attenduA').value);
-          attenduCoupe = frToFloat(document.getElementById('attenduB').value);
-          mesureFreins = frToFloat(document.getElementById('mesureA').value);
-          mesureCoupe = frToFloat(document.getElementById('mesureB').value);
-          labelA = "Frein"; labelB = "Coupe";
-        }
+    // Valeurs après centrage
+    let valeurCoupeApresCentrage = mesureCoupe - decalage; // = attenduCoupe
+    let valeurFreinApresCentrage = mesureFreins + decalage;
 
-        document.getElementById('lblAttenduA').innerHTML = `Côté A <span class="chip">${labelA}</span>`;
-        document.getElementById('lblAttenduB').innerHTML = `Côté B <span class="chipB">${labelB}</span>`;
-        document.getElementById('lblMesureA').innerHTML = `Côté A <span class="chip">${labelA}</span>`;
-        document.getElementById('lblMesureB').innerHTML = `Côté B <span class="chipB">${labelB}</span>`;
+    // 2. Correction fil (rattraper le manque côté Frein)
+    let manqueFrein = attenduFreins - valeurFreinApresCentrage;
+    let longueurFilIHM = 0;
+    if (manqueFrein !== 0) longueurFilIHM = manqueFrein * facteurLongueur;
 
-        const facteurCentrage = frToFloat(document.getElementById('facteurCentrage').value) || 0.2;
-        const facteurLongueur = frToFloat(document.getElementById('facteurLongueurFil').value) || 1.5;
-        const tolerance = frToFloat(document.getElementById('toleranceValue').value) || 0.5;
+    // Arrondir les valeurs pour affichage (optionnel)
+    //centrageIHM = arrondi05(centrageIHM);
+    //longueurFilIHM = arrondi05(longueurFilIHM);
 
-        // 1. Calcul pour l'IHM : valeur à reporter dans la machine
-        const ecartCoupe = attenduCoupe - mesureCoupe;
-        const valeurPourIHM = ecartCoupe * facteurCentrage; // à afficher pour l'IHM
+    document.getElementById('centrageResultat').textContent = floatToFrSigned(centrageIHM) + " mm";
+    document.getElementById('longueurFilResultat').textContent = floatToFr(longueurFilIHM) + " mm";
+    document.getElementById('statusCentrage').textContent = Math.abs(centrageIHM) <= 0.1 ? "Parfait" : "À reporter dans l'IHM";
+    document.getElementById('statusLongueur').textContent = Math.abs(longueurFilIHM) <= 0.1 ? "Parfait" : "Ajuster";
 
-        // 2. Effet centrage réel (ramener Coupe à la cible)
-        const effetCentrage = ecartCoupe;
-        const valeurCoupeApresCentrage = mesureCoupe + effetCentrage; // = attenduCoupe
-        const valeurFreinApresCentrage = mesureFreins - effetCentrage;
+    // Résultats théoriques
+    const valeurFreinApresLongueur = valeurFreinApresCentrage + (longueurFilIHM / facteurLongueur);
+    const nouvelleValeurCoupe = valeurCoupeApresCentrage;
+    const nouvelleValeurFrein = valeurFreinApresLongueur;
+    const ecartFinalCoupe = attenduCoupe - nouvelleValeurCoupe;
+    const ecartFinalFrein = attenduFreins - nouvelleValeurFrein;
 
-        // 3. Correction de longueur fil uniquement côté Frein
-        const ecartFreins = attenduFreins - valeurFreinApresCentrage;
-        let ajustementLongueurFilBrut = ecartFreins / facteurLongueur;
-        let ajustementLongueurFil = arrondi05(ajustementLongueurFilBrut);
+    document.getElementById('predictionA').textContent = floatToFr(type==="NST1"?nouvelleValeurCoupe:nouvelleValeurFrein) + " mm";
+    document.getElementById('predictionB').textContent = floatToFr(type==="NST1"?nouvelleValeurFrein:nouvelleValeurCoupe) + " mm";
+    document.getElementById('ecartAFinal').textContent = Math.abs(type==="NST1"?ecartFinalCoupe:ecartFinalFrein) <= 0.1 ? "Parfait" : `Écart: ${floatToFr(type==="NST1"?ecartFinalCoupe:ecartFinalFrein)}mm`;
+    document.getElementById('ecartBFinal').textContent = Math.abs(type==="NST1"?ecartFinalFrein:ecartFinalCoupe) <= 0.1 ? "Parfait" : `Écart: ${floatToFr(type==="NST1"?ecartFinalFrein:ecartFinalCoupe)}mm`;
+    const tolA = getToleranceLabel(type==="NST1"?ecartFinalCoupe:ecartFinalFrein, tolerance);
+    const tolB = getToleranceLabel(type==="NST1"?ecartFinalFrein:ecartFinalCoupe, tolerance);
+    document.getElementById('toleranceA').textContent = tolA.txt;
+    document.getElementById('toleranceA').className = `chip ${tolA.cls} ml-0`;
+    document.getElementById('toleranceB').textContent = tolB.txt;
+    document.getElementById('toleranceB').className = `chipB ${tolB.cls} ml-0`;
 
-        document.getElementById('centrageResultat').textContent = floatToFrSigned(valeurPourIHM) + " mm";
-        document.getElementById('longueurFilResultat').textContent = floatToFrSigned(ajustementLongueurFil) + " mm";
-        document.getElementById('statusCentrage').textContent = Math.abs(valeurPourIHM) <= 0.1 ? "Parfait" : "À reporter dans l'IHM";
-        document.getElementById('statusLongueur').textContent = Math.abs(ajustementLongueurFil) <= 0.1 ? "Parfait" : "Ajuster";
-
-        const valeurFreinApresLongueur = valeurFreinApresCentrage + (ajustementLongueurFil * facteurLongueur);
-        const nouvelleValeurCoupe = valeurCoupeApresCentrage;
-        const nouvelleValeurFrein = valeurFreinApresLongueur;
-        const ecartFinalCoupe = attenduCoupe - nouvelleValeurCoupe;
-        const ecartFinalFrein = attenduFreins - nouvelleValeurFrein;
-
-        document.getElementById('predictionA').textContent = floatToFr(type==="NST1"?nouvelleValeurCoupe:nouvelleValeurFrein) + " mm";
-        document.getElementById('predictionB').textContent = floatToFr(type==="NST1"?nouvelleValeurFrein:nouvelleValeurCoupe) + " mm";
-        document.getElementById('ecartAFinal').textContent = Math.abs(type==="NST1"?ecartFinalCoupe:ecartFinalFrein) <= 0.1 ? "Parfait" : `Écart: ${floatToFr(type==="NST1"?ecartFinalCoupe:ecartFinalFrein)}mm`;
-        document.getElementById('ecartBFinal').textContent = Math.abs(type==="NST1"?ecartFinalFrein:ecartFinalCoupe) <= 0.1 ? "Parfait" : `Écart: ${floatToFr(type==="NST1"?ecartFinalFrein:ecartFinalCoupe)}mm`;
-        const tolA = getToleranceLabel(type==="NST1"?ecartFinalCoupe:ecartFinalFrein, tolerance);
-        const tolB = getToleranceLabel(type==="NST1"?ecartFinalFrein:ecartFinalCoupe, tolerance);
-        document.getElementById('toleranceA').textContent = tolA.txt;
-        document.getElementById('toleranceA').className = `chip ${tolA.cls} ml-0`;
-        document.getElementById('toleranceB').textContent = tolB.txt;
-        document.getElementById('toleranceB').className = `chipB ${tolB.cls} ml-0`;
-
-        // Bloc détail du calcul
-        document.getElementById('calculDetails').innerHTML =
+    // Bloc détail du calcul
+    document.getElementById('calculDetails').innerHTML =
 `📝 Détail des Corrections
 
 Étape 1 – Centrage
-  - Ecart Coupe : ${floatToFr(ecartCoupe)} mm
-  - Facteur (IHM) : ${facteurCentrage}
-  - Centrage à reporter = ${floatToFr(ecartCoupe)} × ${facteurCentrage} = ${floatToFrSigned(valeurPourIHM)} mm
-  - Après centrage : Coupe = ${floatToFr(valeurCoupeApresCentrage)} mm | Frein = ${floatToFr(valeurFreinApresCentrage)} mm
+- Mesuré Coupe = ${floatToFr(mesureCoupe)} → Attendu = ${floatToFr(attenduCoupe)}
+- Décalage = ${floatToFr(decalage)} mm (${decalage > 0 ? 'ramener vers Frein' : decalage < 0 ? 'ramener vers Coupe' : 'déjà bon'})
+- Centrage à reporter (IHM) : ${floatToFr(decalage)} × 0.2 = ${floatToFrSigned(centrageIHM)} mm
 
-Étape 2 – Longueur fil (uniquement côté ${type==="NST1"?labelB:labelA})
-  - ${floatToFr(valeurFreinApresCentrage)} + (${floatToFrSigned(ajustementLongueurFil)} × ${floatToFr(facteurLongueur)}) = ${floatToFr(valeurFreinApresLongueur)} mm`;
-      } catch (error) {
-        document.getElementById('statusCentrage').textContent = 'Erreur de calcul';
-        document.getElementById('statusLongueur').textContent = '';
-      }
-    }
-    function majLibellesAB() { recalculerAjustements(); }
-    function updateParamExplanation() {
-      function frToFloat(val) { if (typeof val === "string") return parseFloat(val.replace(",", ".")); return Number(val) || 0;}
-      const facteurLongueur = frToFloat(document.getElementById('facteurLongueurFil').value);
-      let longueurTxt = "";
-      if (facteurLongueur !== 0) {
-        const abs = Math.abs(facteurLongueur);
-        const signe = facteurLongueur > 0 ? "+" : "-";
-        const op = facteurLongueur > 0 ? "+" : "-";
-        longueurTxt = `${signe}${abs.toLocaleString('fr-FR', {minimumFractionDigits:2})} : ${op}1 mm sur freins`;
-      } else { longueurTxt = "0 : aucun effet"; }
-      document.getElementById('explicationLongueurFil').textContent = longueurTxt;
-    }
-    const DEFAULT_VALUES = {
-      attenduA: "145",
-      attenduB: "142",
-      mesureA: "141",
-      mesureB: "147",
-      facteurCentrage: "0.2",
-      facteurLongueurFil: "1.5",
-      toleranceValue: "0.5"
-    };
-    function resetValues() {
-      if (!confirm('Confirmer la réinitialisation ? Toutes les valeurs seront remises par défaut.')) return;
-      Object.entries(DEFAULT_VALUES).forEach(([id, value]) => {
-        if(document.getElementById(id)) document.getElementById(id).value = value;
-      });
-      recalculerAjustements();
-      updateParamExplanation();
-      majLibellesAB();
-      setTimeout(() => { document.getElementById('attenduA').focus(); }, 200);
-    }
-    document.addEventListener('DOMContentLoaded', function() {
-      setTimeout(() => { document.getElementById('attenduA').focus(); }, 100);
-      document.querySelectorAll('#attenduA, #attenduB, #mesureA, #mesureB, #facteurCentrage, #facteurLongueurFil, #toleranceValue')
-        .forEach(input => {
-          input.addEventListener('input', recalculerAjustements);
-          input.addEventListener('focus', function() { this.select(); });
-        });
-      document.getElementById('resetBtn').addEventListener('click', resetValues);
-      recalculerAjustements();
-      updateParamExplanation();
-      majLibellesAB();
+Après centrage :
+  Coupe = ${floatToFr(valeurCoupeApresCentrage)} (OK)
+  Frein = ${floatToFr(valeurFreinApresCentrage)}
+
+Étape 2 – Longueur fil (pour corriger Frein)
+- Manque côté Frein = ${floatToFr(manqueFrein)} mm
+- Correction longueur fil à reporter (IHM) : ${floatToFr(manqueFrein)} × 1.5 = ${floatToFr(longueurFilIHM)} mm
+
+Après correction :
+  Frein = ${floatToFr(valeurFreinApresLongueur)}
+  Coupe = ${floatToFr(valeurCoupeApresCentrage)} (inchangé)
+`;
+  } catch (error) {
+    document.getElementById('statusCentrage').textContent = 'Erreur de calcul';
+    document.getElementById('statusLongueur').textContent = '';
+  }
+}
+function majLibellesAB() { recalculerAjustements(); }
+function updateParamExplanation() {
+  function frToFloat(val) { if (typeof val === "string") return parseFloat(val.replace(",", ".")); return Number(val) || 0;}
+  const facteurLongueur = 1.5;
+  let longueurTxt = "";
+  if (facteurLongueur !== 0) {
+    const abs = Math.abs(facteurLongueur);
+    const signe = facteurLongueur > 0 ? "+" : "-";
+    const op = facteurLongueur > 0 ? "+" : "-";
+    longueurTxt = `${signe}${abs.toLocaleString('fr-FR', {minimumFractionDigits:2})} : ${op}1 mm sur freins`;
+  } else { longueurTxt = "0 : aucun effet"; }
+  document.getElementById('explicationLongueurFil').textContent = longueurTxt;
+}
+const DEFAULT_VALUES = {
+  attenduA: "145",
+  attenduB: "142",
+  mesureA: "141",
+  mesureB: "147",
+  facteurCentrage: "0.2",
+  facteurLongueurFil: "1.5",
+  toleranceValue: "0.5"
+};
+function resetValues() {
+  if (!confirm('Confirmer la réinitialisation ? Toutes les valeurs seront remises par défaut.')) return;
+  Object.entries(DEFAULT_VALUES).forEach(([id, value]) => {
+    if(document.getElementById(id)) document.getElementById(id).value = value;
+  });
+  recalculerAjustements();
+  updateParamExplanation();
+  majLibellesAB();
+  setTimeout(() => { document.getElementById('attenduA').focus(); }, 200);
+}
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(() => { document.getElementById('attenduA').focus(); }, 100);
+  document.querySelectorAll('#attenduA, #attenduB, #mesureA, #mesureB, #facteurCentrage, #facteurLongueurFil, #toleranceValue')
+    .forEach(input => {
+      input.addEventListener('input', recalculerAjustements);
+      input.addEventListener('focus', function() { this.select(); });
     });
-    document.addEventListener('keydown', function(e) {
-      if (e.ctrlKey && e.key === 'r') { e.preventDefault(); resetValues(); }
-    });
-  </script>
+  document.getElementById('resetBtn').addEventListener('click', resetValues);
+  recalculerAjustements();
+  updateParamExplanation();
+  majLibellesAB();
+});
+document.addEventListener('keydown', function(e) {
+  if (e.ctrlKey && e.key === 'r') { e.preventDefault(); resetValues(); }
+});
+</script>
+
 </body>
 </html>
