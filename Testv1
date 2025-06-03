@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Calculateur NST - Sobre & Pro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    html, body { height: 100%; margin: 0; padding: 0; }
+    body {
+      background: #f5f7fa;
+      font-family: 'Inter', Arial, sans-serif;
+      color: #1e293b;
+      min-height: 100vh;
+      font-size: 1.07em;
+      letter-spacing: 0.01em;
+    }
+    .container {
+      max-width: 480px;
+      margin: 30px auto 0 auto;
+      padding: 8px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 1rem;
+      box-shadow: 0 2px 12px 0 rgba(40,60,100,0.04);
+      margin-bottom: 24px;
+      padding: 2rem 1.5rem 1.3rem 1.5rem;
+      border: 1px solid #e9edf2;
+    }
+    .section-title {
+      font-weight: 800;
+      font-size: 1.17em;
+      color: #2e467c;
+      margin-bottom: 16px;
+      letter-spacing: 0.02em;
+    }
+    .field-group {
+      display: flex; gap: 0.7em; align-items: center;
+      margin-bottom: 18px;
+    }
+    label {
+      font-weight: 600; font-size: 1em; margin-bottom: 5px; display: block;
+      color: #31405e;
+    }
+    .input-box {
+      display: flex; align-items: center; gap: 4px;
+    }
+    .input-main {
+      background: #f7f8fa;
+      border: 1.3px solid #d6dce6;
+      border-radius: 0.55em;
+      padding: 0.7em 1em;
+      width: 7em;
+      font-size: 1.15em;
+      text-align: center;
+      color: #22293a;
+      font-weight: 600;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .input-main:focus {
+      border-color: #4688ef;
+      background: #f3f7ff;
+      outline: none;
+      box-shadow: 0 0 0 2px #b6d3fd88;
+    }
+    .btn {
+      background: #f1f4fb;
+      color: #2e3b50;
+      border: 1px solid #e1e4ef;
+      border-radius: 0.55em;
+      font-size: 1.15em;
+      font-weight: 700;
+      padding: 0.53em 1em;
+      min-width: 44px;
+      min-height: 44px;
+      cursor: pointer;
+      transition: background 0.13s, box-shadow 0.18s;
+      box-shadow: 0 2px 8px #e4eaff30;
+      margin: 0 0.16em;
+    }
+    .btn:hover { background: #e3e8f2; }
+    .btn:active { background: #d6dce6; }
+    .statut-global {
+      padding: 0.62em 1.2em;
+      border-radius: 0.65em;
+      margin-bottom: 17px;
+      font-size: 1.08em;
+      font-weight: 600;
+      text-align: center;
+      background: #f3f7fd;
+      color: #22754b;
+      border: 1.2px solid #b5ecd0;
+      box-shadow: 0 2px 7px #c9fbe680;
+      display: none;
+    }
+    .statut-warn {
+      background: #fff5f2 !important;
+      color: #ce3b27 !important;
+      border: 1.2px solid #facac5 !important;
+    }
+    .stat-box {
+      margin-top: 1.1em;
+      padding: 0.92em 1.0em;
+      background: #f7faff;
+      border-radius: 11px;
+      font-size: 1.06em;
+      color: #263159;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .stat-value {
+      font-size: 1.36em;
+      font-weight: 800;
+      color: #3653b7;
+    }
+    .badge {
+      display: inline-block;
+      font-weight: 700;
+      border-radius: 1.6em;
+      font-size: 0.99em;
+      padding: 2px 14px;
+      background: #e7f4eb;
+      color: #2b8250;
+      margin-left: 0.6em;
+      border: 1px solid #b2e8ca;
+      vertical-align: middle;
+    }
+    .badge-warn {
+      background: #fff1f1 !important;
+      color: #be3727 !important;
+      border: 1px solid #f8cac5 !important;
+    }
+    .calcul-details {
+      background: #f3f4f8;
+      border-radius: 9px;
+      border: 1px solid #e4e7ef;
+      padding: 1em 1em 1em 1em;
+      margin-top: 1.0em;
+      font-family: 'Fira Mono', 'Consolas', 'Menlo', monospace;
+      color: #273159;
+      font-size: 1em;
+      white-space: pre-line;
+    }
+    details { margin-top: 1.4em; }
+    summary {
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 1.01em;
+      color: #38468b;
+      outline: none;
+    }
+    .advanced-param {
+      margin-top: 1em;
+      padding: 0.8em 0.9em 1.2em 0.9em;
+      background: #f6f8fc;
+      border-radius: 9px;
+      border: 1px solid #e3e8f2;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .advanced-param label { font-size: 0.97em; color: #355ba6; }
+    .advanced-param input { width: 5.2em; }
+    .tooltip {
+      display: inline-block;
+      position: relative;
+      cursor: pointer;
+      color: #7b8597;
+      font-size: 1.04em;
+      margin-left: 4px;
+    }
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      width: 210px;
+      background: #eef3fc;
+      color: #2c3043;
+      text-align: left;
+      border-radius: 0.5rem;
+      padding: 0.8em;
+      position: absolute;
+      z-index: 10;
+      top: 110%; left: 50%; transform: translateX(-50%);
+      opacity: 0;
+      transition: opacity 0.3s;
+      font-size: 0.93em;
+      box-shadow: 0 6px 18px #b9c5e633;
+    }
+    .tooltip:active .tooltiptext,
+    .tooltip:focus .tooltiptext,
+    .tooltip:hover .tooltiptext {
+      visibility: visible;
+      opacity: 1;
+    }
+    @media (max-width: 600px) {
+      .container { padding: 3px; }
+      .card { padding: 11px 2vw 10px 2vw; }
+      .stat-box { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <div id="statutGlobal" class="statut-global">Parfait : toutes les valeurs sont dans la tolérance</div>
+
+    <div class="card">
+      <div class="section-title">Valeurs attendues</div>
+      <div class="field-group">
+        <label for="attenduA">Côté A (Coupe)</label>
+        <div class="input-box">
+          <button type="button" onclick="stepValue('attenduA', -0.5)" class="btn">–</button>
+          <input type="number" id="attenduA" value="145" inputmode="decimal" step="0.01" min="0" class="input-main" aria-label="Valeur attendue côté A">
+          <button type="button" onclick="stepValue('attenduA', 0.5)" class="btn">+</button>
+        </div>
+      </div>
+      <div class="field-group">
+        <label for="attenduB">Côté B (Frein)</label>
+        <div class="input-box">
+          <button type="button" onclick="stepValue('attenduB', -0.5)" class="btn">–</button>
+          <input type="number" id="attenduB" value="142" inputmode="decimal" step="0.01" min="0" class="input-main" aria-label="Valeur attendue côté B">
+          <button type="button" onclick="stepValue('attenduB', 0.5)" class="btn">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Valeurs mesurées</div>
+      <div class="field-group">
+        <label for="mesureA">Côté A (Coupe)</label>
+        <div class="input-box">
+          <button type="button" onclick="stepValue('mesureA', -0.5)" class="btn">–</button>
+          <input type="number" id="mesureA" value="141" inputmode="decimal" step="0.01" min="0" class="input-main" aria-label="Valeur mesurée côté A">
+          <button type="button" onclick="stepValue('mesureA', 0.5)" class="btn">+</button>
+        </div>
+      </div>
+      <div class="field-group">
+        <label for="mesureB">Côté B (Frein)</label>
+        <div class="input-box">
+          <button type="button" onclick="stepValue('mesureB', -0.5)" class="btn">–</button>
+          <input type="number" id="mesureB" value="147" inputmode="decimal" step="0.01" min="0" class="input-main" aria-label="Valeur mesurée côté B">
+          <button type="button" onclick="stepValue('mesureB', 0.5)" class="btn">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Ajustements recommandés</div>
+      <div class="stat-box">
+        <div>
+          Centrage : <span id="centrageResultat" class="stat-value">0,00 mm</span>
+        </div>
+        <div>
+          Longueur Fil : <span id="longueurFilResultat" class="stat-value">0,00 mm</span>
+        </div>
+      </div>
+      <div class="stat-box" style="margin-top: 1em;">
+        <div>
+          Côté A :
+          <span id="predictionA" class="badge">0,00 mm</span>
+          <span id="toleranceA" class="badge">Tolérance</span>
+        </div>
+        <div>
+          Côté B :
+          <span id="predictionB" class="badge">0,00 mm</span>
+          <span id="toleranceB" class="badge">Tolérance</span>
+        </div>
+      </div>
+    </div>
+
+    <details class="card">
+      <summary>Paramètres avancés & Détail calcul</summary>
+      <div class="advanced-param">
+        <label for="facteurCentrage">
+          Facteur centrage
+          <span class="tooltip" tabindex="0">?
+            <span class="tooltiptext">
+              Ce facteur règle l’impact d’un écart sur le centrage. Ex : -0,2 = pour 1 mm d’écart, corriger de -0,2 mm côté coupe, +0,2 mm côté frein.
+            </span>
+          </span>
+          <input type="number" id="facteurCentrage" value="-0.2" inputmode="decimal" step="0.01" class="input-main ml-2" aria-label="Facteur de centrage" oninput="updateParamExplanation()">
+        </label>
+        <label for="facteurLongueurFil">
+          Facteur longueur fil
+          <span class="tooltip" tabindex="0">?
+            <span class="tooltiptext">
+              Ce facteur règle l’effet d’un écart sur la longueur fil. Plus il est grand, moins la correction sera forte.
+            </span>
+          </span>
+          <input type="number" id="facteurLongueurFil" value="1.5" inputmode="decimal" step="0.01" class="input-main ml-2" aria-label="Facteur longueur fil" oninput="updateParamExplanation()">
+        </label>
+        <label for="toleranceValue">
+          Tolérance (mm)
+          <span class="tooltip" tabindex="0">?
+            <span class="tooltiptext">
+              Précise la tolérance maximale autorisée pour chaque côté (ex : 0,3 mm pour des réglages plus fins, ou 1 mm pour plus de souplesse).
+            </span>
+          </span>
+          <input type="number" id="toleranceValue" value="0.5" step="0.01" min="0.01" class="input-main ml-2" aria-label="Tolérance en mm" oninput="recalculerAjustements()">
+        </label>
+      </div>
+      <div id="calculDetails" class="calcul-details"></div>
+    </details>
+
+    <div style="display:flex;justify-content:center;margin-top:22px;">
+      <button id="resetBtn" class="btn text-base font-semibold px-7 py-2 shadow">Réinitialiser</button>
+    </div>
+  </div>
+
+  <script>
+    function frToFloat(val) {
+      if (typeof val === "string") return parseFloat(val.replace(",", "."));
+      return Number(val) || 0;
+    }
+    function floatToFr(val) {
+      return (Math.round(val * 100) / 100).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    function arrondi05(val) {
+      return Math.round(val * 2) / 2;
+    }
+    function stepValue(id, step) {
+      const input = document.getElementById(id);
+      let current = Number(input.value.replace(',', '.')) || 0;
+      current += step;
+      current = Math.round(current * 100) / 100;
+      if (current < 0) current = 0;
+      input.value = current;
+      input.dispatchEvent(new Event('input'));
+    }
+    function getToleranceLabel(ecart, tolerance) {
+      return Math.abs(ecart) <= tolerance
+        ? {txt: 'Tolérance OK', cls: 'badge'}
+        : {txt: 'Hors tolérance', cls: 'badge badge-warn'};
+    }
+    function setStatutGlobal(ok) {
+      const bloc = document.getElementById('statutGlobal');
+      if (ok) {
+        bloc.textContent = "Parfait : toutes les valeurs sont dans la tolérance";
+        bloc.className = "statut-global";
+        bloc.style.display = "block";
+      } else {
+        bloc.textContent = "Ajustement nécessaire : au moins une valeur est hors tolérance";
+        bloc.className = "statut-global statut-warn";
+        bloc.style.display = "block";
+      }
+    }
+    function recalculerAjustements() {
+      try {
+        let attenduCoupe = frToFloat(document.getElementById('attenduA').value);
+        let attenduFreins = frToFloat(document.getElementById('attenduB').value);
+        let mesureCoupe = frToFloat(document.getElementById('mesureA').value);
+        let mesureFreins = frToFloat(document.getElementById('mesureB').value);
+        let facteurCentrage = frToFloat(document.getElementById('facteurCentrage').value) || -0.2;
+        let facteurLongueur = frToFloat(document.getElementById('facteurLongueurFil').value) || 1.5;
+        let tolerance = frToFloat(document.getElementById('toleranceValue').value) || 0.5;
+        if ([attenduFreins, attenduCoupe, mesureFreins, mesureCoupe].some(val => val <= 0)) {
+          throw new Error('Toutes les valeurs doivent être positives');
+        }
+        let ecartFreins = attenduFreins - mesureFreins;
+        let ecartCoupe = attenduCoupe - mesureCoupe;
+        let ajustementCentrage = facteurCentrage * ecartCoupe;
+        let ecartFreinsResiduel = ecartFreins + ecartCoupe;
+        let ajustementLongueurFilBrut = ecartFreinsResiduel / facteurLongueur;
+        let ajustementLongueurFil = arrondi05(ajustementLongueurFilBrut);
+        ajustementCentrage = Math.round(ajustementCentrage * 100) / 100;
+
+        document.getElementById('centrageResultat').textContent = floatToFr(ajustementCentrage) + " mm";
+        document.getElementById('longueurFilResultat').textContent = floatToFr(ajustementLongueurFil) + " mm";
+
+        // Calculs résultats théoriques & Détail étape par étape
+        let effetCentrage = ajustementCentrage / facteurCentrage;
+        let valeurCoupeApresCentrage = mesureCoupe + effetCentrage;
+        let valeurFreinApresCentrage = mesureFreins - effetCentrage;
+        let valeurFreinApresLongueur = valeurFreinApresCentrage + (ajustementLongueurFil * facteurLongueur);
+
+        let nouvelleValeurCoupe = valeurCoupeApresCentrage;
+        let nouvelleValeurFrein = valeurFreinApresLongueur;
+        let ecartFinalCoupe = attenduCoupe - nouvelleValeurCoupe;
+        let ecartFinalFrein = attenduFreins - nouvelleValeurFrein;
+
+        document.getElementById('predictionA').textContent = floatToFr(nouvelleValeurCoupe) + " mm";
+        document.getElementById('predictionA').className = Math.abs(ecartFinalCoupe) <= tolerance ? "badge" : "badge badge-warn";
+        document.getElementById('predictionB').textContent = floatToFr(nouvelleValeurFrein) + " mm";
+        document.getElementById('predictionB').className = Math.abs(ecartFinalFrein) <= tolerance ? "badge" : "badge badge-warn";
+        const tolA = getToleranceLabel(ecartFinalCoupe, tolerance);
+        const tolB = getToleranceLabel(ecartFinalFrein, tolerance);
+        document.getElementById('toleranceA').textContent = tolA.txt;
+        document.getElementById('toleranceA').className = tolA.cls;
+        document.getElementById('toleranceB').textContent = tolB.txt;
+        document.getElementById('toleranceB').className = tolB.cls;
+
+        // Bandeau statut global
+        setStatutGlobal(Math.abs(ecartFinalCoupe) <= tolerance && Math.abs(ecartFinalFrein) <= tolerance);
+
+        document.getElementById('calculDetails').innerHTML =
+`📝 Détail des Corrections
+
+Étape 1 – Centrage (${floatToFr(ajustementCentrage)} mm)
+  - Côté Coupe : ${floatToFr(mesureCoupe)} + ${floatToFr(effetCentrage)} = ${floatToFr(valeurCoupeApresCentrage)} mm
+  - Côté Frein : ${floatToFr(mesureFreins)} - ${floatToFr(effetCentrage)} = ${floatToFr(valeurFreinApresCentrage)} mm
+
+Étape 2 – Longueur fil (${floatToFr(ajustementLongueurFil)} mm)
+  - Côté Frein : ${floatToFr(valeurFreinApresCentrage)} + (${floatToFr(ajustementLongueurFil)} × ${floatToFr(facteurLongueur)}) = ${floatToFr(valeurFreinApresLongueur)} mm`;
+      } catch (error) {
+        document.getElementById('centrageResultat').textContent = '--';
+        document.getElementById('longueurFilResultat').textContent = '--';
+        document.getElementById('predictionA').textContent = "--";
+        document.getElementById('predictionB').textContent = "--";
+        document.getElementById('toleranceA').textContent = "Erreur";
+        document.getElementById('toleranceB').textContent = "Erreur";
+        document.getElementById('calculDetails').textContent = "Erreur dans la saisie ou le calcul.";
+        setStatutGlobal(false);
+      }
+    }
+    function updateParamExplanation() {}
+    function resetValues() {
+      if (!confirm('Confirmer la réinitialisation ? Toutes les valeurs seront remises par défaut.')) return;
+      document.getElementById('attenduA').value = "145";
+      document.getElementById('attenduB').value = "142";
+      document.getElementById('mesureA').value = "141";
+      document.getElementById('mesureB').value = "147";
+      document.getElementById('facteurCentrage').value = "-0.2";
+      document.getElementById('facteurLongueurFil').value = "1.5";
+      document.getElementById('toleranceValue').value = "0.5";
+      recalculerAjustements();
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(() => { document.getElementById('attenduA').focus(); }, 100);
+      document.querySelectorAll('#attenduA, #attenduB, #mesureA, #mesureB, #facteurCentrage, #facteurLongueurFil, #toleranceValue')
+        .forEach(input => {
+          input.addEventListener('input', recalculerAjustements);
+          input.addEventListener('focus', function() { this.select(); });
+        });
+      document.getElementById('resetBtn').addEventListener('click', resetValues);
+      recalculerAjustements();
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.ctrlKey && e.key === 'r') { e.preventDefault(); resetValues(); }
+    });
+  </script>
+</body>
+</html>
