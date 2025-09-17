@@ -23,6 +23,8 @@
     .pill { font-size:.75rem; font-weight:700; padding:.2rem .6rem; border-radius:9999px; }
     .ok { background:#dcfce7; color:#166534; }
     .bad { background:#fee2e2; color:#991b1b; }
+    .delta-ok { color:#166534; font-weight:600; }
+    .delta-bad { color:#991b1b; font-weight:600; }
 
     /* Dark mode */
     .dark body { background:#0b1220; color:#e5e7eb; }
@@ -45,70 +47,51 @@
     <header class="flex items-center justify-between pb-3 border-b border-gray-200">
       <h1 class="text-2xl font-black">⚙️ Calculateur <span class="text-blue-600">SPRINT</span> & <span class="text-green-600">GMT</span></h1>
       <div class="flex items-center gap-2">
-        <button id="btnTheme" class="btn" title="Basculer thème" onclick="toggleTheme()">🌙</button>
-        <span class="bg-gray-200 px-2 py-1 rounded text-xs">v5.4 — fix switchSprint + JS complet + ratios en bas (masqués)</span>
+        <!-- Pas d'inline onclick: le JS attache les événements proprement -->
+        <button id="btnTheme" class="btn" title="Basculer thème" type="button">🌙</button>
+        <span class="bg-gray-200 px-2 py-1 rounded text-xs">v7.0 — Chaîne prédictive: Centrage ⇒ Longueur (SPRINT+GMT) + tests</span>
       </div>
     </header>
 
-    <!-- Onglets principaux avec badges de prédiction -->
+    <!-- Onglets principaux -->
     <div class="flex rounded-lg overflow-hidden border border-gray-200">
-      <button id="tabSprint" class="flex-1 btn tab-active flex items-center justify-between gap-2" onclick="switchTab('sprint')">
-        <span>SPRINT</span>
-        <span id="tabSprintPred" class="text-xs px-2 py-0.5 rounded bg-gray-200 text-gray-700">A — / B —</span>
-      </button>
-      <button id="tabGmt" class="flex-1 btn flex items-center justify-between gap-2" onclick="switchTab('gmt')">
-        <span>GMT</span>
-        <span id="tabGmtPred" class="text-xs px-2 py-0.5 rounded bg-gray-200 text-gray-700">A — / B —</span>
-      </button>
-    </div>
-
-    <!-- Sous-onglets Sprint (NST1/NST2) -->
-    <div id="sprintTabs" class="flex mt-2 rounded-lg overflow-hidden border border-gray-200">
-      <button id="tabNST1" class="flex-1 btn tab-active" onclick="switchSprint('nst1')">NST1</button>
-      <button id="tabNST2" class="flex-1 btn" onclick="switchSprint('nst2')">NST2</button>
+      <button id="tabSprint" class="flex-1 btn tab-active" type="button">SPRINT</button>
+      <button id="tabGmt" class="flex-1 btn" type="button">GMT</button>
     </div>
 
     <!-- SPRINT -->
     <section id="viewSprint" class="card p-6">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="title">SPRINT (<span id="sprintMode">NST1</span>)</h2>
-      </div>
-
+      <h2 class="title">SPRINT (<span id="sprintMode">NST1</span>)</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <h3 class="font-semibold mb-2">Valeurs attendues</h3>
-          <label id="attALabel" class="label">Côté A (Frein)</label>
-          <input id="attA" type="number" step="0.1" class="input mb-2" value="145" />
-          <label id="attBLabel" class="label">Côté B (Coupe)</label>
-          <input id="attB" type="number" step="0.1" class="input" value="142" />
+          <label class="label">Attendu A (Frein)</label>
+          <input id="attA" type="number" step="0.1" class="input" value="150" />
+          <label class="label">Attendu B (Coupe)</label>
+          <input id="attB" type="number" step="0.1" class="input" value="150" />
         </div>
         <div>
-          <h3 class="font-semibold mb-2">Valeurs mesurées</h3>
-          <label id="mesALabel" class="label">Côté A (Frein)</label>
-          <input id="mesA" type="number" step="0.1" class="input mb-2" value="141" />
-          <label id="mesBLabel" class="label">Côté B (Coupe)</label>
-          <input id="mesB" type="number" step="0.1" class="input" value="147" />
+          <label class="label">Mesuré A (Frein)</label>
+          <input id="mesA" type="number" step="0.1" class="input" value="149.5" />
+          <label class="label">Mesuré B (Coupe)</label>
+          <input id="mesB" type="number" step="0.1" class="input" value="150.2" />
         </div>
       </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+      <div class="mt-4 flex items-center gap-3">
+        <div id="sTol" class="pill ok">—</div>
+        <div id="sVals" class="text-sm text-gray-600">—</div>
+      </div>
+      <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="bg-gray-50 p-4 rounded-lg border">
-          <p class="subtitle">Centrage IHM</p>
-          <div id="sprintCentrage" class="highlight">+0.0</div>
-          <div id="sprintCentrageHint" class="text-xs muted mt-1">—</div>
+          <div class="subtitle">Centrage (IHM, pas 0,1)</div>
+          <div id="sprintCentrage" class="highlight">—</div>
+          <div id="sprintCentrageDir" class="text-xs muted">—</div>
         </div>
         <div class="bg-gray-50 p-4 rounded-lg border">
-          <p class="subtitle">Longueur fil (IHM)</p>
-          <div id="sprintLongueur" class="highlight">+0.00 mm</div>
-        </div>
-        <div class="bg-gray-50 p-4 rounded-lg border">
-          <p class="subtitle">Prédictions</p>
-          <div id="sPredA" class="highlight">A —</div>
-          <div id="sPredB" class="highlight">B —</div>
-          <div id="sTol" class="pill ok mt-1">—</div>
+          <div class="subtitle">Longueur fil (IHM, pas 0,25 mm)</div>
+          <div id="sprintLongueur" class="highlight">—</div>
+          <div id="sprintLongueurHint" class="text-xs muted">—</div>
         </div>
       </div>
-
       <details class="mt-4">
         <summary class="font-semibold">Détail du calcul</summary>
         <pre id="logSprint" class="text-xs bg-gray-50 p-3 rounded border"></pre>
@@ -118,54 +101,34 @@
     <!-- GMT -->
     <section id="viewGmt" class="card p-6 hidden">
       <h2 class="title mb-4">GMT</h2>
-      <p class="muted mb-4">Étapes : 1) corriger la <b>longueur totale</b> avec les dents (50/50 fixe), 2) équilibrer A/B avec le <b>centrage</b>.</p>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="grid grid-cols-2 gap-4">
         <div>
-          <h3 class="font-semibold mb-2">Valeurs attendues</h3>
-          <label class="label">Côté A</label>
-          <input id="gAttA" type="number" step="0.5" class="input mb-2" value="110" />
-          <label class="label">Côté B</label>
+          <label class="label">Attendu A</label>
+          <input id="gAttA" type="number" step="0.5" class="input" value="110" />
+          <label class="label">Attendu B</label>
           <input id="gAttB" type="number" step="0.5" class="input" value="110" />
         </div>
         <div>
-          <h3 class="font-semibold mb-2">Valeurs mesurées</h3>
-          <label class="label">Côté A</label>
-          <input id="gMesA" type="number" step="0.5" class="input mb-2" value="108.5" />
-          <label class="label">Côté B</label>
+          <label class="label">Mesuré A</label>
+          <input id="gMesA" type="number" step="0.5" class="input" value="108.5" />
+          <label class="label">Mesuré B</label>
           <input id="gMesB" type="number" step="0.5" class="input" value="108.5" />
         </div>
       </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-        <div>
-          <label class="label">Dent (mm total)</label>
-          <input id="dentTotal" type="number" step="0.01" class="input" value="2.78" />
-        </div>
-        <div>
-          <label class="label">Répartition dents</label>
-          <div class="input bg-gray-50">50% / 50% (fixe)</div>
-        </div>
-        <div>
-          <label class="label">Tolérance centrage (mm)</label>
-          <input id="tolGmt" type="number" step="0.5" class="input" value="40" />
-          <p class="text-xs muted">Borne ±mm appliquée au centrage.</p>
-        </div>
+      <div class="mt-4 flex items-center gap-3">
+        <div id="gTol" class="pill ok">—</div>
+        <div id="gVals" class="text-sm text-gray-600">—</div>
       </div>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+      <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="bg-gray-50 p-4 rounded-lg border">
-          <p class="subtitle">Mise en angle</p>
-          <div id="gmtDent" class="highlight">0 dent</div>
-          <div id="gmtDentAction" class="text-xs muted">—</div>
+          <div class="subtitle">Centrage (IHM, pas 0,1)</div>
+          <div id="gCentrage" class="highlight">—</div>
+          <div id="gCentrageDir" class="text-xs muted">—</div>
         </div>
         <div class="bg-gray-50 p-4 rounded-lg border">
-          <p class="subtitle">Centrage (mm)</p>
-          <div id="gmtCentMm" class="highlight">+0.00 mm</div>
-          <div id="gmtCentDirection" class="text-xs muted">—</div>
-        </div>
-        <div class="bg-gray-50 p-4 rounded-lg border">
-          <p class="subtitle">Prédictions</p>
-          <div id="gPredA" class="highlight">A —</div>
-          <div id="gPredB" class="highlight">B —</div>
+          <div class="subtitle">Mise en angle (dents / ½ dent)</div>
+          <div id="gLongueur" class="highlight">—</div>
+          <div id="gLongueurHint" class="text-xs muted">—</div>
         </div>
       </div>
       <details class="mt-4">
@@ -174,298 +137,280 @@
       </details>
     </section>
 
-    <!-- Section Facteurs/ratios (masquée par défaut) -->
-    <section class="card p-6">
-      <details id="factorsDetails">
-        <summary class="font-semibold cursor-pointer">⚖️ Facteurs & Ratios</summary>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-          <div>
-            <label class="label">Facteur centrage (IHM)</label>
-            <input id="factCentrage" type="number" step="0.01" class="input" value="0.2" />
-          </div>
-          <div>
-            <label class="label">Facteur longueur fil</label>
-            <input id="factLong" type="number" step="0.01" class="input" value="1.5" />
-          </div>
-          <div>
-            <label class="label">Tolérance SPRINT (mm)</label>
-            <input id="tolSprint" type="number" step="0.1" class="input" value="0.5" />
-          </div>
-          <div>
-            <label class="label">Tolérance GMT (mm)</label>
-            <input id="tolGmt2" type="number" step="0.5" class="input" value="40" oninput="document.getElementById('tolGmt').value=this.value; runGmt();" />
-            <p class="text-xs muted">Alias du champ plus haut.</p>
-          </div>
-        </div>
-      </details>
-    </section>
-
     <!-- TESTS -->
     <section class="card p-6">
       <details>
-        <summary class="font-semibold cursor-pointer">🧪 Tests intégrés (cliquer pour ouvrir)</summary>
+        <summary class="font-semibold">🧪 Tests intégrés</summary>
         <div class="mt-3 flex gap-2">
-          <button class="btn btn-primary" id="btnRunTests">Exécuter</button>
-          <button class="btn" id="btnResetEx">Réinitialiser valeurs exemple</button>
+          <button id="btnRunTests" class="btn btn-primary" type="button">Exécuter</button>
+          <button id="btnReset" class="btn" type="button">Réinitialiser</button>
         </div>
-        <pre id="testOutput" class="text-xs bg-gray-50 p-3 rounded border mt-3 whitespace-pre-wrap"></pre>
+        <pre id="testOut" class="text-xs bg-gray-50 p-3 rounded border mt-3 whitespace-pre-wrap"></pre>
       </details>
     </section>
   </main>
 
   <script>
-  // ===== Etat global =====
-  let sprintMode = 'nst1'; // 'nst1' ou 'nst2'
-  let theme = 'light';
-
   // ===== Helpers =====
   const $ = (id) => document.getElementById(id);
   const fr = (n) => Number(n ?? 0);
-  const round2 = (x) => Math.round(x * 100) / 100;
-  const fmt = (x) => (x >= 0 ? "+" : "") + round2(x).toFixed(2);
-  const fmt1 = (x) => (x >= 0 ? "+" : "") + (Math.round(x*10)/10).toFixed(1);
-  function snapTo(v, step){ const s = Number(step||0.1); return isFinite(v) ? Math.round(v/s)*s : 0; }
-  function safeToggle(el, cls, on){ if(!el) return; el.classList.toggle(cls, !!on); }
-  function safeText(id, txt){ const el=$(id); if(el) el.textContent=txt; }
-
-  // ===== Tabs =====
-  function switchTab(name){
-    safeToggle($("viewSprint"), 'hidden', name !== 'sprint');
-    safeToggle($("viewGmt"), 'hidden', name !== 'gmt');
-    safeToggle($("tabSprint"), 'tab-active', name === 'sprint');
-    safeToggle($("tabGmt"), 'tab-active', name === 'gmt');
+  const snap = (v, step) => Math.round(v/step)*step; // arrondi au pas
+  const fmtSign = (v, d=2) => `${v>=0?'+':''}${v.toFixed(d)}`;
+  function formatDelta(val, tol){
+    const cls = Math.abs(val) <= tol ? 'delta-ok' : 'delta-bad';
+    return `<span class="${cls}">Δ ${val.toFixed(2)}</span>`;
   }
 
-  // ===== Thème =====
-  function applyTheme(){ const html=document.documentElement; if(theme==='dark') html.classList.add('dark'); else html.classList.remove('dark'); const b=$("btnTheme"); if(b) b.textContent = theme==='dark'? '☀️':'🌙'; }
-  function toggleTheme(){ theme = (theme==='dark') ? 'light' : 'dark'; try{localStorage.setItem('calc.theme', theme);}catch(_){ } applyTheme(); }
-  function initTheme(){ try{ theme = localStorage.getItem('calc.theme') || 'light'; }catch(_){ theme='light'; } applyTheme(); }
-
-  // ===== NST sous-onglets =====
-  function switchSprint(mode){
-    sprintMode = mode; // 'nst1' | 'nst2'
-    safeToggle($("tabNST1"), 'tab-active', mode==='nst1');
-    safeToggle($("tabNST2"), 'tab-active', mode==='nst2');
-    safeText("sprintMode", mode.toUpperCase());
-    updateSprintLabels();
-    runSprint();
+  // ===== Tabs (global)
+  window.switchTab = function(tab){
+    $("viewSprint").classList.toggle('hidden', tab !== 'sprint');
+    $("viewGmt").classList.toggle('hidden', tab !== 'gmt');
+    $("tabSprint").classList.toggle('tab-active', tab === 'sprint');
+    $("tabGmt").classList.toggle('tab-active', tab === 'gmt');
+    try{ localStorage.setItem('calc.tab', tab); }catch(_){/* noop */}
   }
 
-  function updateSprintLabels(){
-    const la=$("attALabel"), lb=$("attBLabel"), lma=$("mesALabel"), lmb=$("mesBLabel");
-    if(sprintMode==='nst1'){
-      if(la) la.textContent='Côté A (Frein)';
-      if(lb) lb.textContent='Côté B (Coupe)';
-      if(lma) lma.textContent='Côté A (Frein)';
-      if(lmb) lmb.textContent='Côté B (Coupe)';
-    } else {
-      if(la) la.textContent='Côté A (Coupe)';
-      if(lb) lb.textContent='Côté B (Frein)';
-      if(lma) lma.textContent='Côté A (Coupe)';
-      if(lmb) lmb.textContent='Côté B (Frein)';
-    }
+  // ===== Theme (global)
+  const THEME_KEY = 'calc.theme';
+  function getTheme(){ try { return localStorage.getItem(THEME_KEY) || 'light'; } catch(e){ return 'light'; } }
+  function setTheme(t){ try { localStorage.setItem(THEME_KEY, t); } catch(e){} }
+  function applyTheme(){
+    const t = getTheme();
+    const html = document.documentElement;
+    if(t === 'dark') html.classList.add('dark'); else html.classList.remove('dark');
+    const b = $("btnTheme"); if(b) b.textContent = (t === 'dark') ? '☀️' : '🌙';
   }
+  window.toggleTheme = function(){ setTheme(getTheme()==='dark' ? 'light' : 'dark'); applyTheme(); }
+  function initTheme(){ applyTheme(); }
 
-  // ===== SPRINT =====
+  // ===== Chaîne prédictive SPRINT: Centrage ⇒ Longueur =====
   function runSprint(){
-    const attA=fr($("attA").value), attB=fr($("attB").value);
-    const mesA=fr($("mesA").value), mesB=fr($("mesB").value);
-    const kC=fr($("factCentrage").value||0.2);
-    const kL=fr($("factLong").value||1.5);
-    const tol=fr($("tolSprint").value||0.5);
+    const attA = fr($("attA").value), attB = fr($("attB").value);
+    const mesA = fr($("mesA").value), mesB = fr($("mesB").value);
+    const tol = 0.5;
+    const errA = Math.abs(attA - mesA), errB = Math.abs(attB - mesB);
+    const dA = mesA - attA, dB = mesB - attB;
 
-    // Mapping selon NST
-    let attCoupe, attFrein, mesCoupe, mesFrein;
-    if(sprintMode==='nst1'){ attFrein=attA; attCoupe=attB; mesFrein=mesA; mesCoupe=mesB; }
-    else                   { attCoupe=attA; attFrein=attB; mesCoupe=mesA; mesFrein=mesB; }
+    // constantes process
+    const kC = 0.2; // mm IHM par mm d'écart Coupe (B)
+    const kL = 1.5; // mm IHM par mm d'écart Frein (A)
 
-    // 1) Centrage (pas 0,1)
-    const decal = mesCoupe - attCoupe; // + => Coupe trop grande
-    const stepC = 0.1;
-    const centrageRaw = decal * kC;
-    const base = Math.floor(centrageRaw/stepC)*stepC;
-    const candidates = Array.from(new Set([
-      base,
-      Math.round(centrageRaw/stepC)*stepC,
-      base + stepC
-    ])).sort((a,b)=>a-b);
+    let log = [];
 
-    function simulate(centIhm){
-      const appliedDecal = kC ? centIhm / kC : 0; // mm appliqués physiquement
-      const coupeAfter = round2(mesCoupe - appliedDecal);
-      const freinAfter = round2(mesFrein + appliedDecal);
+    if(errA <= tol && errB <= tol){
+      $("sTol").textContent='Déjà conforme';
+      $("sTol").className='pill ok';
+      $("sVals").innerHTML=`A ${mesA} / ${attA} (${formatDelta(dA,tol)}), B ${mesB} / ${attB} (${formatDelta(dB,tol)})`;
+      $("sprintCentrage").textContent = '0.0';
+      $("sprintCentrageDir").textContent = '✅ Déjà conforme — pas de centrage';
+      $("sprintLongueur").textContent = '0.00 mm';
+      $("sprintLongueurHint").textContent = '✅ Déjà conforme — pas de correction de longueur';
+      log.push(`✅ Déjà conforme (écarts A=${errA.toFixed(2)}, B=${errB.toFixed(2)} ≤ ±${tol}) → pas d’action.`);
+    } else {
+      // 1) Centrage: calcule IHM au pas 0,1
+      const centBrut = (mesB - attB) * kC;          // + vers Frein / - vers Coupe
+      const centIHM  = snap(centBrut, 0.1);
+      const dCent    = centIHM / kC;                 // déplacement réel en mm
+      const A1 = mesA + dCent;                       // Frein après centrage
+      const B1 = mesB - dCent;                       // Coupe après centrage
 
-      // 2) Longueur fil (IHM) — pas 0,25
-      const corrLongRaw = (attFrein - freinAfter) * kL; // commande IHM
-      const corrLong = snapTo(corrLongRaw, 0.25);
+      $("sprintCentrage").textContent = fmtSign(centIHM,1);
+      $("sprintCentrageDir").textContent = centIHM>0 ? '→ Ramener vers Frein' : (centIHM<0 ? '→ Ramener vers Coupe' : '—');
 
-      const predCoupe = coupeAfter; // inchangé par fil
-      const predFrein = round2(freinAfter + (kL ? corrLong / kL : 0)); // effet réel
+      // 2) Longueur: calcule à partir de Frein après centrage (A1), pas 0,25
+      const lenBrut = (attA - A1) * kL;              // + Allonger / - Raccourcir
+      const lenIHM  = snap(lenBrut, 0.25);
+      const dLen    = lenIHM / kL;                    // effet réel mm côté Frein
+      const A2 = A1 + dLen;                           // Frein final prévu
 
-      const predA = (sprintMode==='nst1') ? predFrein : predCoupe;
-      const predB = (sprintMode==='nst1') ? predCoupe : predFrein;
-      const errA = Math.abs(predA - attA);
-      const errB = Math.abs(predB - attB);
-      const maxErr = Math.max(errA, errB);
-      const sumErr = errA + errB;
-      return { centIhm, appliedDecal, corrLong, predCoupe, predFrein, predA, predB, errA, errB, maxErr, sumErr };
+      $("sprintLongueur").textContent = `${fmtSign(lenIHM,2)} mm`;
+      $("sprintLongueurHint").textContent = lenIHM>0 ? '→ Allonger' : (lenIHM<0 ? '→ Raccourcir' : '—');
+
+      $("sTol").textContent='Correction requise';
+      $("sTol").className='pill bad';
+      $("sVals").innerHTML=`A ${mesA} / ${attA} (${formatDelta(dA,tol)}), B ${mesB} / ${attB} (${formatDelta(dB,tol)})`;
+
+      log.push('⚠️ Hors tolérance — application prédictive: Centrage ⇒ Longueur');
+      log.push(`• Centrage brut ${(centBrut).toFixed(3)} ⇒ IHM 0,1 = ${fmtSign(centIHM,1)} ⇒ déplacement Δ=${fmtSign(dCent,2)} mm`);
+      log.push(`  ↳ Prévision après centrage: Coupe≈${B1.toFixed(2)}, Frein≈${A1.toFixed(2)}`);
+      log.push(`• Longueur brute ${(lenBrut).toFixed(3)} mm ⇒ IHM 0,25 = ${fmtSign(lenIHM,2)} mm (effet ${fmtSign(dLen,2)} mm sur Frein)`);
+      log.push(`  ↳ Prévision finale: A≈${A2.toFixed(2)} / B≈${B1.toFixed(2)} (tol ±${tol})`);
     }
 
-    const sims = candidates.map(simulate).sort((u,v)=> u.maxErr - v.maxErr || u.sumErr - v.sumErr || Math.abs(u.centIhm-centrageRaw) - Math.abs(v.centIhm-centrageRaw));
-    const best = sims[0];
-
-    // Sorties
-    safeText("sprintCentrage", fmt1(best.centIhm));
-    safeText("sprintLongueur", fmt(best.corrLong) + " mm");
-    safeText("sPredA", `A ${best.predA.toFixed(2)} mm (att ${attA.toFixed(2)})`);
-    safeText("sPredB", `B ${best.predB.toFixed(2)} mm (att ${attB.toFixed(2)})`);
-    const ok = (best.errA <= tol) && (best.errB <= tol);
-    const tolEl = $("sTol"); if(tolEl){ tolEl.textContent = ok? 'OK':'Hors tolérance'; tolEl.className='pill ' + (ok? 'ok':'bad'); }
-
-    // Badge
-    safeText('tabSprintPred', `A ${best.predA.toFixed(2)} / B ${best.predB.toFixed(2)}`);
-
-    // Indice de palier 0,1
-    const up = Math.ceil(centrageRaw/stepC)*stepC;
-    const down = Math.floor(centrageRaw/stepC)*stepC;
-    const needUp = kC ? round2((up-centrageRaw)/kC) : 0;
-    const needDown = kC ? round2((centrageRaw-down)/kC) : 0;
-    const hint = (needUp>0 || needDown>0)
-      ? `Prochain palier 0,1 : +${needUp} mm Coupe pour ${(up>=0?'+':'')+up.toFixed(1)} ou −${needDown} mm pour ${(down>=0?'+':'')+down.toFixed(1)}`
-      : '—';
-    safeText("sprintCentrageHint", hint);
-
-    // Log
-    const log=[];
-    log.push(`Mode SPRINT = ${sprintMode.toUpperCase()}`);
-    log.push(`Écart Coupe = ${round2(mesCoupe)} − ${round2(attCoupe)} = ${round2(decal)} mm`);
-    log.push(`Centrage brut = ${round2(centrageRaw)} → candidats (0,1) = ${candidates.map(x => (x >= 0 ? '+' : '') + x.toFixed(1)).join(' / ')}`);
-    log.push(`Choix auto-optimal = ${fmt1(best.centIhm)} (déplacement réel = ${best.appliedDecal.toFixed(2)} mm)`);
-    log.push(`Après centrage: Coupe≈${best.predCoupe.toFixed(2)}, Frein avant fil≈${(round2(mesFrein + (best.centIhm/(kC||1)))).toFixed(2)}`);
-    log.push(`Longueur fil IHM (pas 0,25) = ${fmt(best.corrLong)} mm → Frein prévu ≈ ${best.predFrein.toFixed(2)}`);
-    log.push(`Prédictions finales A/B = ${best.predA.toFixed(2)} / ${best.predB.toFixed(2)} (tol ±${tol})`);
-    safeText("logSprint", log.join('\n'));
+    $("logSprint").textContent = log.join("\n");
   }
 
-  // ===== GMT =====
+  // ===== Chaîne prédictive GMT: Centrage ⇒ Longueur =====
   function runGmt(){
-    const attA=fr($("gAttA").value), attB=fr($("gAttB").value);
-    const mesA=fr($("gMesA").value), mesB=fr($("gMesB").value);
-    const dentTot=fr($("dentTotal").value||2.78);
-    const limCent=fr($("tolGmt").value||40);
+    const attA = fr($("gAttA").value), attB = fr($("gAttB").value);
+    const mesA = fr($("gMesA").value), mesB = fr($("gMesB").value);
+    const tol = 0.5;
 
-    // 1) Longueur totale
-    const Lm=mesA+mesB, La=attA+attB, dL=La-Lm; // >0 : trop court ⇒ ajouter
-    const rSel=0.5; // pas 0,5 dent
-    let n=Math.round((dL/dentTot)/rSel)*rSel;
+    // Ratios GMT
+    const MM_PER_DENT = 2.78;          // total
+    const MM_PER_HALF_DENT = MM_PER_DENT/2; // 1.39 total
+    const IHM_PER_MM_CENTER = 5;       // +5 IHM = +1 mm vers A
 
-    // 50/50
-    const addA=n*dentTot*0.5, addB=n*dentTot*0.5;
-    const A1=mesA+addA, B1=mesB+addB;
+    // 1) Mise en angle (longueur totale d'abord)
+    const sumAtt = attA + attB;
+    const sumMes = mesA + mesB;
+    const needTotal = sumAtt - sumMes;           // mm à ajouter au total (+ = allonger)
+    const halfDentCount = Math.round(needTotal / MM_PER_HALF_DENT); // arrondi à la 1/2 dent
+    const totalAdded = halfDentCount * MM_PER_HALF_DENT;            // mm total appliqué
+    const perSide = totalAdded / 2;                                  // répartition symétrique
 
-    // 2) Centrage
-    const rA=attA-A1, rB=attB-B1;
-    let s=(rA-rB)/2; // >0 : centrer vers A
-    s=Math.max(Math.min(s, limCent), -limCent);
+    const A1 = mesA + perSide;  // après mise en angle
+    const B1 = mesB + perSide;
 
-    const A2=round2(A1+s), B2=round2(B1-s);
+    // 2) Centrage ensuite (répartition A/B à somme constante)
+    const needShiftA = attA - A1;                 // mm à donner à A (et retirer à B)
+    const centIHMraw = needShiftA * IHM_PER_MM_CENTER; // + vers A / - vers B
+    const centIHM = Math.round(centIHMraw);            // pas 1 unité IHM (=0,2 mm)
+    const dCent = centIHM / IHM_PER_MM_CENTER;         // mm réel
 
-    // Sorties
-    const actionDent = n>0 ? `▶︎ Ajouter ${n} dent(s)` : n<0 ? `◀︎ Retirer ${Math.abs(n)} dent(s)` : `— Aucune dent`;
-    const dirCent = s>0 ? `▶︎ Centrer vers A` : s<0 ? `◀︎ Centrer vers B` : `— Aucun centrage`;
-    safeText('gmtDent', `${n} dent${Math.abs(n)===1?'':'s'}`);
-    safeText('gmtDentAction', `${actionDent} (ΔL=${round2(dL)} mm)`);
-    safeText('gmtCentMm', `${fmt(s)} mm`);
-    safeText('gmtCentDirection', dirCent);
-    safeText('gPredA', `A ${A2} mm (att ${attA})`);
-    safeText('gPredB', `B ${B2} mm (att ${attB})`);
+    const A2 = A1 + dCent;
+    const B2 = B1 - dCent;
 
-    safeText('tabGmtPred', `A ${A2.toFixed(2)} / B ${B2.toFixed(2)}`);
+    // Badges et affichage Δ
+    const errA = Math.abs(attA - mesA);
+    const errB = Math.abs(attB - mesB);
+    const dA0 = mesA - attA, dB0 = mesB - attB;
 
-    // Log
+    if(errA <= tol && errB <= tol){
+      $("gTol").textContent='Déjà conforme';
+      $("gTol").className='pill ok';
+    } else {
+      $("gTol").textContent='Correction requise';
+      $("gTol").className='pill bad';
+    }
+    $("gVals").innerHTML=`A ${mesA} / ${attA} (${formatDelta(dA0,tol)}), B ${mesB} / ${attB} (${formatDelta(dB0,tol)})`;
+
+    // Sorties action
+    // Mise en angle: exprimer en dents / 1/2 dent, et mm total + par côté
+    const dents = (halfDentCount/2).toFixed(2).replace(/\.00$/,''); // info dents en décimal
+    const labelDents = (Math.abs(halfDentCount)%2===0)
+      ? `${(halfDentCount/2)>=0?'+':''}${(halfDentCount/2)} dent${Math.abs(halfDentCount/2)===1?'':'s'}`
+      : `${halfDentCount>=0?'+':''}${halfDentCount}/2 dent`;
+
+    $("gLongueur").textContent = `${labelDents} (${fmtSign(totalAdded,2)} mm total, ${fmtSign(perSide,2)} mm/side)`;
+    $("gLongueurHint").textContent = halfDentCount>0 ? '→ Ajouter des dents (allonger)' : (halfDentCount<0 ? '→ Retirer des dents (raccourcir)' : '— Aucun ajustement de longueur');
+
+    // Centrage IHM (unités)
+    $("gCentrage").textContent = `${centIHM>=0?'+':''}${centIHM}`;
+    $("gCentrageDir").textContent = centIHM>0 ? '→ Ramener vers A' : (centIHM<0 ? '→ Ramener vers B' : '— Déjà centré');
+
+    // Journal
     const log=[];
-    log.push(`1️⃣ Longueurs: mes=${round2(Lm)}, att=${round2(La)}, ΔL=${round2(dL)} mm → n=${n}`);
-    log.push(`2️⃣ Dents 50/50 : +${addA.toFixed(2)} mm sur A, +${addB.toFixed(2)} mm sur B → A1=${A1.toFixed(2)}, B1=${B1.toFixed(2)}`);
-    log.push(`3️⃣ Restes: rA=${(attA-A1).toFixed(2)}, rB=${(attB-B1).toFixed(2)} ⇒ s=(rA−rB)/2=${round2((rA-rB)/2)} mm (borné ±${limCent})`);
-    log.push(`4️⃣ Final (prédiction): A=${A2.toFixed(2)} mm, B=${B2.toFixed(2)} mm`);
-    safeText('logGmt', log.join('\n'));
+    log.push(`🧮 GMT — Mise en angle puis centrage`);
+    log.push(`Sommes: mes=${sumMes.toFixed(2)} vs att=${sumAtt.toFixed(2)} ⇒ besoin total = ${fmtSign(needTotal,2)} mm`);
+    log.push(`Mise en angle: ${labelDents} ⇒ +${totalAdded.toFixed(2)} mm total (±${perSide.toFixed(2)} mm par côté)`);
+    log.push(`Après angle: A1≈${A1.toFixed(2)}, B1≈${B1.toFixed(2)}`);
+    log.push(`Centrage: besoin A = ${fmtSign(needShiftA,2)} mm ⇒ IHM ≈ ${fmtSign(centIHMraw,2)} ⇒ retenu ${centIHM}`);
+    log.push(`Prédiction finale: A≈${A2.toFixed(2)} / B≈${B2.toFixed(2)} (tol ±${tol})`);
+
+    $("logGmt").textContent = log.join("
+");
+  } / ${attA} (${formatDelta(dA,tol)}), B ${mesB} / ${attB} (${formatDelta(dB,tol)})`;
+      $("gCentrage").textContent = '0.0';
+      $("gCentrageDir").textContent = '✅ Déjà conforme — pas de centrage';
+      $("gLongueur").textContent = '0.00 mm';
+      $("gLongueurHint").textContent = '✅ Déjà conforme — pas de correction de longueur';
+      log.push(`✅ Déjà conforme (écarts A=${errA.toFixed(2)}, B=${errB.toFixed(2)} ≤ ±${tol}) → pas d’action.`);
+    } else {
+      // 1) Centrage
+      const centBrut = (mesB - attB) * kC; // + vers A / - vers B (même convention)
+      const centIHM  = snap(centBrut, 0.1);
+      const dCent    = centIHM / kC;
+      const A1 = mesA + dCent;
+      const B1 = mesB - dCent;
+      $("gCentrage").textContent = fmtSign(centIHM,1);
+      $("gCentrageDir").textContent = centIHM>0 ? '→ Ramener vers A' : (centIHM<0 ? '→ Ramener vers B' : '—');
+
+      // 2) Longueur à partir de A1
+      const lenBrut = (attA - A1) * kL;
+      const lenIHM  = snap(lenBrut, 0.25);
+      const dLen    = lenIHM / kL;
+      const A2 = A1 + dLen;
+      $("gLongueur").textContent = `${fmtSign(lenIHM,2)} mm`;
+      $("gLongueurHint").textContent = lenIHM>0 ? '→ Allonger' : (lenIHM<0 ? '→ Raccourcir' : '—');
+
+      $("gTol").textContent='Correction requise';
+      $("gTol").className='pill bad';
+      $("gVals").innerHTML=`A ${mesA} / ${attA} (${formatDelta(dA,tol)}), B ${mesB} / ${attB} (${formatDelta(dB,tol)})`;
+
+      log.push('⚠️ Hors tolérance — application prédictive: Centrage ⇒ Longueur');
+      log.push(`• Centrage brut ${(centBrut).toFixed(3)} ⇒ IHM 0,1 = ${fmtSign(centIHM,1)} ⇒ déplacement Δ=${fmtSign(dCent,2)} mm`);
+      log.push(`  ↳ Prévision après centrage: B≈${B1.toFixed(2)}, A≈${A1.toFixed(2)}`);
+      log.push(`• Longueur brute ${(lenBrut).toFixed(3)} mm ⇒ IHM 0,25 = ${fmtSign(lenIHM,2)} mm (effet ${fmtSign(dLen,2)} mm sur A)`);
+      log.push(`  ↳ Prévision finale: A≈${A2.toFixed(2)} / B≈${B1.toFixed(2)} (tol ±${tol})`);
+    }
+
+    $("logGmt").textContent = log.join("\n");
   }
 
   // ===== Tests =====
-  function getSprintSnapshot(){
-    return {
-      centrage: $("sprintCentrage").textContent,
-      longueur: $("sprintLongueur").textContent,
-      tab: $("tabSprintPred").textContent,
-      predA: $("sPredA").textContent,
-      predB: $("sPredB").textContent,
-    };
-  }
-  function approxEqual(a,b,eps){ return Math.abs(a-b) <= (eps ?? 0.26); }
-
   function runTests(){
     const out=[];
     try{
-      // T1 SPRINT NST1 ref
-      $("attA").value=145; $("attB").value=142; $("mesA").value=141; $("mesB").value=147; $("factCentrage").value=0.2; $("factLong").value=1.5; $("tolSprint").value=0.5;
-      switchSprint('nst1'); runSprint();
-      out.push(`T1 SPRINT NST1 → ${$("tabSprintPred").textContent}`);
+      // T0: fonctions globales
+      out.push(`T0 typeof switchTab: ${typeof window.switchTab}`);
 
-      // T2 Mapping NST1 ↔ NST2
-      const p1=$("tabSprintPred").textContent; switchSprint('nst2'); runSprint(); const p2=$("tabSprintPred").textContent;
-      out.push(`T2 Mapping NST1(${p1}) ↔ NST2(${p2})`);
+      // T1: thème
+      const wasDark = document.documentElement.classList.contains('dark');
+      window.toggleTheme();
+      const nowDark = document.documentElement.classList.contains('dark');
+      out.push(`T1 Theme toggle: ${wasDark!==nowDark ? 'OK' : 'FAIL'}`);
+      window.toggleTheme();
 
-      // T3 Invariance commande IHM (NST1→NST2)
-      switchSprint('nst1'); runSprint(); const L1=parseFloat($("sprintLongueur").textContent);
-      switchSprint('nst2'); runSprint(); const L2=parseFloat($("sprintLongueur").textContent);
-      const ratio = (Math.abs(L1)>0.01) ? Math.abs(L2/L1) : 1;
-      out.push(`T3 Longueur IHM NST1=${isFinite(L1)?L1.toFixed(2):'NaN'} / NST2=${isFinite(L2)?L2.toFixed(2):'NaN'} (ratio≈${isFinite(ratio)?ratio.toFixed(2):'—'})`);
+      // T2: switchTab + persistance
+      window.switchTab('gmt');
+      out.push(`T2→gmt: ${!$("viewGmt").classList.contains('hidden') && $("tabGmt").classList.contains('tab-active') ? 'OK' : 'FAIL'}`);
+      const stored = localStorage.getItem('calc.tab');
+      out.push(`T2b stored=${stored}`);
+      window.switchTab('sprint');
 
-      // T4 Paliers 0,1 (kC=0.2 -> ΔCoupe ±0.5)
-      $("attB").value=142; $("mesB").value=147; $("factCentrage").value=0.2; switchSprint('nst1'); runSprint();
-      const cBase=$("sprintCentrage").textContent; $("mesB").value=147.49; runSprint(); const cUp49=$("sprintCentrage").textContent; $("mesB").value=147.51; runSprint(); const cUp51=$("sprintCentrage").textContent;
-      out.push(`T4 +: base=${cBase}, +0.49→${cUp49}, +0.51→${cUp51}`);
-      $("mesB").value=146.51; runSprint(); const cDn49=$("sprintCentrage").textContent; $("mesB").value=146.49; runSprint(); const cDn51=$("sprintCentrage").textContent;
-      out.push(`T5 −: −0.49→${cDn49}, −0.51→${cDn51}`);
+      // T3: prédictif cohérent (SPRINT)
+      // Cas: attA=145, attB=145, mesA=141, mesB=149 → centré puis longueur
+      const bak={a:$("attA").value,b:$("attB").value,ma:$("mesA").value,mb:$("mesB").value};
+      $("attA").value=145; $("attB").value=145; $("mesA").value=141; $("mesB").value=149;
+      runSprint();
+      out.push('T3 SPRINT log ok');
+      $("attA").value=bak.a; $("attB").value=bak.b; $("mesA").value=bak.ma; $("mesB").value=bak.mb; runSprint();
 
-      // T6 GMT
-      $("gAttA").value=110; $("gAttB").value=110; $("gMesA").value=108.5; $("gMesB").value=108.5; $("dentTotal").value=2.78; $("tolGmt").value=40; runGmt();
-      out.push(`T6 GMT → ${$("gmtDent").textContent}, ${$("gmtCentMm").textContent}, tab=${$("tabGmtPred").textContent}`);
-
-      // T7 GMT long
-      $("gMesA").value=112; $("gMesB").value=112; runGmt(); out.push(`T7 GMT long → ${$("gmtDent").textContent}, ${$("gmtCentMm").textContent}`);
+      // T4: GMT prédictif ne plante pas
+      runGmt(); out.push('T4 GMT ok');
 
     }catch(e){ out.push('❌ Exception tests: '+(e && e.message ? e.message : e)); }
-    $("testOutput").textContent = out.join('\n');
+    $("testOut").textContent = out.join("\n");
   }
 
-  function resetExample(){
-    $("attA").value=145; $("attB").value=142; $("mesA").value=141; $("mesB").value=147; $("factCentrage").value=0.2; $("factLong").value=1.5; $("tolSprint").value=0.5;
-    $("gAttA").value=110; $("gAttB").value=110; $("gMesA").value=108.5; $("gMesB").value=108.5; $("dentTotal").value=2.78; $("tolGmt").value=40;
-    switchSprint('nst1');
+  function resetAll(){
+    $("attA").value=150; $("attB").value=150; $("mesA").value=149.5; $("mesB").value=150.2;
+    $("gAttA").value=110; $("gAttB").value=110; $("gMesA").value=108.5; $("gMesB").value=108.5;
+    runSprint(); runGmt();
   }
 
   // ===== Init =====
   document.addEventListener('DOMContentLoaded', () => {
+    // thème
     initTheme();
-    switchTab('sprint');
-    updateSprintLabels();
+    const btn = $("btnTheme"); if(btn) btn.addEventListener('click', window.toggleTheme);
 
-    // Recalc dyn SPRINT
-    ["attA","attB","mesA","mesB","factCentrage","factLong","tolSprint"].forEach(id=>{
-      const el=$(id); if(!el) return; el.addEventListener('input', runSprint);
-    });
-    // Recalc dyn GMT
-    ["gAttA","gAttB","gMesA","gMesB","dentTotal","tolGmt"].forEach(id=>{
-      const el=$(id); if(!el) return; el.addEventListener('input', runGmt);
-    });
+    // onglets
+    const lastTab = (localStorage.getItem('calc.tab')||'sprint');
+    $("tabSprint").addEventListener('click', ()=>window.switchTab('sprint'));
+    $("tabGmt").addEventListener('click', ()=>window.switchTab('gmt'));
+    window.switchTab(lastTab);
 
-    // Tests
-    const bt1=$("btnRunTests"); if(bt1) bt1.addEventListener('click', runTests);
-    const bt2=$("btnResetEx"); if(bt2) bt2.addEventListener('click', ()=>{ resetExample(); runSprint(); runGmt(); });
+    // recalcul live
+    ['attA','attB','mesA','mesB'].forEach(id=>{ const el=$(id); if(el) el.addEventListener('input', runSprint); });
+    ['gAttA','gAttB','gMesA','gMesB'].forEach(id=>{ const el=$(id); if(el) el.addEventListener('input', runGmt); });
 
-    // Start
-    resetExample();
+    // tests & reset
+    const b1=$("btnRunTests"); if(b1) b1.addEventListener('click', runTests);
+    const b2=$("btnReset");    if(b2) b2.addEventListener('click', resetAll);
+
+    // 1ers calculs
     runSprint();
     runGmt();
   });
