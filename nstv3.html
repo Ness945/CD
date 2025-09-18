@@ -48,7 +48,7 @@
       <h1 class="text-2xl font-black">⚙️ Calculateur <span class="text-blue-600">SPRINT</span> & <span class="text-green-600">GMT</span></h1>
       <div class="flex items-center gap-2">
         <button id="btnTheme" class="btn" title="Basculer thème" type="button">🌙</button>
-        <span class="bg-gray-200 px-2 py-1 rounded text-xs">v7.1 — Fix syntaxe JS + GMT (angle→centrage) + tests</span>
+        <span class="bg-gray-200 px-2 py-1 rounded text-xs">v7.4 — Fix script tronqué + switch NST OK</span>
       </div>
     </header>
 
@@ -60,18 +60,26 @@
 
     <!-- SPRINT -->
     <section id="viewSprint" class="card p-6">
-      <h2 class="title">SPRINT (<span id="sprintMode">NST1</span>)</h2>
+      <h2 class="title flex items-center gap-3">SPRINT (<span id="sprintMode">NST1</span>)
+        <span class="ml-auto inline-flex items-center gap-2 text-xs font-semibold text-gray-500">
+          <span id="roleChip" class="pill bg-gray-200">A=Frein • B=Coupe</span>
+          <span class="inline-flex rounded-lg overflow-hidden border">
+            <button id="btnNST1" type="button" class="btn px-3 py-1 !rounded-none tab-active">NST1</button>
+            <button id="btnNST2" type="button" class="btn px-3 py-1 !rounded-none">NST2</button>
+          </span>
+        </span>
+      </h2>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="label">Attendu A (Frein)</label>
+          <label class="label" id="labelAttA">Attendu A (Frein)</label>
           <input id="attA" type="number" step="0.1" class="input" value="150" />
-          <label class="label">Attendu B (Coupe)</label>
+          <label class="label" id="labelAttB">Attendu B (Coupe)</label>
           <input id="attB" type="number" step="0.1" class="input" value="150" />
         </div>
         <div>
-          <label class="label">Mesuré A (Frein)</label>
+          <label class="label" id="labelMesA">Mesuré A (Frein)</label>
           <input id="mesA" type="number" step="0.1" class="input" value="149.5" />
-          <label class="label">Mesuré B (Coupe)</label>
+          <label class="label" id="labelMesB">Mesuré B (Coupe)</label>
           <input id="mesB" type="number" step="0.1" class="input" value="150.2" />
         </div>
       </div>
@@ -150,148 +158,134 @@
   </main>
 
   <script>
-  // ===== Helpers =====
+  // ===== Utils =====
   const $ = (id) => document.getElementById(id);
   const fr = (n) => Number(n ?? 0);
   const snap = (v, step) => Math.round(v/step)*step; // arrondi au pas
-  const fmtSign = (v, d=2) => `${v>=0?'+':''}${v.toFixed(d)}`;
-  function formatDelta(val, tol){
-    const cls = Math.abs(val) <= tol ? 'delta-ok' : 'delta-bad';
-    return `<span class="${cls}">Δ ${val.toFixed(2)}</span>`;
+  const fmtSign = (v,d=2) => `${v>=0?'+':''}${v.toFixed(d)}`;
+  function formatDelta(val,tol){const cls=Math.abs(val)<=tol?'delta-ok':'delta-bad';return `<span class="${cls}">Δ ${val.toFixed(2)}</span>`;}
+
+  // ===== Tabs =====
+  window.switchTab=function(tab){
+    $("viewSprint").classList.toggle('hidden',tab!=='sprint');
+    $("viewGmt").classList.toggle('hidden',tab!=='gmt');
+    $("tabSprint").classList.toggle('tab-active',tab==='sprint');
+    $("tabGmt").classList.toggle('tab-active',tab==='gmt');
+    try{localStorage.setItem('calc.tab',tab);}catch(_){}
   }
 
-  // ===== Tabs (global) =====
-  window.switchTab = function(tab){
-    $("viewSprint").classList.toggle('hidden', tab !== 'sprint');
-    $("viewGmt").classList.toggle('hidden', tab !== 'gmt');
-    $("tabSprint").classList.toggle('tab-active', tab === 'sprint');
-    $("tabGmt").classList.toggle('tab-active', tab === 'gmt');
-    try{ localStorage.setItem('calc.tab', tab); }catch(_){/* noop */}
-  }
+  // ===== Theme =====
+  const THEME_KEY='calc.theme';
+  function getTheme(){try{return localStorage.getItem(THEME_KEY)||'light';}catch(e){return'light';}}
+  function setTheme(t){try{localStorage.setItem(THEME_KEY,t);}catch(e){}}
+  function applyTheme(){const t=getTheme();document.documentElement.classList.toggle('dark',t==='dark');const b=$("btnTheme");if(b)b.textContent=(t==='dark')?'☀️':'🌙';}
+  window.toggleTheme=function(){setTheme(getTheme()==='dark'?'light':'dark');applyTheme();}
+  function initTheme(){applyTheme();}
 
-  // ===== Theme (global) =====
-  const THEME_KEY = 'calc.theme';
-  function getTheme(){ try { return localStorage.getItem(THEME_KEY) || 'light'; } catch(e){ return 'light'; } }
-  function setTheme(t){ try { localStorage.setItem(THEME_KEY, t); } catch(e){} }
-  function applyTheme(){
-    const t = getTheme();
-    document.documentElement.classList.toggle('dark', t==='dark');
-    const b = $("btnTheme"); if(b) b.textContent = (t === 'dark') ? '☀️' : '🌙';
-  }
-  window.toggleTheme = function(){ setTheme(getTheme()==='dark' ? 'light' : 'dark'); applyTheme(); }
-  function initTheme(){ applyTheme(); }
-
-  // ===== SPRINT: Centrage ⇒ Longueur =====
+  // ===== SPRINT: Centrage ⇒ Longueur (avec inversion NST1/NST2) =====
   function runSprint(){
-    const attA = fr($("attA").value), attB = fr($("attB").value);
-    const mesA = fr($("mesA").value), mesB = fr($("mesB").value);
-    const tol = 0.5;
-    const errA = Math.abs(attA - mesA), errB = Math.abs(attB - mesB);
-    const dA0 = mesA - attA, dB0 = mesB - attB;
+    const attA=fr($("attA").value),attB=fr($("attB").value);
+    const mesA=fr($("mesA").value),mesB=fr($("mesB").value);
+    const tol=0.5;
 
-    // constantes process
-    const kC = 0.2; // mm IHM par mm d'écart Coupe (B)
-    const kL = 1.5; // mm IHM par mm d'écart Frein (A)
+    const mode=window._sprintMode||'NST1';
+    const freinAtt=(mode==='NST1')?attA:attB;
+    const coupeAtt=(mode==='NST1')?attB:attA;
+    const freinMes=(mode==='NST1')?mesA:mesB;
+    const coupeMes=(mode==='NST1')?mesB:mesA;
 
-    let log = [];
+    const dA0=mesA-attA,dB0=mesB-attB;
+    const errA=Math.abs(dA0),errB=Math.abs(dB0);
 
-    if(errA <= tol && errB <= tol){
+    const kC=0.2; // IHM/mm pour centrage
+    const kL=1.5; // IHM/mm pour longueur (SPRINT)
+
+    const log=[];
+
+    if(errA<=tol && errB<=tol){
       $("sTol").textContent='Déjà conforme';
       $("sTol").className='pill ok';
       $("sVals").innerHTML=`A ${mesA} / ${attA} (${formatDelta(dA0,tol)}), B ${mesB} / ${attB} (${formatDelta(dB0,tol)})`;
-      $("sprintCentrage").textContent = '0.0';
-      $("sprintCentrageDir").textContent = '✅ Déjà conforme — pas de centrage';
-      $("sprintLongueur").textContent = '0.00 mm';
-      $("sprintLongueurHint").textContent = '✅ Déjà conforme — pas de correction de longueur';
-      log.push(`✅ Déjà conforme (écarts A=${errA.toFixed(2)}, B=${errB.toFixed(2)} ≤ ±${tol}) → pas d’action.`);
+      $("sprintCentrage").textContent='0.0';
+      $("sprintCentrageDir").textContent='✅ Déjà conforme — pas de centrage';
+      $("sprintLongueur").textContent='0.00 mm';
+      $("sprintLongueurHint").textContent='—';
+      log.push(`✅ Déjà conforme (mode ${mode})`);
     } else {
-      // 1) Centrage (pas 0,1)
-      const centBrut = (mesB - attB) * kC;          // + vers Frein / - vers Coupe
-      const centIHM  = snap(centBrut, 0.1);
-      const dCent    = centIHM / kC;                 // mm réels
-      const A1 = mesA + dCent;                       // Frein après centrage
-      const B1 = mesB - dCent;                       // Coupe après centrage
+      // 1) Centrage (basé sur l'écart Coupe), pas 0,1
+      const centBrut=(coupeMes-coupeAtt)*kC;  // + vers Frein / - vers Coupe
+      const centIHM=snap(centBrut,0.1);
+      const dCent=centIHM/kC;                 // mm réels
+      const A1=(mode==='NST1')?(mesA+dCent):(mesA-dCent);
+      const B1=(mode==='NST1')?(mesB-dCent):(mesB+dCent);
 
-      $("sprintCentrage").textContent = fmtSign(centIHM,1);
-      $("sprintCentrageDir").textContent = centIHM>0 ? '→ Ramener vers Frein' : (centIHM<0 ? '→ Ramener vers Coupe' : '—');
+      $("sprintCentrage").textContent=fmtSign(centIHM,1);
+      $("sprintCentrageDir").textContent=centIHM>0?'→ Ramener vers Frein':(centIHM<0?'→ Ramener vers Coupe':'—');
 
-      // 2) Longueur (pas 0,25) à partir de A1
-      const lenBrut = (attA - A1) * kL;              // + Allonger / - Raccourcir
-      const lenIHM  = snap(lenBrut, 0.25);
-      const dLen    = lenIHM / kL;                    // mm réels
-      const A2 = A1 + dLen;                           // Frein final prévu
+      // 2) Longueur (sur Frein après centrage), pas 0,25
+      const freinApres=(mode==='NST1')?A1:B1;
+      const lenBrut=(freinAtt-freinApres)*kL;
+      const lenIHM=snap(lenBrut,0.25);
+      const dLen=lenIHM/kL;
+      const A2=(mode==='NST1')?(A1+dLen):A1;
+      const B2=(mode==='NST1')?B1:(B1+dLen);
 
-      $("sprintLongueur").textContent = `${fmtSign(lenIHM,2)} mm`;
-      $("sprintLongueurHint").textContent = lenIHM>0 ? '→ Allonger' : (lenIHM<0 ? '→ Raccourcir' : '—');
+      $("sprintLongueur").textContent=`${fmtSign(lenIHM,2)} mm`;
+      $("sprintLongueurHint").textContent=lenIHM>0?'→ Allonger':(lenIHM<0?'→ Raccourcir':'—');
 
       $("sTol").textContent='Correction requise';
       $("sTol").className='pill bad';
       $("sVals").innerHTML=`A ${mesA} / ${attA} (${formatDelta(dA0,tol)}), B ${mesB} / ${attB} (${formatDelta(dB0,tol)})`;
 
-      log.push('⚠️ Hors tolérance — chaîne prédictive: Centrage ⇒ Longueur');
-      log.push(`• Centrage brut ${(centBrut).toFixed(3)} ⇒ IHM 0,1 = ${fmtSign(centIHM,1)} ⇒ Δ=${fmtSign(dCent,2)} mm`);
-      log.push(`  ↳ Après centrage: Coupe≈${B1.toFixed(2)}, Frein≈${A1.toFixed(2)}`);
-      log.push(`• Longueur brute ${(lenBrut).toFixed(3)} mm ⇒ IHM 0,25 = ${fmtSign(lenIHM,2)} mm (effet ${fmtSign(dLen,2)} mm)`);
-      log.push(`  ↳ Prédiction finale: A≈${A2.toFixed(2)} / B≈${B1.toFixed(2)} (tol ±${tol})`);
+      log.push(`⚠️ Mode ${mode}`);
+      log.push(`Centrage: brut ${centBrut.toFixed(3)} ⇒ IHM ${fmtSign(centIHM,1)} ⇒ Δ=${fmtSign(dCent,2)} mm`);
+      log.push(`Après centrage: A1=${A1.toFixed(2)}, B1=${B1.toFixed(2)}`);
+      log.push(`Longueur: brut ${lenBrut.toFixed(3)} ⇒ IHM ${fmtSign(lenIHM,2)} (effet ${fmtSign(dLen,2)} mm sur Frein)`);
+      log.push(`Final prévu: A≈${A2.toFixed(2)} / B≈${B2.toFixed(2)} (tol ±${tol})`);
     }
 
     $("logSprint").textContent = log.join("\n");
   }
 
-  // ===== GMT: Mise en angle (longueur totale) ⇒ Centrage =====
+  // ===== GMT: Mise en angle ⇒ Centrage =====
   function runGmt(){
-    const attA = fr($("gAttA").value), attB = fr($("gAttB").value);
-    const mesA = fr($("gMesA").value), mesB = fr($("gMesB").value);
-    const tol = 0.5;
+    const attA=fr($("gAttA").value), attB=fr($("gAttB").value);
+    const mesA=fr($("gMesA").value), mesB=fr($("gMesB").value);
+    const tol=0.5;
 
-    // Ratios GMT
-    const MM_PER_DENT = 2.78;                 // mm total par dent
-    const MM_PER_HALF_DENT = MM_PER_DENT/2;   // 1.39 mm total par 1/2 dent
-    const IHM_PER_MM_CENTER = 5;              // +5 IHM = +1 mm vers A (donc 1 IHM = 0,2 mm)
+    const MM_PER_DENT=2.78;               // mm total par dent
+    const HALF=MM_PER_DENT/2;             // 1.39 mm
+    const IHM_PER_MM_CENTER=5;            // +5 IHM = +1 mm vers A
 
-    // 1) Mise en angle (corrige la somme totale)
-    const sumAtt = attA + attB;
-    const sumMes = mesA + mesB;
-    const needTotal = sumAtt - sumMes;                             // mm à ajouter au total (+ = allonger)
-    const halfDentCount = Math.round(needTotal / MM_PER_HALF_DENT); // arrondi à la 1/2 dent
-    const totalAdded = halfDentCount * MM_PER_HALF_DENT;            // mm total appliqué
-    const perSide = totalAdded / 2;                                 // symétrique
+    // 1) Mise en angle — corrige la somme totale
+    const sumAtt=attA+attB, sumMes=mesA+mesB;
+    const needTotal=sumAtt-sumMes;                     // mm à ajouter au total
+    const halfDentCount=Math.round(needTotal/HALF);    // en 1/2 dent
+    const totalAdded=halfDentCount*HALF;               // mm total appliqué
+    const perSide=totalAdded/2;                        // répartition symétrique
 
-    const A1 = mesA + perSide;        // après angle
-    const B1 = mesB + perSide;
+    const A1=mesA+perSide, B1=mesB+perSide;
 
-    // 2) Centrage (répartition sans changer la somme)
-    const needShiftA = attA - A1;                         // mm à donner à A
-    const centIHMraw = needShiftA * IHM_PER_MM_CENTER;    // + vers A / - vers B
-    const centIHM = Math.round(centIHMraw);               // pas 1 IHM
-    const dCent = centIHM / IHM_PER_MM_CENTER;            // mm réels
+    // 2) Centrage — répartition sans changer la somme
+    const needShiftA=attA-A1;                          // mm à donner à A
+    const centIHMraw=needShiftA*IHM_PER_MM_CENTER;     // + vers A / - vers B
+    const centIHM=Math.round(centIHMraw);              // pas 1 IHM
+    const dCent=centIHM/IHM_PER_MM_CENTER;             // mm
 
-    const A2 = A1 + dCent;
-    const B2 = B1 - dCent;
+    const A2=A1+dCent, B2=B1-dCent;
 
-    // Badges et Δ (état initial)
-    const errA0 = Math.abs(attA - mesA);
-    const errB0 = Math.abs(attB - mesB);
-    const dA0 = mesA - attA, dB0 = mesB - attB;
-    if(errA0 <= tol && errB0 <= tol){
-      $("gTol").textContent='Déjà conforme';
-      $("gTol").className='pill ok';
-    } else {
-      $("gTol").textContent='Correction requise';
-      $("gTol").className='pill bad';
-    }
+    // Badges init
+    const dA0=mesA-attA, dB0=mesB-attB; const errA0=Math.abs(dA0), errB0=Math.abs(dB0);
+    if(errA0<=tol && errB0<=tol){ $("gTol").textContent='Déjà conforme'; $("gTol").className='pill ok'; }
+    else { $("gTol").textContent='Correction requise'; $("gTol").className='pill bad'; }
     $("gVals").innerHTML=`A ${mesA} / ${attA} (${formatDelta(dA0,tol)}), B ${mesB} / ${attB} (${formatDelta(dB0,tol)})`;
 
     // Sorties — Mise en angle
     let labelDents;
-    if(halfDentCount === 0){
-      labelDents = '0 dent';
-    } else if (halfDentCount % 2 === 0){
-      const dents = halfDentCount/2;
-      labelDents = `${dents>=0?'+':''}${dents} dent${Math.abs(dents)===1?'':'s'}`;
-    } else {
-      labelDents = `${halfDentCount>=0?'+':''}${halfDentCount}/2 dent`;
-    }
+    if(halfDentCount===0) labelDents='0 dent';
+    else if(halfDentCount%2===0){ const dents=halfDentCount/2; labelDents=`${dents>=0?'+':''}${dents} dent${Math.abs(dents)===1?'':'s'}`; }
+    else labelDents=`${halfDentCount>=0?'+':''}${halfDentCount}/2 dent`;
+
     $("gLongueur").textContent = `${labelDents} (${fmtSign(totalAdded,2)} mm total, ${fmtSign(perSide,2)} mm/side)`;
     $("gLongueurHint").textContent = halfDentCount>0 ? '→ Ajouter des dents (allonger)' : (halfDentCount<0 ? '→ Retirer des dents (raccourcir)' : '— Aucun ajustement de longueur');
 
@@ -303,7 +297,7 @@
     const log=[];
     log.push('🧮 GMT — Mise en angle (longueur totale) puis centrage');
     log.push(`Sommes: mes=${sumMes.toFixed(2)} vs att=${sumAtt.toFixed(2)} ⇒ besoin total = ${fmtSign(needTotal,2)} mm`);
-    log.push(`Mise en angle: ${labelDents} ⇒ ${fmtSign(totalAdded,2)} mm total (±${(perSide).toFixed(2)} mm par côté)`);
+    log.push(`Mise en angle: ${labelDents} ⇒ ${fmtSign(totalAdded,2)} mm total (±${perSide.toFixed(2)} mm par côté)`);
     log.push(`Après angle: A1≈${A1.toFixed(2)}, B1≈${B1.toFixed(2)}`);
     log.push(`Centrage: besoin A = ${fmtSign(needShiftA,2)} mm ⇒ IHM ≈ ${fmtSign(centIHMraw,2)} ⇒ retenu ${centIHM}`);
     log.push(`Prédiction finale: A≈${A2.toFixed(2)} / B≈${B2.toFixed(2)} (tol ±${tol})`);
@@ -314,39 +308,23 @@
   function runTests(){
     const out=[];
     try{
-      // T0: fonctions globales présentes
       out.push(`T0 typeof switchTab: ${typeof window.switchTab}`);
-
-      // T1: thème
-      const wasDark = document.documentElement.classList.contains('dark');
-      window.toggleTheme();
-      const nowDark = document.documentElement.classList.contains('dark');
-      out.push(`T1 Theme toggle: ${wasDark!==nowDark ? 'OK' : 'FAIL'}`);
-      window.toggleTheme();
-
-      // T2: switchTab + persistance
-      window.switchTab('gmt');
-      out.push(`T2→gmt: ${!$("viewGmt").classList.contains('hidden') && $("tabGmt").classList.contains('tab-active') ? 'OK' : 'FAIL'}`);
-      const stored = localStorage.getItem('calc.tab');
-      out.push(`T2b stored=${stored}`);
-      window.switchTab('sprint');
-
-      // T3: SPRINT prédictif — scénario de test
+      // Theme toggle
+      const wasDark=document.documentElement.classList.contains('dark'); window.toggleTheme(); const nowDark=document.documentElement.classList.contains('dark'); out.push(`T1 Theme: ${wasDark!==nowDark?'OK':'FAIL'}`); window.toggleTheme();
+      // Tabs
+      window.switchTab('gmt'); out.push(`T2 tabs→gmt: ${!$("viewGmt").classList.contains('hidden')?'OK':'FAIL'}`); window.switchTab('sprint');
+      // NST switch mapping
       const bak={a:$("attA").value,b:$("attB").value,ma:$("mesA").value,mb:$("mesB").value};
-      $("attA").value=145; $("attB").value=145; $("mesA").value=141; $("mesB").value=149;
-      runSprint();
-      out.push('T3 SPRINT: OK');
-      $("attA").value=bak.a; $("attB").value=bak.b; $("mesA").value=bak.ma; $("mesB").value=bak.mb; runSprint();
-
-      // T4: GMT prédictif — scénario de test
-      const gbak={a:$("gAttA").value,b:$("gAttB").value,ma:$("gMesA").value,mb:$("gMesB").value};
-      $("gAttA").value=110; $("gAttB").value=110; $("gMesA").value=108.5; $("gMesB").value=108.5;
-      runGmt();
-      out.push('T4 GMT: OK');
-      $("gAttA").value=gbak.a; $("gAttB").value=gbak.b; $("gMesA").value=gbak.ma; $("gMesB").value=gbak.mb; runGmt();
-
-    }catch(e){ out.push('❌ Exception tests: '+(e && e.message ? e.message : e)); }
-    $("testOut").textContent = out.join("\n");
+      $("attA").value=150; $("attB").value=150; $("mesA").value=150.5; $("mesB").value=150.0;
+      // NST1: Coupe=B, donc ΔCoupe≈0 → centrage≈0
+      setMode('NST1'); runSprint(); out.push(`T3 NST1 centrage=${$("sprintCentrage").textContent}`);
+      // NST2: Coupe=A, ΔCoupe=+0.5 → centrage≈+0.1
+      setMode('NST2'); runSprint(); out.push(`T3 NST2 centrage=${$("sprintCentrage").textContent}`);
+      // restore
+      $("attA").value=bak.a; $("attB").value=bak.b; $("mesA").value=bak.ma; $("mesB").value=bak.mb; setMode(localStorage.getItem('calc.sprintMode')||'NST1'); runSprint();
+      out.push('T4 OK');
+    }catch(e){ out.push('❌ Tests exception: '+(e&&e.message||e)); }
+    $("testOut").textContent=out.join("\n");
   }
 
   function resetAll(){
@@ -355,27 +333,53 @@
     runSprint(); runGmt();
   }
 
-  // ===== Init =====
-  document.addEventListener('DOMContentLoaded', () => {
-    // Thème
-    initTheme();
-    const btn = $("btnTheme"); if(btn) btn.addEventListener('click', window.toggleTheme);
+  // ===== Init & Mode wiring =====
+  function refreshModeUI(){
+    const mode=window._sprintMode||'NST1';
+    $("sprintMode").textContent=mode;
+    const b1=$("btnNST1"), b2=$("btnNST2"); if(b1&&b2){ b1.classList.toggle('tab-active',mode==='NST1'); b2.classList.toggle('tab-active',mode==='NST2'); }
+    if(mode==='NST1'){
+      $("labelAttA").textContent='Attendu A (Frein)';
+      $("labelAttB").textContent='Attendu B (Coupe)';
+      $("labelMesA").textContent='Mesuré A (Frein)';
+      $("labelMesB").textContent='Mesuré B (Coupe)';
+      $("roleChip").textContent='A=Frein • B=Coupe';
+    }else{
+      $("labelAttA").textContent='Attendu A (Coupe)';
+      $("labelAttB").textContent='Attendu B (Frein)';
+      $("labelMesA").textContent='Mesuré A (Coupe)';
+      $("labelMesB").textContent='Mesuré B (Frein)';
+      $("roleChip").textContent='A=Coupe • B=Frein';
+    }
+  }
 
-    // Onglets
-    const lastTab = (localStorage.getItem('calc.tab')||'sprint');
-    $("tabSprint").addEventListener('click', ()=>window.switchTab('sprint'));
-    $("tabGmt").addEventListener('click', ()=>window.switchTab('gmt'));
+  function setMode(m){ window._sprintMode=m; try{ localStorage.setItem('calc.sprintMode', m);}catch(_){} refreshModeUI(); runSprint(); }
+
+  document.addEventListener('DOMContentLoaded',()=>{
+    initTheme(); const btn=$("btnTheme"); if(btn) btn.addEventListener('click', window.toggleTheme);
+
+    // Mode NST persist
+    window._sprintMode = localStorage.getItem('calc.sprintMode') || 'NST1';
+    refreshModeUI();
+    const n1=$("btnNST1"), n2=$("btnNST2");
+    if(n1) n1.addEventListener('click', ()=>setMode('NST1'));
+    if(n2) n2.addEventListener('click', ()=>setMode('NST2'));
+
+    // Tabs
+    const lastTab=localStorage.getItem('calc.tab')||'sprint';
+    $("tabSprint").addEventListener('click',()=>window.switchTab('sprint'));
+    $("tabGmt").addEventListener('click',()=>window.switchTab('gmt'));
     window.switchTab(lastTab);
 
-    // Recalcul live
-    ['attA','attB','mesA','mesB'].forEach(id=>{ const el=$(id); if(el) el.addEventListener('input', runSprint); });
-    ['gAttA','gAttB','gMesA','gMesB'].forEach(id=>{ const el=$(id); if(el) el.addEventListener('input', runGmt); });
+    // Live recalc
+    ['attA','attB','mesA','mesB'].forEach(id=>{const el=$(id); if(el) el.addEventListener('input', runSprint);});
+    ['gAttA','gAttB','gMesA','gMesB'].forEach(id=>{const el=$(id); if(el) el.addEventListener('input', runGmt);});
 
     // Tests & reset
     const b1=$("btnRunTests"); if(b1) b1.addEventListener('click', runTests);
-    const b2=$("btnReset");    if(b2) b2.addEventListener('click', resetAll);
+    const b2=$("btnReset"); if(b2) b2.addEventListener('click', resetAll);
 
-    // 1ers calculs
+    // Initial calc
     runSprint();
     runGmt();
   });
