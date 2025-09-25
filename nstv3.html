@@ -2,29 +2,46 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Calculateur SPRINT & GMT</title>
+  <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f1f5f9" media="(prefers-color-scheme: light)">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
   <style>
+    /* Base */
+    :root { --ring:#60a5fa; }
+    html { -webkit-tap-highlight-color: transparent; }
     body { background:#f1f5f9; color:#0f172a; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Helvetica, Arial; }
     .card { background:#fff; border-radius:1rem; box-shadow:0 8px 28px rgba(2,6,23,.06); border:1px solid #e2e8f0; }
-    .btn { padding:.6rem 1rem; border-radius:.6rem; font-weight:700; transition:.2s; border:1px solid #e5e7eb; background:#f3f4f6; }
+    .btn { padding:.7rem 1rem; border-radius:.8rem; font-weight:700; transition:.2s; border:1px solid #e5e7eb; background:#f3f4f6; line-height:1; }
     .btn:hover { background:#e5e7eb; }
+    .btn:focus { outline: 3px solid var(--ring); outline-offset:2px; }
     .btn-primary { background:#2563eb; color:#fff; border-color:#2563eb; }
     .btn-primary:hover { background:#1d4ed8; }
-    .tab-active { background:#2563eb!important; color:#fff!important; }
-    .input { width:100%; padding:.55rem .75rem; border:1px solid #cbd5e1; border-radius:.55rem; }
-    .label { font-size:.85rem; font-weight:600; color:#475569; }
+    .tab-active { background:#2563eb!important; color:#fff!important; border-color:#2563eb!important; }
+    .input { width:100%; padding:.75rem .9rem; border:1px solid #cbd5e1; border-radius:.7rem; font-size:1rem; }
+    .input:focus { outline: 3px solid var(--ring); outline-offset:2px; border-color:#93c5fd; }
+    .label { font-size:.85rem; font-weight:600; color:#475569; display:block; margin:.25rem 0 .25rem; }
     .title { font-size:1.25rem; font-weight:800; color:#1e293b; }
     .subtitle { font-size:.95rem; color:#64748b; }
-    .highlight { font-size:1.25rem; font-weight:900; }
+    .highlight { font-size:1.3rem; font-weight:900; letter-spacing:.2px; }
     .muted { color:#64748b; }
     pre { white-space:pre-wrap; }
-    .pill { font-size:.75rem; font-weight:700; padding:.2rem .6rem; border-radius:9999px; }
+    .pill { font-size:.75rem; font-weight:700; padding:.25rem .6rem; border-radius:9999px; border:1px solid rgba(2,6,23,.06); }
     .ok { background:#dcfce7; color:#166534; }
     .bad { background:#fee2e2; color:#991b1b; }
     .delta-ok { color:#166534; font-weight:600; }
     .delta-bad { color:#991b1b; font-weight:600; }
+
+    /* Mobile: improve hit targets */
+    @media (max-width: 480px){
+      .btn { padding:.8rem 1rem; border-radius:1rem; }
+      .input { border-radius:1rem; }
+    }
+
+    /* Sticky header */
+    .app-header { position:sticky; top:0; z-index:30; backdrop-filter:saturate(180%) blur(8px); background:rgba(241,245,249,.7); }
+    .dark .app-header { background:rgba(11,18,32,.6); }
 
     /* Dark mode */
     .dark body { background:#0b1220; color:#e5e7eb; }
@@ -40,27 +57,36 @@
     .dark .border { border-color:#1f2a44; }
     .dark .ok { background:#134e4a; color:#a7f3d0; }
     .dark .bad { background:#7f1d1d; color:#fecaca; }
+
+    /* Hide number spinners (mobile-friendly) */
+    input[type=number]::-webkit-outer-spin-button,
+    input[type=number]::-webkit-inner-spin-button{ -webkit-appearance: none; margin: 0; }
+    input[type=number]{ -moz-appearance: textfield; }
   </style>
 </head>
-<body class="p-6">
+<body class="px-4 sm:px-6 lg:px-8 pb-8">
   <main class="max-w-6xl mx-auto space-y-6">
-    <header class="flex items-center justify-between pb-3 border-b border-gray-200">
-      <h1 class="text-2xl font-black">⚙️ Calculateur <span class="text-blue-600">SPRINT</span> & <span class="text-green-600">GMT</span></h1>
+    <header class="app-header flex items-center justify-between py-4 border-b border-gray-200">
+      <h1 class="text-xl sm:text-2xl font-black flex items-center gap-2">
+        <span class="text-2xl">⚙️</span> Calculateur <span class="text-blue-600">SPRINT</span> & <span class="text-green-600">GMT</span>
+      </h1>
       <div class="flex items-center gap-2">
-        <button id="btnTheme" class="btn" title="Basculer thème" type="button">🌙</button>
-        <span class="bg-gray-200 px-2 py-1 rounded text-xs">v7.4 — Fix script tronqué + switch NST OK</span>
+        <button id="btnTheme" class="btn" title="Basculer thème" type="button" aria-label="Basculer le thème">🌙</button>
+        <span class="bg-gray-200 px-2 py-1 rounded text-[11px] sm:text-xs">v7.5 — UI mobile-first</span>
       </div>
     </header>
 
     <!-- Onglets principaux -->
-    <div class="flex rounded-lg overflow-hidden border border-gray-200">
-      <button id="tabSprint" class="flex-1 btn tab-active" type="button">SPRINT</button>
-      <button id="tabGmt" class="flex-1 btn" type="button">GMT</button>
+    <div class="rounded-xl overflow-hidden border border-gray-200">
+      <div class="flex">
+        <button id="tabSprint" class="flex-1 btn tab-active !rounded-none text-sm sm:text-base" type="button" role="tab" aria-selected="true">SPRINT</button>
+        <button id="tabGmt" class="flex-1 btn !rounded-none text-sm sm:text-base" type="button" role="tab" aria-selected="false">GMT</button>
+      </div>
     </div>
 
     <!-- SPRINT -->
-    <section id="viewSprint" class="card p-6">
-      <h2 class="title flex items-center gap-3">SPRINT (<span id="sprintMode">NST1</span>)
+    <section id="viewSprint" class="card p-5 sm:p-6">
+      <h2 class="title flex items-center gap-3 mb-3">SPRINT (<span id="sprintMode">NST1</span>)
         <span class="ml-auto inline-flex items-center gap-2 text-xs font-semibold text-gray-500">
           <span id="roleChip" class="pill bg-gray-200">A=Frein • B=Coupe</span>
           <span class="inline-flex rounded-lg overflow-hidden border">
@@ -73,21 +99,21 @@
         <div>
           <label class="label" id="labelAttA">Attendu A (Frein)</label>
           <input id="attA" type="number" step="0.1" class="input" value="150" />
-          <label class="label" id="labelAttB">Attendu B (Coupe)</label>
+          <label class="label mt-3" id="labelAttB">Attendu B (Coupe)</label>
           <input id="attB" type="number" step="0.1" class="input" value="150" />
         </div>
         <div>
           <label class="label" id="labelMesA">Mesuré A (Frein)</label>
           <input id="mesA" type="number" step="0.1" class="input" value="149.5" />
-          <label class="label" id="labelMesB">Mesuré B (Coupe)</label>
+          <label class="label mt-3" id="labelMesB">Mesuré B (Coupe)</label>
           <input id="mesB" type="number" step="0.1" class="input" value="150.2" />
         </div>
       </div>
-      <div class="mt-4 flex items-center gap-3">
+      <div class="mt-4 flex flex-wrap items-center gap-3">
         <div id="sTol" class="pill ok">—</div>
         <div id="sVals" class="text-sm text-gray-600">—</div>
       </div>
-      <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="bg-gray-50 p-4 rounded-lg border">
           <div class="subtitle">Centrage (IHM, pas 0,1)</div>
           <div id="sprintCentrage" class="highlight">—</div>
@@ -100,33 +126,33 @@
         </div>
       </div>
       <details class="mt-4">
-        <summary class="font-semibold">Détail du calcul</summary>
-        <pre id="logSprint" class="text-xs bg-gray-50 p-3 rounded border"></pre>
+        <summary class="font-semibold cursor-pointer select-none">Détail du calcul</summary>
+        <pre id="logSprint" class="text-xs bg-gray-50 p-3 rounded border mt-2"></pre>
       </details>
     </section>
 
     <!-- GMT -->
-    <section id="viewGmt" class="card p-6 hidden">
+    <section id="viewGmt" class="card p-5 sm:p-6 hidden">
       <h2 class="title mb-4">GMT</h2>
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label class="label">Attendu A</label>
           <input id="gAttA" type="number" step="0.5" class="input" value="110" />
-          <label class="label">Attendu B</label>
+          <label class="label mt-3">Attendu B</label>
           <input id="gAttB" type="number" step="0.5" class="input" value="110" />
         </div>
         <div>
           <label class="label">Mesuré A</label>
           <input id="gMesA" type="number" step="0.5" class="input" value="108.5" />
-          <label class="label">Mesuré B</label>
+          <label class="label mt-3">Mesuré B</label>
           <input id="gMesB" type="number" step="0.5" class="input" value="108.5" />
         </div>
       </div>
-      <div class="mt-4 flex items-center gap-3">
+      <div class="mt-4 flex flex-wrap items-center gap-3">
         <div id="gTol" class="pill ok">—</div>
         <div id="gVals" class="text-sm text-gray-600">—</div>
       </div>
-      <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="bg-gray-50 p-4 rounded-lg border">
           <div class="subtitle">Centrage (IHM, 1 unité = 0,2 mm)</div>
           <div id="gCentrage" class="highlight">—</div>
@@ -139,16 +165,16 @@
         </div>
       </div>
       <details class="mt-4">
-        <summary class="font-semibold">Détail du calcul</summary>
-        <pre id="logGmt" class="text-xs bg-gray-50 p-3 rounded border"></pre>
+        <summary class="font-semibold cursor-pointer select-none">Détail du calcul</summary>
+        <pre id="logGmt" class="text-xs bg-gray-50 p-3 rounded border mt-2"></pre>
       </details>
     </section>
 
     <!-- TESTS -->
-    <section class="card p-6">
+    <section class="card p-5 sm:p-6">
       <details>
-        <summary class="font-semibold">🧪 Tests intégrés</summary>
-        <div class="mt-3 flex gap-2">
+        <summary class="font-semibold cursor-pointer select-none">🧪 Tests intégrés</summary>
+        <div class="mt-3 flex flex-wrap gap-2">
           <button id="btnRunTests" class="btn btn-primary" type="button">Exécuter</button>
           <button id="btnReset" class="btn" type="button">Réinitialiser</button>
         </div>
@@ -171,8 +197,7 @@
     $("viewGmt").classList.toggle('hidden',tab!=='gmt');
     $("tabSprint").classList.toggle('tab-active',tab==='sprint');
     $("tabGmt").classList.toggle('tab-active',tab==='gmt');
-    try{localStorage.setItem('calc.tab',tab);}catch(_){}
-  }
+    try{localStorage.setItem('calc.tab',tab);}catch(_){}}
 
   // ===== Theme =====
   const THEME_KEY='calc.theme';
