@@ -65,15 +65,22 @@
     .safe-p-top{ padding-top: max(0px, env(safe-area-inset-top)); }
   .safe-p-bottom{ padding-bottom: max(0px, env(safe-area-inset-bottom)); }
   input, button, select, textarea{ font-size:16px; }
+  /* iPhone layout fixes */
+  .app-header{flex-wrap:wrap; gap:.5rem;}
+  .app-header .right{display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; max-width:100%;}
+  .seg{display:flex; border:1px solid #e5e7eb; border-radius:.75rem; overflow:hidden;}
+  .seg > .btn{border-radius:0; min-width:64px; flex:1 0 auto; padding:.5rem .9rem;}
+  .seg > .btn:first-child{border-top-left-radius:.75rem;border-bottom-left-radius:.75rem;}
+  .seg > .btn:last-child{border-top-right-radius:.75rem;border-bottom-right-radius:.75rem;}
 </style>
 </head>
 <body class="px-4 sm:px-6 lg:px-8 pb-8">
   <main class="max-w-6xl mx-auto space-y-6">
-    <header class="app-header safe-p-top $1">
+    <header class="app-header safe-p-top $1 flex-wrap gap-2">
       <h1 class="text-xl sm:text-2xl font-black flex items-center gap-2">
         <span class="text-2xl">⚙️</span> Calculateur <span class="text-blue-600">SPRINT</span> & <span class="text-green-600">GMT</span>
       </h1>
-      <div class="flex items-center gap-2">
+      <div class="right flex items-center gap-2 flex-wrap">
         <button id="btnTheme" class="btn" title="Basculer thème" type="button" aria-label="Basculer le thème">🌙</button>
         <span class="bg-gray-200 px-2 py-1 rounded text-[11px] sm:text-xs">v7.5 — UI mobile-first</span>
       </div>
@@ -89,10 +96,10 @@
 
     <!-- SPRINT -->
     <section id="viewSprint" class="card p-5 sm:p-6">
-      <h2 class="title flex items-center gap-3 mb-3">SPRINT (<span id="sprintMode">NST1</span>)
-        <span class="ml-auto inline-flex items-center gap-2 text-xs font-semibold text-gray-500">
+      <h2 class="title flex flex-wrap items-center gap-3 mb-3">SPRINT (<span id="sprintMode">NST1</span>)
+        <span class="w-full sm:w-auto inline-flex items-center gap-2 text-xs font-semibold text-gray-500 justify-end">
           <span id="roleChip" class="pill bg-gray-200">A=Frein • B=Coupe</span>
-          <span class="inline-flex rounded-lg overflow-hidden border">
+          <span class="seg">
             <button id="btnNST1" type="button" class="btn px-3 py-1 !rounded-none tab-active">NST1</button>
             <button id="btnNST2" type="button" class="btn px-3 py-1 !rounded-none">NST2</button>
           </span>
