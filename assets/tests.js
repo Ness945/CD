@@ -138,6 +138,51 @@
       presque(gmtDesequilibre.prevuA + gmtDesequilibre.prevuB,
         107 + 112 + gmtDesequilibre.mmTotal, 1e-9));
 
+    // --- Propriété d'ensemble : la correction ramène toujours dans la tolérance ---
+    //
+    // Balayage de l'espace des mesures plutôt que quelques cas choisis. C'est ce
+    // qui garantit qu'aucun réglage de PARAMS ne fera sortir une prévision de la
+    // tolérance : l'ancienne formule de centrage GMT échouait sur 27 % des cas.
+    function balayer(nom, calculer, attendu, plage, pas) {
+      let total = 0;
+      let hors = 0;
+      let pireEcart = 0;
+      let pireCas = null;
+      for (let a = -plage; a <= plage + 1e-9; a += pas) {
+        for (let b = -plage; b <= plage + 1e-9; b += pas) {
+          const mesA = Number((attendu + a).toFixed(3));
+          const mesB = Number((attendu + b).toFixed(3));
+          const r = calculer(mesA, mesB);
+          total++;
+          const ecart = Math.max(
+            Math.abs(r.prevuA - attendu),
+            Math.abs(r.prevuB - attendu)
+          );
+          if (ecart > pireEcart) {
+            pireEcart = ecart;
+            pireCas = mesA + ' / ' + mesB;
+          }
+          if (ecart > NSTCalc.PARAMS.TOLERANCE + 1e-9) hors++;
+        }
+      }
+      verifier(nom + ' : toutes les prévisions dans la tolérance',
+        hors === 0,
+        hors + '/' + total + ' hors tolérance, pire écart ' +
+          pireEcart.toFixed(3) + ' mm' + (pireCas ? ' sur ' + pireCas : ''));
+    }
+
+    balayer('GMT', function (mesA, mesB) {
+      return NSTCalc.calculerGmt({ attA: 110, attB: 110, mesA: mesA, mesB: mesB });
+    }, 110, 6, 0.25);
+
+    balayer('SPRINT NST1', function (mesA, mesB) {
+      return NSTCalc.calculerSprint({ attA: 150, attB: 150, mesA: mesA, mesB: mesB, mode: 'NST1' });
+    }, 150, 6, 0.25);
+
+    balayer('SPRINT NST2', function (mesA, mesB) {
+      return NSTCalc.calculerSprint({ attA: 150, attB: 150, mesA: mesA, mesB: mesB, mode: 'NST2' });
+    }, 150, 6, 0.25);
+
     // --- Formatage des dents ---
     verifier('formaterDents(0) = "0 dent"',
       NSTCalc.formaterDents(0) === '0 dent', NSTCalc.formaterDents(0));

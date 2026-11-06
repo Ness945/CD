@@ -56,9 +56,14 @@ ensuite**, plusieurs d'entre eux portent sur ces constantes.
 
 ## Tests
 
-33 tests couvrent la logique de calcul : tolérance, inversion NST1/NST2,
+36 tests couvrent la logique de calcul : tolérance, inversion NST1/NST2,
 arrondi au pas machine, rejet des saisies vides, et vérification que chaque
 correction proposée rapproche bien de la cible.
+
+Trois d'entre eux balaient l'espace des mesures (2 401 combinaisons par mode)
+et vérifient qu'**aucune prévision ne sort de la tolérance de 0,5 mm**. C'est
+cette propriété qui a révélé l'erreur de centrage GMT : l'ancienne formule
+sortait de la tolérance dans 27 % des cas, avec un pire écart de 0,77 mm.
 
 - **Dans l'application** : section « 🧪 Tests intégrés » → *Exécuter*.
   Ils portent sur des valeurs en mémoire et ne touchent pas aux saisies.
