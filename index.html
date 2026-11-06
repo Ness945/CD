@@ -52,13 +52,13 @@
           <div class="ligne-titre">Centrage</div>
           <div class="valeur"><span id="sCentrage">0</span><span class="unite">IHM</span></div>
           <div id="sCentrageDir" class="consigne consigne-rien">—</div>
-          <div class="appoint">Pas de 0,1</div>
+          <div class="appoint">Se règle par 0,1</div>
         </div>
         <div class="ligne">
           <div class="ligne-titre">Longueur fil</div>
           <div class="valeur"><span id="sLongueur">0</span><span class="unite">IHM</span></div>
           <div id="sLongueurDir" class="consigne consigne-rien">—</div>
-          <div class="appoint">Pas de 0,25 mm</div>
+          <div class="appoint">Se règle par 0,25</div>
         </div>
       </div>
     </div>
@@ -111,7 +111,7 @@
           <div class="ligne-titre">Mise en angle</div>
           <div class="valeur"><span id="gAngle">0</span><span id="gAngleUnite" class="unite">dent</span></div>
           <div id="gAngleDir" class="consigne consigne-rien">—</div>
-          <div id="gAngleDetail" class="appoint">Pas d'une demi-dent</div>
+          <div id="gAngleDetail" class="appoint">Se règle par demi-dent</div>
         </div>
         <div class="ligne">
           <div class="ligne-titre">Centrage</div>
@@ -347,7 +347,7 @@
       $('gAngleUnite').textContent = 'dent';
       poserConsigne('gAngleDir', '—', 'rien');
       poserConsigne('gCentrageDir', '', 'rien');
-      $('gAngleDetail').textContent = 'Pas d’une demi-dent';
+      $('gAngleDetail').textContent = 'Se règle par demi-dent';
       mentionner('gMention', 'Complétez les quatre mesures. Un champ vide vaudrait 0 mm.', true);
       $('logGmt').textContent = 'Aucun calcul : il manque au moins une mesure.';
       return;
@@ -365,7 +365,7 @@
       poser('gAngle', '0', true);
       $('gAngleUnite').textContent = 'dent';
       poserConsigne('gAngleDir', 'Rien à reprendre', 'ok');
-      $('gAngleDetail').textContent = 'Pas d’une demi-dent';
+      $('gAngleDetail').textContent = 'Se règle par demi-dent';
       poser('gCentrage', '0', true);
       poserConsigne('gCentrageDir', 'Rien à reprendre', 'ok');
       $('logGmt').textContent = r.journal.join('\n');
@@ -383,7 +383,7 @@
         : (demi < 0 ? 'Retirer des dents (raccourcir)' : 'Angle déjà bon'),
       demi === 0 ? 'rien' : '');
     $('gAngleDetail').textContent = demi === 0
-      ? 'Pas d’une demi-dent'
+      ? 'Se règle par demi-dent'
       : signe(Number(r.mmTotal.toFixed(2)), 2) + ' mm au total, ' +
         signe(Number(r.mmParCote.toFixed(2)), 2) + ' mm par côté';
 
