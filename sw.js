@@ -5,11 +5,12 @@
  * figées et versionnées. Changer VERSION invalide l'ancien cache et force le
  * rechargement complet au prochain passage en ligne.
  */
-const VERSION = 'nst-v8.2.0';
+const VERSION = 'nst-v8.3.0';
 
 const RESSOURCES = [
   './',
   './index.html',
+  './3X8.html',
   './manifest.webmanifest',
   './assets/app.css',
   './assets/calc.js',
@@ -49,11 +50,15 @@ self.addEventListener('fetch', function (e) {
   if (requete.method !== 'GET') return;
   if (new URL(requete.url).origin !== self.location.origin) return;
 
-  // Navigation : servir la page même hors ligne.
+  // Navigation : servir la page demandée même hors ligne. On retombe sur la
+  // page elle-même si elle est en cache — sinon ouvrir 3X8.html hors réseau
+  // affichait le calculateur à sa place.
   if (requete.mode === 'navigate') {
     e.respondWith(
       fetch(requete).catch(function () {
-        return caches.match('./index.html', { ignoreSearch: true });
+        return caches.match(requete, { ignoreSearch: true }).then(function (r) {
+          return r || caches.match('./index.html', { ignoreSearch: true });
+        });
       })
     );
     return;
