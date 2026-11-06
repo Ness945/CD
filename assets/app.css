@@ -1,106 +1,529 @@
-*,::after,::before{box-sizing:border-box}
-html{-moz-tab-size:4;tab-size:4}
-html{line-height:1.15;-webkit-text-size-adjust:100%}
-body{margin:0}
-body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif,'Apple Color Emoji','Segoe UI Emoji'}
-hr{height:0;color:inherit}
-abbr[title]{-webkit-text-decoration:underline dotted;text-decoration:underline dotted}
-b,strong{font-weight:bolder}
-code,kbd,pre,samp{font-family:ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:1em}
-small{font-size:80%}
-sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}
-sub{bottom:-.25em}
-sup{top:-.5em}
-table{text-indent:0;border-color:inherit}
-button,input,optgroup,select,textarea{font-family:inherit;font-size:100%;line-height:1.15;margin:0}
-button,select{text-transform:none}
-[type=button],[type=reset],[type=submit],button{-webkit-appearance:button}
-::-moz-focus-inner{border-style:none;padding:0}
-:-moz-focusring{outline:1px dotted ButtonText}
-:-moz-ui-invalid{box-shadow:none}
-legend{padding:0}
-progress{vertical-align:baseline}
-::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}
-[type=search]{-webkit-appearance:textfield;outline-offset:-2px}
-::-webkit-search-decoration{-webkit-appearance:none}
-::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}
-summary{display:list-item}
-blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}
-button{background-color:transparent;background-image:none}
-fieldset{margin:0;padding:0}
-ol,ul{list-style:none;margin:0;padding:0}
-html{font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";line-height:1.5}
-body{font-family:inherit;line-height:inherit}
-*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:currentColor}
-hr{border-top-width:1px}
-img{border-style:solid}
-textarea{resize:vertical}
-input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}
-[role=button],button{cursor:pointer}
-:-moz-focusring{outline:auto}
-table{border-collapse:collapse}
-h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}
-a{color:inherit;text-decoration:inherit}
-button,input,optgroup,select,textarea{padding:0;line-height:inherit;color:inherit}
-code,kbd,pre,samp{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
-audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}
-img,video{max-width:100%;height:auto}
-[hidden]{display:none}
-*,::after,::before{--tw-border-opacity:1;border-color:rgba(229,231,235,var(--tw-border-opacity))}.mx-auto{margin-left:auto;margin-right:auto}
-.mt-2{margin-top:.5rem}
-.mt-3{margin-top:.75rem}
-.mt-4{margin-top:1rem}
-.mb-3{margin-bottom:.75rem}
-.mb-4{margin-bottom:1rem}
-.flex{display:flex}
-.inline-flex{display:inline-flex}
-.grid{display:grid}
-.hidden{display:none}
-.w-full{width:100%}
-.max-w-6xl{max-width:72rem}
-.flex-1{flex:1 1 0%}
-.cursor-pointer{cursor:pointer}
-.select-none{-webkit-user-select:none;user-select:none}
-.grid-cols-1{grid-template-columns:repeat(1,minmax(0,1fr))}
-.flex-wrap{flex-wrap:wrap}
-.items-center{align-items:center}
-.justify-end{justify-content:flex-end}
-.gap-2{gap:.5rem}
-.gap-3{gap:.75rem}
-.gap-4{gap:1rem}
-.space-y-6>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1.5rem * var(--tw-space-y-reverse))}
-.overflow-hidden{overflow:hidden}
-.whitespace-pre-wrap{white-space:pre-wrap}
-.rounded{border-radius:.25rem}
-.rounded-lg{border-radius:.5rem}
-.rounded-xl{border-radius:.75rem}
-.border{border-width:1px}
-.border-gray-200{--tw-border-opacity:1;border-color:rgba(229,231,235,var(--tw-border-opacity))}
-.bg-gray-50{--tw-bg-opacity:1;background-color:rgba(249,250,251,var(--tw-bg-opacity))}
-.bg-gray-200{--tw-bg-opacity:1;background-color:rgba(229,231,235,var(--tw-bg-opacity))}
-.p-3{padding:.75rem}
-.p-4{padding:1rem}
-.p-5{padding:1.25rem}
-.px-2{padding-left:.5rem;padding-right:.5rem}
-.px-3{padding-left:.75rem;padding-right:.75rem}
-.px-4{padding-left:1rem;padding-right:1rem}
-.py-1{padding-top:.25rem;padding-bottom:.25rem}
-.pb-8{padding-bottom:2rem}
-.text-xs{font-size:.75rem;line-height:1rem}
-.text-sm{font-size:.875rem;line-height:1.25rem}
-.text-xl{font-size:1.25rem;line-height:1.75rem}
-.text-2xl{font-size:1.5rem;line-height:2rem}
-.font-semibold{font-weight:600}
-.font-black{font-weight:900}
-.text-gray-500{--tw-text-opacity:1;color:rgba(107,114,128,var(--tw-text-opacity))}
-.text-gray-600{--tw-text-opacity:1;color:rgba(75,85,99,var(--tw-text-opacity))}
-.text-green-600{--tw-text-opacity:1;color:rgba(5,150,105,var(--tw-text-opacity))}
-.text-blue-600{--tw-text-opacity:1;color:rgba(37,99,235,var(--tw-text-opacity))}
-@media (min-width:640px){.sm\:w-auto{width:auto}
-.sm\:p-6{padding:1.5rem}
-.sm\:px-6{padding-left:1.5rem;padding-right:1.5rem}
-.sm\:text-xs{font-size:.75rem;line-height:1rem}
-.sm\:text-base{font-size:1rem;line-height:1.5rem}
-.sm\:text-2xl{font-size:1.5rem;line-height:2rem}}
-@media (min-width:768px){.md\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (min-width:1024px){.lg\:px-8{padding-left:2rem;padding-right:2rem}}
+/* =========================================================================
+   Calculateur SPRINT & GMT — feuille de style
+   -------------------------------------------------------------------------
+   Écrite pour cet outil, sans framework. Tailwind a été retiré : ses classes
+   utilitaires ne servaient plus la mise en page, et la feuille v2 chargée
+   rendait inerte toute syntaxe v3 (valeurs arbitraires, modificateur « ! »).
+
+   Le principe : l'afficheur est l'élément fort, tout le reste se tait.
+   ========================================================================= */
+
+/* Chiffres du readout : DejaVu Sans Condensed Bold, réduit aux seuls
+   caractères employés (1,5 Ko). Condensé pour tenir des valeurs longues
+   sur une ligne, et chasse fixe pour que les chiffres ne dansent pas
+   pendant la saisie. Licence Bitstream Vera / Arev, libre de rediffusion. */
+@font-face {
+  font-family: 'Readout';
+  src: url('readout.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+  unicode-range: U+0020, U+002B-002F, U+0030-0039, U+2212;
+}
+
+:root {
+  /* Teintes neutres : béton et graphite, pas le bleu-gris par défaut. */
+  --sol:        #e7e8e3;
+  --surface:    #fdfdfc;
+  --surface-2:  #f2f3ef;
+  --trait:      #d2d4cc;
+  --trait-fort: #b4b7ac;
+  --encre:      #16191c;
+  --encre-2:    #5c6159;
+
+  /* Afficheur : panneau sombre, quel que soit le thème. */
+  --panneau:     #16191c;
+  --panneau-2:   #22262a;
+  --panneau-tx:  #f4f5f2;
+  --panneau-tx2: #9aa09a;
+
+  /* Signaux, repris du code couleur d'atelier. */
+  --signal-ok:    #2f7d4f;
+  --signal-ok-bg: #dce9df;
+  --signal-agir:    #a8600a;
+  --signal-agir-bg: #f5e6cd;
+  --signal-stop:    #b23a2e;
+  --signal-stop-bg: #f3dcd9;
+
+  --focus: #a8600a;
+
+  --r-bloc: 14px;
+  --r-petit: 9px;
+
+  --police: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+            "Helvetica Neue", Arial, sans-serif;
+}
+
+:root.sombre {
+  --sol:        #101316;
+  --surface:    #191d21;
+  --surface-2:  #14181b;
+  --trait:      #2b3136;
+  --trait-fort: #3d444a;
+  --encre:      #eceee9;
+  --encre-2:    #99a0a6;
+
+  --panneau:     #060809;
+  --panneau-2:   #14181b;
+
+  --signal-ok-bg:   #19311f;
+  --signal-agir-bg: #332509;
+  --signal-stop-bg: #371a16;
+  --signal-ok:   #6fc08d;
+  --signal-agir: #e0a53c;
+  --signal-stop: #e58478;
+
+  --focus: #e0a53c;
+}
+
+* { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  background: var(--sol);
+  color: var(--encre);
+  font-family: var(--police);
+  font-size: 16px;
+  line-height: 1.45;
+  padding: 0 14px calc(28px + env(safe-area-inset-bottom));
+}
+
+.page {
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+/* ===== En-tête ===================================================== */
+
+.barre {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: calc(12px + env(safe-area-inset-top)) 0 12px;
+}
+
+.marque {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.marque .version {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--encre-2);
+  letter-spacing: 0;
+}
+
+/* ===== Boutons ===================================================== */
+
+.bouton {
+  font: inherit;
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--encre);
+  background: var(--surface);
+  border: 1px solid var(--trait);
+  border-radius: var(--r-petit);
+  padding: 10px 14px;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.bouton:hover { border-color: var(--trait-fort); }
+
+.bouton:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.bouton-icone {
+  min-width: 44px;
+  padding: 10px;
+  line-height: 1;
+  font-size: 17px;
+}
+
+.bouton-fort {
+  background: var(--encre);
+  color: var(--sol);
+  border-color: var(--encre);
+}
+
+/* Segments : onglets et mode NST. Le segment actif se signale par le
+   remplissage plein ; le :hover est aussi spécifique que l'état actif,
+   sinon il reprend la main et efface le contraste. */
+.segments {
+  display: flex;
+  background: var(--surface-2);
+  border: 1px solid var(--trait);
+  border-radius: var(--r-petit);
+  padding: 3px;
+  gap: 3px;
+}
+
+.segments .bouton {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  border-radius: 6px;
+  padding: 9px 10px;
+  color: var(--encre-2);
+}
+
+.segments .bouton:hover { background: var(--trait); color: var(--encre); }
+
+.segments .bouton[aria-selected="true"],
+.segments .bouton[aria-selected="true"]:hover {
+  background: var(--encre);
+  color: var(--sol);
+}
+
+.onglets { margin-bottom: 14px; }
+.onglets .bouton { font-size: 15px; letter-spacing: 0.02em; }
+
+/* ===== L'afficheur : l'élément fort ================================= */
+
+.afficheur {
+  background: var(--panneau);
+  border: 1px solid transparent;
+  border-radius: var(--r-bloc);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+/* En thème sombre, le panneau et le fond sont tous deux noirs : sans liseré,
+   l'afficheur se fond dans la page et perd son statut d'instrument. */
+:root.sombre .afficheur { border-color: var(--trait); }
+
+.afficheur-etat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  padding: 11px 16px;
+  background: var(--panneau-2);
+  font-size: 13px;
+  color: var(--panneau-tx2);
+}
+
+.verdict {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--panneau-tx);
+}
+
+/* Une pastille pleine plutôt qu'une étiquette colorée : lisible de loin,
+   et le mot reste lisible même si la couleur passe mal à l'écran. */
+.voyant {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--panneau-tx2);
+  flex: none;
+}
+.voyant-ok   { background: #6fc08d; }
+.voyant-agir { background: #e3a040; }
+.voyant-stop { background: #ff8e7f; }
+
+.ecarts {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--panneau-tx2);
+}
+.ecarts b { color: var(--panneau-tx); font-weight: 650; }
+/* Doit être au moins aussi spécifique que « .ecarts b », sinon l'écart hors
+   tolérance reste blanc. Teinte éclaircie : le rouge signal est trop sombre
+   sur le panneau noir. */
+.ecarts b.ecart-hors { color: #ff8e7f; font-weight: 700; }
+
+.lignes { display: grid; }
+
+.ligne {
+  padding: 15px 16px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+.ligne:first-child { border-top: 0; }
+
+.ligne-titre {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--panneau-tx2);
+  margin-bottom: 2px;
+}
+
+.valeur {
+  font-family: 'Readout', var(--police);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-size: 44px;
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+  color: var(--panneau-tx);
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  overflow-wrap: anywhere;
+}
+
+.valeur .unite {
+  font-family: var(--police);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--panneau-tx2);
+  letter-spacing: 0;
+}
+
+.valeur-neutre { color: var(--panneau-tx2); }
+
+/* En attente de saisie : la place de la valeur est tenue, mais un tiret en
+   44 px se lit comme une barre pleine. On le réduit sans bouger la ligne. */
+.valeur-attente {
+  font-family: var(--police);
+  font-size: 26px;
+  font-weight: 400;
+}
+
+/* Le panneau est noir dans les deux thèmes : les signaux y ont leurs propres
+   teintes, éclaircies. Les versions sombres servent sur fond clair, ailleurs
+   dans la page. C'est la ligne la plus importante à lire au poste, elle doit
+   passer 4,5:1 — l'ambre d'origine tombait à 3,7. */
+.consigne {
+  margin-top: 5px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #e3a040;   /* 7,9:1 sur le panneau */
+}
+.consigne-ok { color: #6fc08d; }   /* 8,1:1 */
+.consigne-rien { color: var(--panneau-tx2); font-weight: 500; }
+
+.appoint {
+  margin-top: 3px;
+  font-size: 12.5px;
+  color: var(--panneau-tx2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== Saisie : grille 2 × 2 ======================================= */
+
+.saisie {
+  background: var(--surface);
+  border: 1px solid var(--trait);
+  border-radius: var(--r-bloc);
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.grille {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr;
+  gap: 8px 10px;
+  align-items: center;
+}
+
+.colonne-titre {
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  padding-bottom: 2px;
+}
+
+.colonne-titre .role {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--encre-2);
+}
+
+.rangee-titre {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--encre-2);
+  white-space: nowrap;
+}
+
+.champ {
+  font: inherit;
+  font-size: 17px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 8px;
+  color: var(--encre);
+  background: var(--surface-2);
+  border: 1px solid var(--trait);
+  border-radius: var(--r-petit);
+}
+
+.champ:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 1px;
+  border-color: var(--focus);
+  background: var(--surface);
+}
+
+.champ.vide {
+  border-color: var(--signal-stop);
+  background: var(--signal-stop-bg);
+}
+
+/* Masque les flèches : au doigt, elles gênent plus qu'elles n'aident. */
+.champ::-webkit-outer-spin-button,
+.champ::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.champ { -moz-appearance: textfield; appearance: textfield; }
+
+.mention {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  color: var(--encre-2);
+}
+.mention-alerte { color: var(--signal-stop); font-weight: 600; }
+
+/* ===== Replis et outils ============================================ */
+
+.repli {
+  background: var(--surface);
+  border: 1px solid var(--trait);
+  border-radius: var(--r-bloc);
+  margin-bottom: 14px;
+}
+
+.repli > summary {
+  padding: 13px 15px;
+  font-size: 14px;
+  font-weight: 650;
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+}
+
+.repli > summary::-webkit-details-marker { display: none; }
+
+.repli > summary::before {
+  content: '';
+  width: 0;
+  height: 0;
+  border-left: 5px solid currentColor;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  transition: transform .15s ease;
+  flex: none;
+}
+.repli[open] > summary::before { transform: rotate(90deg); }
+
+.repli > summary:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: -3px;
+  border-radius: var(--r-bloc);
+}
+
+.repli-corps {
+  padding: 0 15px 15px;
+  border-top: 1px solid var(--trait);
+  padding-top: 13px;
+}
+
+.journal {
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  color: var(--encre-2);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.bilan {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 11px;
+  border-radius: 999px;
+  margin-bottom: 10px;
+}
+.bilan-ok   { background: var(--signal-ok-bg);   color: var(--signal-ok); }
+.bilan-echec{ background: var(--signal-stop-bg); color: var(--signal-stop); }
+
+.note {
+  font-size: 12.5px;
+  color: var(--encre-2);
+  margin: 0 0 12px;
+}
+
+.pied {
+  font-size: 12.5px;
+  color: var(--encre-2);
+  text-align: center;
+  margin: 4px 0 0;
+  min-height: 1.2em;
+}
+
+.invisible {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.cache { display: none; }
+
+/* ===== Adaptations ================================================= */
+
+/* Très petits écrans : le readout reste lisible avant tout le reste. */
+@media (max-width: 359px) {
+  .valeur { font-size: 38px; }
+  .grille { gap: 7px 7px; }
+  .champ { font-size: 16px; padding: 10px 4px; }
+}
+
+/* À partir de la tablette, les deux lignes du readout tiennent côte à côte. */
+@media (min-width: 620px) {
+  body { padding-left: 20px; padding-right: 20px; }
+  .lignes { grid-template-columns: 1fr 1fr; }
+  .ligne { border-top: 0; }
+  .ligne + .ligne { border-left: 1px solid rgba(255, 255, 255, 0.07); }
+  .valeur { font-size: 48px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    transition-duration: .001ms !important;
+  }
+}
+
+@media print {
+  .onglets, .actions, .bouton-icone, .repli { display: none; }
+  body { background: #fff; }
+  .afficheur { border: 1px solid #000; }
+}

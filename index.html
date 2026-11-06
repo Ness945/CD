@@ -5,529 +5,483 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Calculateur SPRINT &amp; GMT</title>
   <meta name="description" content="Calculateur d'ajustements NST — centrage, longueur de fil et mise en angle." />
-  <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
-  <meta name="theme-color" content="#f1f5f9" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#e7e8e3" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#101316" media="(prefers-color-scheme: dark)">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="assets/icon-180.png">
+  <link rel="preload" href="assets/readout.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="assets/app.css">
-  <style>
-    /* Base */
-    :root { --ring:#60a5fa; }
-    html { -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
-    body { background:#f1f5f9; color:#0f172a; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Helvetica, Arial; }
-    .card { background:#fff; border-radius:1rem; box-shadow:0 8px 28px rgba(2,6,23,.06); border:1px solid #e2e8f0; }
-    .btn { padding:.7rem 1rem; border-radius:.8rem; font-weight:700; transition:.2s; border:1px solid #e5e7eb; background:#f3f4f6; line-height:1; }
-    .btn:hover { background:#e5e7eb; }
-    .btn:focus-visible { outline: 3px solid var(--ring); outline-offset:2px; }
-    .btn-primary { background:#2563eb; color:#fff; border-color:#2563eb; }
-    .btn-primary:hover { background:#1d4ed8; }
-    /* Le :hover doit être au moins aussi spécifique que .btn:hover, sinon
-       l'onglet actif vire au blanc sur gris clair quand la souris le survole. */
-    .tab-active, .tab-active:hover { background:#2563eb; color:#fff; border-color:#2563eb; }
-    .input { width:100%; padding:.75rem .9rem; border:1px solid #cbd5e1; border-radius:.7rem; font-size:16px; min-height:44px; background:#fff; color:inherit; }
-    .input:focus-visible { outline: 3px solid var(--ring); outline-offset:2px; border-color:#93c5fd; }
-    .label { font-size:.85rem; font-weight:600; color:#475569; display:block; margin:.25rem 0 .25rem; }
-    .title { font-size:1.25rem; font-weight:800; color:#1e293b; }
-    .subtitle { font-size:.95rem; color:#64748b; }
-    .highlight { font-size:1.3rem; font-weight:900; letter-spacing:.2px; }
-    .muted { color:#64748b; }
-    .tiny { font-size:11px; }
-    pre { white-space:pre-wrap; }
-    .pill { font-size:.75rem; font-weight:700; padding:.25rem .6rem; border-radius:9999px; border:1px solid rgba(2,6,23,.06); }
-    .ok { background:#dcfce7; color:#166534; }
-    .bad { background:#fee2e2; color:#991b1b; }
-    .warn { background:#fef3c7; color:#92400e; }
-    .delta-ok { color:#166534; font-weight:600; }
-    .delta-bad { color:#991b1b; font-weight:600; }
-
-    /* Saisie invalide : le champ le dit, et le résultat se retire. */
-    .input.invalide { border-color:#dc2626; background:#fef2f2; }
-    .resultat-suspendu { opacity:.35; }
-
-    /* Boutons segmentés — remplace !rounded-none, qui est de la syntaxe
-       Tailwind v3 et restait inerte avec la feuille v2 chargée ici. */
-    .seg { display:flex; border:1px solid #e5e7eb; border-radius:.75rem; overflow:hidden; }
-    .seg > .btn { border-radius:0; min-width:64px; flex:1 0 auto; padding:.5rem .9rem; }
-    .tabs { display:flex; border-radius:.75rem; overflow:hidden; border:1px solid #e2e8f0; }
-    .tabs > .btn { border-radius:0; flex:1; }
-
-    @media (max-width: 480px){
-      .btn { padding:.8rem 1rem; border-radius:1rem; }
-      .seg > .btn, .tabs > .btn { border-radius:0; }
-      .input { border-radius:1rem; }
-    }
-
-    /* En-tête collant */
-    .app-header {
-      position:sticky; top:0; z-index:30;
-      display:flex; align-items:center; justify-content:space-between;
-      flex-wrap:wrap; gap:.5rem;
-      background:#f1f5f9; border-bottom:1px solid #e2e8f0;
-    }
-    @supports ((-webkit-backdrop-filter: blur(8px)) or (backdrop-filter: blur(8px))) {
-      .app-header { background:rgba(241,245,249,.75); -webkit-backdrop-filter: saturate(180%) blur(8px); backdrop-filter: saturate(180%) blur(8px); }
-      .dark .app-header { background:rgba(11,18,32,.6); }
-    }
-    .app-header .right { display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; max-width:100%; }
-
-    /* Thème sombre */
-    .dark body { background:#0b1220; color:#e5e7eb; }
-    .dark .card { background:#0f172a; border-color:#1f2a44; box-shadow:0 8px 28px rgba(0,0,0,.35); }
-    .dark .btn { background:#0b1220; color:#e5e7eb; border-color:#1f2a44; }
-    .dark .btn:hover { background:#111a2e; }
-    .dark .btn-primary, .dark .tab-active, .dark .tab-active:hover { background:#3b82f6; border-color:#3b82f6; color:#fff; }
-    .dark .btn-primary:hover { background:#2563eb; }
-    .dark .input { background:#0b1220; color:#e5e7eb; border-color:#1f2a44; }
-    .dark .input.invalide { border-color:#f87171; background:#2a1212; }
-    .dark .app-header { background:#0b1220; border-bottom-color:#1f2a44; }
-    .dark .title { color:#e5e7eb; }
-    .dark .label { color:#93a4c4; }
-    .dark .subtitle, .dark .muted { color:#93a4c4; }
-    .dark .bg-gray-50 { background:#0b1220; }
-    .dark .bg-gray-200 { background:#1f2a44; color:#e5e7eb; }
-    .dark .text-gray-600, .dark .text-gray-500 { color:#93a4c4; }
-    .dark .border, .dark .border-gray-200 { border-color:#1f2a44; }
-    .dark .seg, .dark .tabs { border-color:#1f2a44; }
-    .dark .ok { background:#134e4a; color:#a7f3d0; }
-    .dark .bad { background:#7f1d1d; color:#fecaca; }
-    .dark .warn { background:#78350f; color:#fde68a; }
-    .dark .delta-ok { color:#6ee7b7; }
-    .dark .delta-bad { color:#fca5a5; }
-
-    /* Masque les flèches des champs numériques (gênantes au doigt) */
-    input[type=number]::-webkit-outer-spin-button,
-    input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-    input[type=number] { -moz-appearance: textfield; }
-
-    .safe-p-top { padding-top: max(0px, env(safe-area-inset-top)); }
-    .safe-p-bottom { padding-bottom: max(0px, env(safe-area-inset-bottom)); }
-    input, button, select, textarea { font-size:16px; }
-
-    .sr-only {
-      position:absolute; width:1px; height:1px; padding:0; margin:-1px;
-      overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
-    }
-  </style>
+  <script>
+    // Appliqué avant le premier rendu : sans cela, l'écran blanchit une
+    // fraction de seconde avant de passer au sombre.
+    try {
+      if (localStorage.getItem('calc.theme') === 'dark') {
+        document.documentElement.classList.add('sombre');
+      }
+    } catch (e) { /* mode privé */ }
+  </script>
 </head>
-<body class="px-4 sm:px-6 pb-8 safe-p-bottom">
-  <main class="max-w-6xl mx-auto space-y-6">
-    <header class="app-header safe-p-top">
-      <h1 class="text-xl sm:text-2xl font-black flex items-center gap-2">
-        <span class="text-2xl" aria-hidden="true">⚙️</span>
-        Calculateur <span class="text-blue-600">SPRINT</span> &amp; <span class="text-green-600">GMT</span>
-      </h1>
-      <div class="right">
-        <button id="btnTheme" class="btn" title="Basculer le thème" type="button" aria-label="Basculer le thème">🌙</button>
-        <span class="bg-gray-200 px-2 py-1 rounded tiny sm:text-xs">v8.0</span>
-      </div>
-    </header>
+<body>
+<div class="page">
 
-    <!-- Onglets principaux -->
-    <div class="tabs" role="tablist" aria-label="Type de calcul">
-      <button id="tabSprint" class="btn tab-active text-sm sm:text-base" type="button" role="tab" aria-selected="true" aria-controls="viewSprint">SPRINT</button>
-      <button id="tabGmt" class="btn text-sm sm:text-base" type="button" role="tab" aria-selected="false" aria-controls="viewGmt">GMT</button>
+  <header class="barre">
+    <h1 class="marque">Calculateur NST <span class="version">v8.1</span></h1>
+    <button id="btnTheme" class="bouton bouton-icone" type="button" aria-label="Passer au thème sombre">☾</button>
+  </header>
+
+  <div class="segments onglets" role="tablist" aria-label="Type de calcul">
+    <button id="tabSprint" class="bouton" type="button" role="tab" aria-selected="true" aria-controls="vueSprint">SPRINT</button>
+    <button id="tabGmt" class="bouton" type="button" role="tab" aria-selected="false" aria-controls="vueGmt">GMT</button>
+  </div>
+
+  <!-- ===================== SPRINT ===================== -->
+  <section id="vueSprint" role="tabpanel" aria-labelledby="tabSprint">
+
+    <!-- L'afficheur passe avant les champs : c'est ce qu'on vient lire. -->
+    <div class="afficheur">
+      <div class="afficheur-etat">
+        <span class="verdict">
+          <span id="sVoyant" class="voyant voyant-ok"></span>
+          <span id="sVerdict">Conforme</span>
+        </span>
+        <span id="sEcarts" class="ecarts"></span>
+      </div>
+      <div class="lignes" aria-live="polite">
+        <div class="ligne">
+          <div class="ligne-titre">Centrage</div>
+          <div class="valeur"><span id="sCentrage">0</span><span class="unite">IHM</span></div>
+          <div id="sCentrageDir" class="consigne consigne-rien">—</div>
+          <div class="appoint">Pas de 0,1</div>
+        </div>
+        <div class="ligne">
+          <div class="ligne-titre">Longueur fil</div>
+          <div class="valeur"><span id="sLongueur">0</span><span class="unite">IHM</span></div>
+          <div id="sLongueurDir" class="consigne consigne-rien">—</div>
+          <div class="appoint">Pas de 0,25 mm</div>
+        </div>
+      </div>
     </div>
 
-    <!-- ===== SPRINT ===== -->
-    <section id="viewSprint" class="card p-5 sm:p-6" role="tabpanel" aria-labelledby="tabSprint">
-      <h2 class="title flex flex-wrap items-center gap-3 mb-3">
-        SPRINT (<span id="sprintMode">NST1</span>)
-        <span class="w-full sm:w-auto inline-flex items-center gap-2 text-xs font-semibold text-gray-500 justify-end">
-          <span id="roleChip" class="pill bg-gray-200">A=Frein • B=Coupe</span>
-          <span class="seg" role="group" aria-label="Mode NST">
-            <button id="btnNST1" type="button" class="btn tab-active">NST1</button>
-            <button id="btnNST2" type="button" class="btn">NST2</button>
-          </span>
+    <div class="saisie">
+      <div class="segments" role="group" aria-label="Mode NST" style="margin-bottom:12px">
+        <button id="btnNST1" class="bouton" type="button" aria-selected="true">NST1</button>
+        <button id="btnNST2" class="bouton" type="button" aria-selected="false">NST2</button>
+      </div>
+
+      <div class="grille">
+        <span></span>
+        <span class="colonne-titre">A<span id="roleA" class="role">Frein</span></span>
+        <span class="colonne-titre">B<span id="roleB" class="role">Coupe</span></span>
+
+        <span class="rangee-titre" id="ligneAttendu">Attendu</span>
+        <input id="attA" class="champ" type="number" inputmode="decimal" step="0.1" value="150"
+               aria-labelledby="ligneAttendu roleA" />
+        <input id="attB" class="champ" type="number" inputmode="decimal" step="0.1" value="150"
+               aria-labelledby="ligneAttendu roleB" />
+
+        <span class="rangee-titre" id="ligneMesure">Mesuré</span>
+        <input id="mesA" class="champ" type="number" inputmode="decimal" step="0.1" value="149.5"
+               aria-labelledby="ligneMesure roleA" />
+        <input id="mesB" class="champ" type="number" inputmode="decimal" step="0.1" value="150.2"
+               aria-labelledby="ligneMesure roleB" />
+      </div>
+      <p id="sMention" class="mention cache"></p>
+    </div>
+
+    <details class="repli">
+      <summary>Détail du calcul</summary>
+      <div class="repli-corps"><pre id="logSprint" class="journal"></pre></div>
+    </details>
+  </section>
+
+  <!-- ====================== GMT ====================== -->
+  <section id="vueGmt" class="cache" role="tabpanel" aria-labelledby="tabGmt">
+
+    <div class="afficheur">
+      <div class="afficheur-etat">
+        <span class="verdict">
+          <span id="gVoyant" class="voyant voyant-ok"></span>
+          <span id="gVerdict">Conforme</span>
         </span>
-      </h2>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label class="label" id="labelAttA" for="attA">Attendu A (Frein)</label>
-          <input id="attA" type="number" inputmode="decimal" step="0.1" class="input" value="150" />
-          <label class="label mt-3" id="labelAttB" for="attB">Attendu B (Coupe)</label>
-          <input id="attB" type="number" inputmode="decimal" step="0.1" class="input" value="150" />
+        <span id="gEcarts" class="ecarts"></span>
+      </div>
+      <div class="lignes" aria-live="polite">
+        <div class="ligne">
+          <div class="ligne-titre">Mise en angle</div>
+          <div class="valeur"><span id="gAngle">0</span><span id="gAngleUnite" class="unite">dent</span></div>
+          <div id="gAngleDir" class="consigne consigne-rien">—</div>
+          <div id="gAngleDetail" class="appoint">Pas d'une demi-dent</div>
         </div>
-        <div>
-          <label class="label" id="labelMesA" for="mesA">Mesuré A (Frein)</label>
-          <input id="mesA" type="number" inputmode="decimal" step="0.1" class="input" value="149.5" />
-          <label class="label mt-3" id="labelMesB" for="mesB">Mesuré B (Coupe)</label>
-          <input id="mesB" type="number" inputmode="decimal" step="0.1" class="input" value="150.2" />
+        <div class="ligne">
+          <div class="ligne-titre">Centrage</div>
+          <div class="valeur"><span id="gCentrage">0</span><span class="unite">IHM</span></div>
+          <div id="gCentrageDir" class="consigne consigne-rien">—</div>
+          <div class="appoint">1 unité = 0,2 mm</div>
         </div>
       </div>
+    </div>
 
-      <div class="mt-4 flex flex-wrap items-center gap-3">
-        <div id="sTol" class="pill ok">—</div>
-        <div id="sVals" class="text-sm text-gray-600">—</div>
+    <div class="saisie">
+      <div class="grille">
+        <span></span>
+        <span class="colonne-titre">A</span>
+        <span class="colonne-titre">B</span>
+
+        <span class="rangee-titre" id="gLigneAttendu">Attendu</span>
+        <input id="gAttA" class="champ" type="number" inputmode="decimal" step="0.5" value="110"
+               aria-labelledby="gLigneAttendu" aria-label="Attendu A" />
+        <input id="gAttB" class="champ" type="number" inputmode="decimal" step="0.5" value="110"
+               aria-label="Attendu B" />
+
+        <span class="rangee-titre" id="gLigneMesure">Mesuré</span>
+        <input id="gMesA" class="champ" type="number" inputmode="decimal" step="0.5" value="108.5"
+               aria-label="Mesuré A" />
+        <input id="gMesB" class="champ" type="number" inputmode="decimal" step="0.5" value="108.5"
+               aria-label="Mesuré B" />
       </div>
+      <p id="gMention" class="mention cache"></p>
+    </div>
 
-      <div id="sprintResultats" class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4" aria-live="polite">
-        <div class="bg-gray-50 p-4 rounded-lg border">
-          <div class="subtitle">Centrage (IHM, pas 0,1)</div>
-          <div id="sprintCentrage" class="highlight">—</div>
-          <div id="sprintCentrageDir" class="text-xs muted">—</div>
-        </div>
-        <div class="bg-gray-50 p-4 rounded-lg border">
-          <div class="subtitle">Longueur fil (IHM, pas 0,25 mm)</div>
-          <div id="sprintLongueur" class="highlight">—</div>
-          <div id="sprintLongueurHint" class="text-xs muted">—</div>
-        </div>
+    <details class="repli">
+      <summary>Détail du calcul</summary>
+      <div class="repli-corps"><pre id="logGmt" class="journal"></pre></div>
+    </details>
+  </section>
+
+  <!-- ====================== Outils ====================== -->
+  <details class="repli">
+    <summary>Tests et réinitialisation</summary>
+    <div class="repli-corps">
+      <p class="note">Les tests portent sur des valeurs en mémoire. Vos saisies ne sont pas touchées.</p>
+      <div class="actions">
+        <button id="btnTests" class="bouton bouton-fort" type="button">Lancer les tests</button>
+        <button id="btnReset" class="bouton" type="button">Remettre les valeurs par défaut</button>
       </div>
+      <div id="testBilan"></div>
+      <pre id="testSortie" class="journal"></pre>
+    </div>
+  </details>
 
-      <details class="mt-4">
-        <summary class="font-semibold cursor-pointer select-none">Détail du calcul</summary>
-        <pre id="logSprint" class="text-xs bg-gray-50 p-3 rounded border mt-2"></pre>
-      </details>
-    </section>
+  <p class="pied" id="pied"></p>
+</div>
 
-    <!-- ===== GMT ===== -->
-    <section id="viewGmt" class="card p-5 sm:p-6 hidden" role="tabpanel" aria-labelledby="tabGmt">
-      <h2 class="title mb-4">GMT</h2>
+<script src="assets/calc.js"></script>
+<script src="assets/tests.js"></script>
+<script>
+(function () {
+  'use strict';
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label class="label" for="gAttA">Attendu A</label>
-          <input id="gAttA" type="number" inputmode="decimal" step="0.5" class="input" value="110" />
-          <label class="label mt-3" for="gAttB">Attendu B</label>
-          <input id="gAttB" type="number" inputmode="decimal" step="0.5" class="input" value="110" />
-        </div>
-        <div>
-          <label class="label" for="gMesA">Mesuré A</label>
-          <input id="gMesA" type="number" inputmode="decimal" step="0.5" class="input" value="108.5" />
-          <label class="label mt-3" for="gMesB">Mesuré B</label>
-          <input id="gMesB" type="number" inputmode="decimal" step="0.5" class="input" value="108.5" />
-        </div>
-      </div>
+  const $ = function (id) { return document.getElementById(id); };
+  const C = window.NSTCalc;
 
-      <div class="mt-4 flex flex-wrap items-center gap-3">
-        <div id="gTol" class="pill ok">—</div>
-        <div id="gVals" class="text-sm text-gray-600">—</div>
-      </div>
+  // ===== Préférences et saisies conservées =====
+  const CLES = { theme: 'calc.theme', onglet: 'calc.tab', mode: 'calc.sprintMode', champs: 'calc.champs' };
 
-      <div id="gmtResultats" class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4" aria-live="polite">
-        <div class="bg-gray-50 p-4 rounded-lg border">
-          <div class="subtitle">Centrage (IHM, 1 unité = 0,2 mm)</div>
-          <div id="gCentrage" class="highlight">—</div>
-          <div id="gCentrageDir" class="text-xs muted">—</div>
-        </div>
-        <div class="bg-gray-50 p-4 rounded-lg border">
-          <div class="subtitle">Mise en angle (dents / ½ dent)</div>
-          <div id="gLongueur" class="highlight">—</div>
-          <div id="gLongueurHint" class="text-xs muted">—</div>
-        </div>
-      </div>
+  function lire(cle, defaut) {
+    try {
+      const v = localStorage.getItem(cle);
+      return v === null ? defaut : v;
+    } catch (e) { return defaut; }
+  }
+  function ecrire(cle, valeur) {
+    try { localStorage.setItem(cle, valeur); } catch (e) { /* mode privé */ }
+  }
 
-      <details class="mt-4">
-        <summary class="font-semibold cursor-pointer select-none">Détail du calcul</summary>
-        <pre id="logGmt" class="text-xs bg-gray-50 p-3 rounded border mt-2"></pre>
-      </details>
-    </section>
+  const CHAMPS = ['attA', 'attB', 'mesA', 'mesB', 'gAttA', 'gAttB', 'gMesA', 'gMesB'];
+  const DEFAUTS = {
+    attA: '150', attB: '150', mesA: '149.5', mesB: '150.2',
+    gAttA: '110', gAttB: '110', gMesA: '108.5', gMesB: '108.5'
+  };
 
-    <!-- ===== Outils ===== -->
-    <section class="card p-5 sm:p-6">
-      <details>
-        <summary class="font-semibold cursor-pointer select-none">🧪 Tests intégrés</summary>
-        <p class="text-xs muted mt-2">
-          Les tests portent sur des valeurs en mémoire. Ils ne touchent pas à vos saisies.
-        </p>
-        <div class="mt-3 flex flex-wrap gap-2">
-          <button id="btnRunTests" class="btn btn-primary" type="button">Exécuter</button>
-          <button id="btnReset" class="btn" type="button">Réinitialiser les champs</button>
-        </div>
-        <div id="testBilan" class="mt-3"></div>
-        <pre id="testOut" class="text-xs bg-gray-50 p-3 rounded border mt-3 whitespace-pre-wrap"></pre>
-      </details>
-    </section>
+  function sauverChamps() {
+    const etat = {};
+    CHAMPS.forEach(function (id) { etat[id] = $(id).value; });
+    ecrire(CLES.champs, JSON.stringify(etat));
+  }
 
-    <p class="text-xs muted" id="etatHorsLigne"></p>
-  </main>
+  function restaurerChamps() {
+    let etat = null;
+    try { etat = JSON.parse(lire(CLES.champs, '') || 'null'); } catch (e) { etat = null; }
+    if (!etat) return;
+    CHAMPS.forEach(function (id) {
+      if (typeof etat[id] === 'string') $(id).value = etat[id];
+    });
+  }
 
-  <script src="assets/calc.js"></script>
-  <script src="assets/tests.js"></script>
-  <script>
-  (function () {
-    'use strict';
+  // ===== Thème =====
+  function appliquerTheme() {
+    const sombre = lire(CLES.theme, 'light') === 'dark';
+    document.documentElement.classList.toggle('sombre', sombre);
+    const b = $('btnTheme');
+    b.textContent = sombre ? '☀' : '☾';
+    b.setAttribute('aria-label', sombre ? 'Passer au thème clair' : 'Passer au thème sombre');
+  }
 
-    const $ = function (id) { return document.getElementById(id); };
-    const C = window.NSTCalc;
+  // ===== Onglets =====
+  function changerOnglet(onglet) {
+    const sprint = onglet !== 'gmt';
+    $('vueSprint').classList.toggle('cache', !sprint);
+    $('vueGmt').classList.toggle('cache', sprint);
+    $('tabSprint').setAttribute('aria-selected', String(sprint));
+    $('tabGmt').setAttribute('aria-selected', String(!sprint));
+    ecrire(CLES.onglet, sprint ? 'sprint' : 'gmt');
+  }
 
-    // ===== Préférences et saisies persistantes =====
-    const CLES = {
-      theme: 'calc.theme',
-      onglet: 'calc.tab',
-      mode: 'calc.sprintMode',
-      champs: 'calc.champs'
-    };
+  // ===== Mise en forme =====
 
-    function lire(cle, defaut) {
-      try {
-        const v = localStorage.getItem(cle);
-        return v === null ? defaut : v;
-      } catch (e) { return defaut; }
+  /** Signe explicite : au poste, « 0.3 » et « -0.3 » ne se confondent pas. */
+  function signe(valeur, decimales) {
+    if (valeur === 0) return '0';
+    return (valeur > 0 ? '+' : '−') + Math.abs(valeur).toFixed(decimales);
+  }
+
+  function poser(idValeur, texte, neutre) {
+    const el = $(idValeur);
+    el.textContent = texte;
+    el.parentNode.classList.toggle('valeur-neutre', !!neutre);
+    el.parentNode.classList.toggle('valeur-attente', texte === '—');
+  }
+
+  function poserConsigne(id, texte, genre) {
+    const el = $(id);
+    el.textContent = texte;
+    el.className = 'consigne' + (genre ? ' consigne-' + genre : '');
+  }
+
+  function poserEtat(idVoyant, idVerdict, genre, texte) {
+    $(idVoyant).className = 'voyant voyant-' + genre;
+    $(idVerdict).textContent = texte;
+  }
+
+  function ecartHTML(etiquette, valeur, tolerance) {
+    const hors = Math.abs(valeur) > tolerance;
+    return etiquette + ' <b' + (hors ? ' class="ecart-hors"' : '') + '>' +
+      signe(Number(valeur.toFixed(2)), 2) + '</b>';
+  }
+
+  /** Lit un groupe de champs ; null si l'un est vide, et le signale. */
+  function lireGroupe(ids) {
+    const valeurs = {};
+    let complet = true;
+    ids.forEach(function (id) {
+      const el = $(id);
+      const n = C.versNombre(el.value);
+      const vide = n === null;
+      el.classList.toggle('vide', vide);
+      el.setAttribute('aria-invalid', String(vide));
+      if (vide) complet = false;
+      valeurs[id] = n;
+    });
+    return complet ? valeurs : null;
+  }
+
+  function mentionner(id, texte, alerte) {
+    const el = $(id);
+    el.textContent = texte || '';
+    el.className = 'mention' + (alerte ? ' mention-alerte' : '') + (texte ? '' : ' cache');
+  }
+
+  // ===== SPRINT =====
+  const IDS_SPRINT = ['attA', 'attB', 'mesA', 'mesB'];
+
+  function rendreSprint() {
+    const v = lireGroupe(IDS_SPRINT);
+
+    if (!v) {
+      poserEtat('sVoyant', 'sVerdict', 'agir', 'En attente');
+      $('sEcarts').textContent = '';
+      poser('sCentrage', '\u2014', true);
+      poser('sLongueur', '\u2014', true);
+      poserConsigne('sCentrageDir', '', 'rien');
+      poserConsigne('sLongueurDir', '', 'rien');
+      mentionner('sMention', 'Complétez les quatre mesures. Un champ vide vaudrait 0 mm.', true);
+      $('logSprint').textContent = 'Aucun calcul : il manque au moins une mesure.';
+      return;
     }
-    function ecrire(cle, valeur) {
-      try { localStorage.setItem(cle, valeur); } catch (e) { /* mode privé */ }
+    mentionner('sMention', '');
+
+    const r = C.calculerSprint({
+      attA: v.attA, attB: v.attB, mesA: v.mesA, mesB: v.mesB,
+      mode: window._mode || 'NST1'
+    });
+
+    poserEtat('sVoyant', 'sVerdict', r.conforme ? 'ok' : 'agir',
+      r.conforme ? 'Conforme' : 'À corriger');
+    $('sEcarts').innerHTML =
+      ecartHTML('A', r.ecartA, r.tolerance) + ' &nbsp; ' + ecartHTML('B', r.ecartB, r.tolerance);
+
+    if (r.conforme) {
+      poser('sCentrage', '0', true);
+      poser('sLongueur', '0', true);
+      poserConsigne('sCentrageDir', 'Rien à reprendre', 'ok');
+      poserConsigne('sLongueurDir', 'Rien à reprendre', 'ok');
+    } else {
+      poser('sCentrage', signe(r.centrage, 1), r.centrage === 0);
+      poserConsigne('sCentrageDir',
+        r.centrage > 0 ? 'Ramener vers le Frein'
+          : (r.centrage < 0 ? 'Ramener vers la Coupe' : 'Centrage déjà bon'),
+        r.centrage === 0 ? 'rien' : '');
+
+      poser('sLongueur', signe(r.longueur, 2), r.longueur === 0);
+      poserConsigne('sLongueurDir',
+        r.longueur > 0 ? 'Allonger le fil'
+          : (r.longueur < 0 ? 'Raccourcir le fil' : 'Longueur déjà bonne'),
+        r.longueur === 0 ? 'rien' : '');
     }
 
-    const CHAMPS = ['attA', 'attB', 'mesA', 'mesB', 'gAttA', 'gAttB', 'gMesA', 'gMesB'];
-    const DEFAUTS = {
-      attA: '150', attB: '150', mesA: '149.5', mesB: '150.2',
-      gAttA: '110', gAttB: '110', gMesA: '108.5', gMesB: '108.5'
-    };
+    $('logSprint').textContent = r.journal.join('\n');
+  }
 
-    function sauverChamps() {
-      const etat = {};
-      CHAMPS.forEach(function (id) { etat[id] = $(id).value; });
-      ecrire(CLES.champs, JSON.stringify(etat));
+  // ===== GMT =====
+  const IDS_GMT = ['gAttA', 'gAttB', 'gMesA', 'gMesB'];
+
+  function rendreGmt() {
+    const v = lireGroupe(IDS_GMT);
+
+    if (!v) {
+      poserEtat('gVoyant', 'gVerdict', 'agir', 'En attente');
+      $('gEcarts').textContent = '';
+      poser('gAngle', '—', true);
+      poser('gCentrage', '—', true);
+      $('gAngleUnite').textContent = 'dent';
+      poserConsigne('gAngleDir', '—', 'rien');
+      poserConsigne('gCentrageDir', '', 'rien');
+      $('gAngleDetail').textContent = 'Pas d’une demi-dent';
+      mentionner('gMention', 'Complétez les quatre mesures. Un champ vide vaudrait 0 mm.', true);
+      $('logGmt').textContent = 'Aucun calcul : il manque au moins une mesure.';
+      return;
+    }
+    mentionner('gMention', '');
+
+    const r = C.calculerGmt({ attA: v.gAttA, attB: v.gAttB, mesA: v.gMesA, mesB: v.gMesB });
+
+    poserEtat('gVoyant', 'gVerdict', r.conforme ? 'ok' : 'agir',
+      r.conforme ? 'Conforme' : 'À corriger');
+    $('gEcarts').innerHTML =
+      ecartHTML('A', r.ecartA, r.tolerance) + ' &nbsp; ' + ecartHTML('B', r.ecartB, r.tolerance);
+
+    if (r.conforme) {
+      poser('gAngle', '0', true);
+      $('gAngleUnite').textContent = 'dent';
+      poserConsigne('gAngleDir', 'Rien à reprendre', 'ok');
+      $('gAngleDetail').textContent = 'Pas d’une demi-dent';
+      poser('gCentrage', '0', true);
+      poserConsigne('gCentrageDir', 'Rien à reprendre', 'ok');
+      $('logGmt').textContent = r.journal.join('\n');
+      return;
     }
 
-    function restaurerChamps() {
-      let etat;
-      try { etat = JSON.parse(lire(CLES.champs, '') || 'null'); } catch (e) { etat = null; }
-      if (!etat) return;
-      CHAMPS.forEach(function (id) {
-        if (typeof etat[id] === 'string') $(id).value = etat[id];
-      });
-    }
+    // La demi-dent s'écrit en fraction, qui est l'unité de réglage machine.
+    const demi = r.demiDents;
+    const entier = demi % 2 === 0;
+    poser('gAngle', demi === 0 ? '0' : (demi > 0 ? '+' : '−') +
+      (entier ? String(Math.abs(demi) / 2) : String(Math.abs(demi)) + '/2'), demi === 0);
+    $('gAngleUnite').textContent = entier && Math.abs(demi) / 2 > 1 ? 'dents' : 'dent';
+    poserConsigne('gAngleDir',
+      demi > 0 ? 'Ajouter des dents (allonger)'
+        : (demi < 0 ? 'Retirer des dents (raccourcir)' : 'Angle déjà bon'),
+      demi === 0 ? 'rien' : '');
+    $('gAngleDetail').textContent = demi === 0
+      ? 'Pas d’une demi-dent'
+      : signe(Number(r.mmTotal.toFixed(2)), 2) + ' mm au total, ' +
+        signe(Number(r.mmParCote.toFixed(2)), 2) + ' mm par côté';
 
-    // ===== Thème =====
-    function appliquerTheme() {
-      const sombre = lire(CLES.theme, 'light') === 'dark';
-      document.documentElement.classList.toggle('dark', sombre);
-      const b = $('btnTheme');
-      if (b) {
-        b.textContent = sombre ? '☀️' : '🌙';
-        b.setAttribute('aria-label', sombre ? 'Passer au thème clair' : 'Passer au thème sombre');
-      }
-    }
-    function basculerTheme() {
+    poser('gCentrage', signe(r.centrage, 0), r.centrage === 0);
+    poserConsigne('gCentrageDir',
+      r.centrage > 0 ? 'Ramener vers A'
+        : (r.centrage < 0 ? 'Ramener vers B' : 'Centrage déjà bon'),
+      r.centrage === 0 ? 'rien' : '');
+
+    $('logGmt').textContent = r.journal.join('\n');
+  }
+
+  function toutRendre() { rendreSprint(); rendreGmt(); }
+
+  // ===== Mode NST =====
+  function rafraichirMode() {
+    const nst1 = (window._mode || 'NST1') === 'NST1';
+    $('btnNST1').setAttribute('aria-selected', String(nst1));
+    $('btnNST2').setAttribute('aria-selected', String(!nst1));
+    $('roleA').textContent = nst1 ? 'Frein' : 'Coupe';
+    $('roleB').textContent = nst1 ? 'Coupe' : 'Frein';
+  }
+
+  function definirMode(mode) {
+    window._mode = mode;
+    ecrire(CLES.mode, mode);
+    rafraichirMode();
+    rendreSprint();
+  }
+
+  // ===== Tests =====
+  function lancerTests() {
+    const bilan = window.NSTTests.lancerTests();
+    $('testSortie').textContent = bilan.resultats.map(function (r) {
+      return (r.ok ? '✓ ' : '✗ ') + r.nom + (r.detail ? '  (' + r.detail + ')' : '');
+    }).join('\n');
+    const el = $('testBilan');
+    el.className = 'bilan ' + (bilan.ok ? 'bilan-ok' : 'bilan-echec');
+    el.textContent = bilan.ok
+      ? bilan.total + ' tests passés'
+      : bilan.echecs + ' échec(s) sur ' + bilan.total;
+  }
+
+  function reinitialiser() {
+    CHAMPS.forEach(function (id) { $(id).value = DEFAUTS[id]; });
+    sauverChamps();
+    toutRendre();
+  }
+
+  // ===== Démarrage =====
+  document.addEventListener('DOMContentLoaded', function () {
+    appliquerTheme();
+    $('btnTheme').addEventListener('click', function () {
       ecrire(CLES.theme, lire(CLES.theme, 'light') === 'dark' ? 'light' : 'dark');
       appliquerTheme();
-    }
-
-    // ===== Onglets =====
-    function changerOnglet(onglet) {
-      const sprint = onglet !== 'gmt';
-      $('viewSprint').classList.toggle('hidden', !sprint);
-      $('viewGmt').classList.toggle('hidden', sprint);
-      $('tabSprint').classList.toggle('tab-active', sprint);
-      $('tabGmt').classList.toggle('tab-active', !sprint);
-      $('tabSprint').setAttribute('aria-selected', String(sprint));
-      $('tabGmt').setAttribute('aria-selected', String(!sprint));
-      ecrire(CLES.onglet, sprint ? 'sprint' : 'gmt');
-    }
-
-    // ===== Lecture des champs, avec rejet des saisies vides =====
-    /**
-     * Lit un groupe de champs. Renvoie null si l'un d'eux est vide ou illisible,
-     * et marque visuellement les fautifs. Mieux vaut pas de résultat qu'un
-     * résultat faux calculé sur un zéro implicite.
-     */
-    function lireGroupe(ids) {
-      const valeurs = {};
-      let complet = true;
-      ids.forEach(function (id) {
-        const el = $(id);
-        const n = C.versNombre(el.value);
-        const vide = n === null;
-        el.classList.toggle('invalide', vide);
-        el.setAttribute('aria-invalid', String(vide));
-        if (vide) complet = false;
-        valeurs[id] = n;
-      });
-      return complet ? valeurs : null;
-    }
-
-    function suspendre(idZone, idBadge, idVals, idLog, ids) {
-      $(idZone).classList.add('resultat-suspendu');
-      const badge = $(idBadge);
-      badge.textContent = 'Saisie incomplète';
-      badge.className = 'pill warn';
-      const manquants = ids.filter(function (id) { return C.versNombre($(id).value) === null; });
-      $(idVals).textContent = 'Renseignez : ' + manquants.join(', ');
-      $(idLog).textContent = 'Aucun calcul : ' + manquants.length +
-        ' champ(s) vide(s) ou illisible(s).\nUn champ vide vaudrait 0 mm et donnerait un ajustement faux.';
-    }
-
-    function formaterEcart(valeur, tolerance) {
-      const classe = Math.abs(valeur) <= tolerance ? 'delta-ok' : 'delta-bad';
-      return '<span class="' + classe + '">Δ ' + valeur.toFixed(2) + '</span>';
-    }
-
-    function signe(valeur, decimales) {
-      return (valeur >= 0 ? '+' : '') + valeur.toFixed(decimales);
-    }
-
-    // ===== Rendu SPRINT =====
-    const IDS_SPRINT = ['attA', 'attB', 'mesA', 'mesB'];
-
-    function rendreSprint() {
-      const v = lireGroupe(IDS_SPRINT);
-      if (!v) {
-        suspendre('sprintResultats', 'sTol', 'sVals', 'logSprint', IDS_SPRINT);
-        return;
-      }
-      $('sprintResultats').classList.remove('resultat-suspendu');
-
-      const r = C.calculerSprint({
-        attA: v.attA, attB: v.attB, mesA: v.mesA, mesB: v.mesB,
-        mode: window._sprintMode || 'NST1'
-      });
-
-      const badge = $('sTol');
-      badge.textContent = r.conforme ? 'Déjà conforme' : 'Correction requise';
-      badge.className = 'pill ' + (r.conforme ? 'ok' : 'bad');
-
-      $('sVals').innerHTML =
-        'A ' + v.mesA + ' / ' + v.attA + ' (' + formaterEcart(r.ecartA, r.tolerance) + '), ' +
-        'B ' + v.mesB + ' / ' + v.attB + ' (' + formaterEcart(r.ecartB, r.tolerance) + ')';
-
-      $('sprintCentrage').textContent = r.conforme ? '0.0' : signe(r.centrage, 1);
-      $('sprintCentrageDir').textContent = r.conforme
-        ? '✅ Déjà conforme — pas de centrage'
-        : (r.centrage > 0 ? '→ Ramener vers Frein' : (r.centrage < 0 ? '→ Ramener vers Coupe' : '—'));
-
-      $('sprintLongueur').textContent = (r.conforme ? '0.00' : signe(r.longueur, 2)) + ' mm';
-      $('sprintLongueurHint').textContent = r.conforme
-        ? '—'
-        : (r.longueur > 0 ? '→ Allonger' : (r.longueur < 0 ? '→ Raccourcir' : '—'));
-
-      $('logSprint').textContent = r.journal.join('\n');
-    }
-
-    // ===== Rendu GMT =====
-    const IDS_GMT = ['gAttA', 'gAttB', 'gMesA', 'gMesB'];
-
-    function rendreGmt() {
-      const v = lireGroupe(IDS_GMT);
-      if (!v) {
-        suspendre('gmtResultats', 'gTol', 'gVals', 'logGmt', IDS_GMT);
-        return;
-      }
-      $('gmtResultats').classList.remove('resultat-suspendu');
-
-      const r = C.calculerGmt({
-        attA: v.gAttA, attB: v.gAttB, mesA: v.gMesA, mesB: v.gMesB
-      });
-
-      const badge = $('gTol');
-      badge.textContent = r.conforme ? 'Déjà conforme' : 'Correction requise';
-      badge.className = 'pill ' + (r.conforme ? 'ok' : 'bad');
-
-      $('gVals').innerHTML =
-        'A ' + v.gMesA + ' / ' + v.gAttA + ' (' + formaterEcart(r.ecartA, r.tolerance) + '), ' +
-        'B ' + v.gMesB + ' / ' + v.gAttB + ' (' + formaterEcart(r.ecartB, r.tolerance) + ')';
-
-      if (r.conforme) {
-        $('gLongueur').textContent = '0 dent';
-        $('gLongueurHint').textContent = '✅ Déjà conforme — pas de mise en angle';
-        $('gCentrage').textContent = '0';
-        $('gCentrageDir').textContent = '✅ Déjà conforme — pas de centrage';
-      } else {
-        $('gLongueur').textContent = C.formaterDents(r.demiDents) +
-          ' (' + signe(r.mmTotal, 2) + ' mm au total, ' + signe(r.mmParCote, 2) + ' mm/côté)';
-        $('gLongueurHint').textContent = r.demiDents > 0
-          ? '→ Ajouter des dents (allonger)'
-          : (r.demiDents < 0 ? '→ Retirer des dents (raccourcir)' : '— Aucun ajustement de longueur');
-
-        $('gCentrage').textContent = r.centrage === 0
-          ? '0'
-          : (r.centrage > 0 ? '+' : '') + String(r.centrage);
-        $('gCentrageDir').textContent = r.centrage > 0
-          ? '→ Ramener vers A'
-          : (r.centrage < 0 ? '→ Ramener vers B' : '— Déjà centré');
-      }
-
-      $('logGmt').textContent = r.journal.join('\n');
-    }
-
-    function toutRecalculer() {
-      rendreSprint();
-      rendreGmt();
-    }
-
-    // ===== Mode NST =====
-    function rafraichirModeUI() {
-      const mode = window._sprintMode || 'NST1';
-      const nst1 = mode === 'NST1';
-      $('sprintMode').textContent = mode;
-      $('btnNST1').classList.toggle('tab-active', nst1);
-      $('btnNST2').classList.toggle('tab-active', !nst1);
-      $('labelAttA').textContent = nst1 ? 'Attendu A (Frein)' : 'Attendu A (Coupe)';
-      $('labelAttB').textContent = nst1 ? 'Attendu B (Coupe)' : 'Attendu B (Frein)';
-      $('labelMesA').textContent = nst1 ? 'Mesuré A (Frein)' : 'Mesuré A (Coupe)';
-      $('labelMesB').textContent = nst1 ? 'Mesuré B (Coupe)' : 'Mesuré B (Frein)';
-      $('roleChip').textContent = nst1 ? 'A=Frein • B=Coupe' : 'A=Coupe • B=Frein';
-    }
-
-    function definirMode(mode) {
-      window._sprintMode = mode;
-      ecrire(CLES.mode, mode);
-      rafraichirModeUI();
-      rendreSprint();
-    }
-
-    // ===== Tests =====
-    function afficherTests() {
-      const bilan = window.NSTTests.lancerTests();
-      const lignes = bilan.resultats.map(function (r) {
-        return (r.ok ? '✅' : '❌') + ' ' + r.nom + (r.detail ? '  (' + r.detail + ')' : '');
-      });
-      $('testOut').textContent = lignes.join('\n');
-      const badge = $('testBilan');
-      badge.innerHTML = '<span class="pill ' + (bilan.ok ? 'ok' : 'bad') + '">' +
-        (bilan.total - bilan.echecs) + '/' + bilan.total + ' tests passés' +
-        (bilan.ok ? '' : ' — ' + bilan.echecs + ' échec(s)') + '</span>';
-    }
-
-    function reinitialiser() {
-      CHAMPS.forEach(function (id) { $(id).value = DEFAUTS[id]; });
-      sauverChamps();
-      toutRecalculer();
-    }
-
-    // ===== Démarrage =====
-    document.addEventListener('DOMContentLoaded', function () {
-      appliquerTheme();
-      $('btnTheme').addEventListener('click', basculerTheme);
-
-      restaurerChamps();
-
-      window._sprintMode = lire(CLES.mode, 'NST1') === 'NST2' ? 'NST2' : 'NST1';
-      rafraichirModeUI();
-      $('btnNST1').addEventListener('click', function () { definirMode('NST1'); });
-      $('btnNST2').addEventListener('click', function () { definirMode('NST2'); });
-
-      $('tabSprint').addEventListener('click', function () { changerOnglet('sprint'); });
-      $('tabGmt').addEventListener('click', function () { changerOnglet('gmt'); });
-      changerOnglet(lire(CLES.onglet, 'sprint'));
-
-      IDS_SPRINT.forEach(function (id) {
-        $(id).addEventListener('input', function () { rendreSprint(); sauverChamps(); });
-      });
-      IDS_GMT.forEach(function (id) {
-        $(id).addEventListener('input', function () { rendreGmt(); sauverChamps(); });
-      });
-
-      $('btnRunTests').addEventListener('click', afficherTests);
-      $('btnReset').addEventListener('click', reinitialiser);
-
-      toutRecalculer();
-
-      // Service worker : l'appli doit rester utilisable sans réseau.
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js').catch(function () { /* sans gravité */ });
-      }
-      const etat = $('etatHorsLigne');
-      function majEtat() {
-        etat.textContent = navigator.onLine ? '' : 'Hors ligne — l\'application fonctionne normalement.';
-      }
-      window.addEventListener('online', majEtat);
-      window.addEventListener('offline', majEtat);
-      majEtat();
     });
-  })();
-  </script>
+
+    restaurerChamps();
+
+    window._mode = lire(CLES.mode, 'NST1') === 'NST2' ? 'NST2' : 'NST1';
+    rafraichirMode();
+    $('btnNST1').addEventListener('click', function () { definirMode('NST1'); });
+    $('btnNST2').addEventListener('click', function () { definirMode('NST2'); });
+
+    $('tabSprint').addEventListener('click', function () { changerOnglet('sprint'); });
+    $('tabGmt').addEventListener('click', function () { changerOnglet('gmt'); });
+    changerOnglet(lire(CLES.onglet, 'sprint'));
+
+    IDS_SPRINT.forEach(function (id) {
+      $(id).addEventListener('input', function () { rendreSprint(); sauverChamps(); });
+    });
+    IDS_GMT.forEach(function (id) {
+      $(id).addEventListener('input', function () { rendreGmt(); sauverChamps(); });
+    });
+
+    // Au doigt, on tape par-dessus la valeur : la sélectionner évite d'effacer
+    // chiffre à chiffre, et évite donc le champ à moitié vide.
+    CHAMPS.forEach(function (id) {
+      $(id).addEventListener('focus', function () { this.select(); });
+    });
+
+    $('btnTests').addEventListener('click', lancerTests);
+    $('btnReset').addEventListener('click', reinitialiser);
+
+    toutRendre();
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(function () { /* sans gravité */ });
+    }
+    const pied = $('pied');
+    function majPied() {
+      pied.textContent = navigator.onLine ? '' : 'Hors ligne — l’outil fonctionne normalement.';
+    }
+    window.addEventListener('online', majPied);
+    window.addEventListener('offline', majPied);
+    majPied();
+  });
+})();
+</script>
 </body>
 </html>

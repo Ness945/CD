@@ -76,7 +76,8 @@ sortait de la tolérance dans 27 % des cas, avec un pire écart de 0,77 mm.
 index.html                 Interface (la seule page servie)
 assets/calc.js             Logique de calcul — fonctions pures, sans DOM
 assets/tests.js            Tests, exécutables en navigateur et sous Node
-assets/app.css             Tailwind 2.2.19, réduit aux classes utilisées (5 Ko)
+assets/app.css             Styles, écrits pour cet outil (sans framework)
+assets/readout.woff2       Chiffres de l'afficheur — police réduite, 1,5 Ko
 sw.js                      Service worker — fonctionnement hors ligne
 manifest.webmanifest       Installation sur l'écran d'accueil
 3X8.html                   Planning 3x8 (outil distinct)
@@ -97,15 +98,32 @@ python3 -m http.server 8000
 puis ouvrir <http://127.0.0.1:8000>. Un serveur est nécessaire : le service
 worker ne s'enregistre pas depuis un `file://`.
 
-### Après modification du CSS
+### Parti pris de l'interface
 
-`assets/app.css` est une réduction de Tailwind aux seules classes employées
-dans `index.html` (5 Ko contre 2,8 Mo). Si vous ajoutez des classes Tailwind,
-il faut la régénérer — sinon elles resteront sans effet.
+L'outil se lit à une main, debout, au poste. L'afficheur est donc placé
+**au-dessus** des champs, comme sur une calculatrice : on y revient à chaque
+saisie, il ne doit jamais demander de défiler. Les quatre mesures tiennent
+dans une grille 2 × 2 plutôt qu'en colonne, ce qui divise par deux la hauteur
+occupée.
 
-Attention : la feuille chargée est la **v2.2.19**. Les valeurs arbitraires
-(`text-[11px]`) et le modificateur `!` (`!rounded-none`) relèvent de la **v3**
-et restent inertes ici.
+Tailwind a été retiré : `assets/app.css` est écrit pour cet outil. Les deux
+pièges à connaître :
+
+- **Spécificité.** `.btn:hover` (0,2,0) l'emporte sur une classe d'état
+  (0,1,0). Tout état visuel qui doit survivre au survol s'écrit avec son
+  propre `:hover`.
+- **Contraste.** Le panneau de l'afficheur est noir dans les deux thèmes, et
+  les signaux y ont des teintes éclaircies propres. Viser 4,5:1 minimum sur la
+  ligne de consigne, qui est la plus lue.
+
+Les chiffres de l'afficheur utilisent DejaVu Sans Condensed Bold réduit aux
+caractères employés (1,5 Ko). Pour le régénérer après ajout d'un caractère :
+
+```bash
+python3 -m fontTools.subset /chemin/DejaVuSansCondensed-Bold.ttf \
+  --text="0123456789+-−.,/ " --flavor=woff2 --layout-features='' \
+  --output-file=assets/readout.woff2
+```
 
 ### Après modification du service worker ou des ressources
 

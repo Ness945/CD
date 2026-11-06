@@ -5,7 +5,7 @@
  * figées et versionnées. Changer VERSION invalide l'ancien cache et force le
  * rechargement complet au prochain passage en ligne.
  */
-const VERSION = 'nst-v8.0.0';
+const VERSION = 'nst-v8.1.0';
 
 const RESSOURCES = [
   './',
@@ -15,6 +15,7 @@ const RESSOURCES = [
   './assets/calc.js',
   './assets/tests.js',
   './assets/icon.svg',
+  './assets/readout.woff2',
   './assets/icon-180.png',
   './assets/icon-192.png',
   './assets/icon-512.png',
