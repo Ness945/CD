@@ -1,11 +1,28 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Calculateur NST">
-  <rect width="512" height="512" rx="96" fill="#2563eb"/>
-  <g fill="none" stroke="#ffffff" stroke-width="26" stroke-linecap="round">
-    <line x1="112" y1="196" x2="400" y2="196"/>
-    <line x1="112" y1="316" x2="400" y2="316"/>
-  </g>
-  <g fill="#ffffff">
-    <circle cx="188" cy="196" r="44"/>
-    <circle cx="324" cy="316" r="44"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Règle de mesure">
+  <title>Calculateur NST</title>
+
+  <rect width="512" height="512" rx="104" fill="#16191c"/>
+
+  <!-- Règle posée en diagonale : la graduation traverse l'icône, ce qui la
+       rend reconnaissable même réduite à 48 px sur un écran d'accueil. -->
+  <g transform="rotate(-38 256 256)">
+
+    <!-- Corps -->
+    <rect x="66" y="196" width="380" height="120" rx="16" fill="#e8b357"/>
+    <!-- Chant supérieur, plus clair : donne l'épaisseur sans dégradé -->
+    <rect x="66" y="196" width="380" height="30" rx="15" fill="#f3cd86"/>
+    <!-- Chant inférieur, plus sombre -->
+    <path d="M66 286h380v14a16 16 0 0 1-16 16H82a16 16 0 0 1-16-16z" fill="#c9923b"/>
+
+    <!-- Graduations : alternance longue / courte, comme sur une vraie règle -->
+    <g fill="#16191c">
+      <rect x="104" y="226" width="13" height="62" rx="6"/>
+      <rect x="152" y="226" width="13" height="38" rx="6"/>
+      <rect x="200" y="226" width="13" height="62" rx="6"/>
+      <rect x="248" y="226" width="13" height="38" rx="6"/>
+      <rect x="296" y="226" width="13" height="62" rx="6"/>
+      <rect x="344" y="226" width="13" height="38" rx="6"/>
+      <rect x="392" y="226" width="13" height="62" rx="6"/>
+    </g>
   </g>
 </svg>
