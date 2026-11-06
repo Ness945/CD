@@ -1,468 +1,508 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon Planning 3x8</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .fade-in { animation: fadeIn 0.5s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* Style FLASHY pour les jours fermés/ponts */
-        .flashy-closed {
-            background-color: #fbbf24; /* amber-400 */
-            background-image: repeating-linear-gradient(
-                135deg,
-                #fbbf24,
-                #fbbf24 10px,
-                #f59e0b 10px,
-                #f59e0b 20px
-            );
-            border: 2px solid #dc2626 !important; /* red-600 */
-            color: #7f1d1d;
-        }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Planning 3x8</title>
+<meta name="description" content="Poste du jour et calendrier de rotation 3x8.">
+<meta name="theme-color" content="#e7e8e3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101316" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<script>
+  try {
+    if (localStorage.getItem('calc.theme') === 'dark') document.documentElement.classList.add('sombre');
+  } catch (e) {}
+</script>
+<style>
+/* Mêmes jetons que le calculateur NST : les deux outils sont du même poste,
+   ils doivent se ressembler. Rien n'est chargé depuis l'extérieur — la page
+   s'affiche à l'identique sans réseau. */
+:root {
+  --sol:#e7e8e3; --surface:#fdfdfc; --surface-2:#f2f3ef;
+  --trait:#d2d4cc; --encre:#16191c; --encre-2:#5c6159;
+  --panneau:#16191c; --panneau-2:#22262a; --panneau-tx:#f4f5f2; --panneau-tx2:#9aa09a;
+  --ambre:#a8600a; --ambre-clair:#e3a040; --ambre-fond:#f5e6cd;
+  --focus:#a8600a;
+  --police: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
-        /* Style Vacances Scolaires */
-        .school-holiday {
-            background-color: #d1fae5; /* emerald-100 */
-            border-bottom: 2px solid #34d399; /* emerald-400 */
-        }
-    </style>
+  /* Le poste se lit à la valeur, pas à la teinte : clair le matin, sombre la
+     nuit. Une seule famille de gris remplace les trois couleurs saturées. */
+  --matin:#e7ebdf;
+  --aprem:#c6ccbb;
+  --nuit:#949e8f;
+}
+:root.sombre {
+  --sol:#101316; --surface:#191d21; --surface-2:#14181b;
+  --trait:#2b3136; --encre:#eceee9; --encre-2:#99a0a6;
+  --panneau:#060809; --panneau-2:#14181b;
+  --ambre:#e3a040; --ambre-fond:#332509;
+  --focus:#e0a53c;
+  /* L'echelle reste ordonnee (matin clair -> nuit sombre) mais demarre
+     au-dessus du fond de la carte : plus bas, les semaines de nuit se
+     confondaient avec le fond et la ligne paraissait vide. */
+  --matin:#4c555c;
+  --aprem:#363e44;
+  --nuit:#242a2f;
+}
+
+* { box-sizing:border-box; }
+html { -webkit-text-size-adjust:100%; text-size-adjust:100%; -webkit-tap-highlight-color:transparent; }
+body {
+  margin:0; background:var(--sol); color:var(--encre);
+  font-family:var(--police); font-size:16px; line-height:1.45;
+  padding:0 14px calc(28px + env(safe-area-inset-bottom));
+}
+.page { max-width:560px; margin:0 auto; }
+
+.barre {
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:calc(12px + env(safe-area-inset-top)) 0 12px;
+}
+h1 { margin:0; font-size:15px; font-weight:700; letter-spacing:-0.01em; }
+
+.bouton {
+  font:inherit; font-size:15px; font-weight:650; color:var(--encre);
+  background:var(--surface); border:1px solid var(--trait); border-radius:9px;
+  min-height:44px; min-width:44px; padding:10px 14px; cursor:pointer;
+}
+.bouton:hover { border-color:var(--encre-2); }
+.bouton:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
+
+/* ===== Le poste du jour : l'élément fort ===== */
+.aujourdhui {
+  background:var(--panneau); border:1px solid transparent; border-radius:14px;
+  overflow:hidden; margin-bottom:14px;
+}
+:root.sombre .aujourdhui { border-color:var(--trait); }
+
+.aujourdhui-date {
+  padding:11px 16px; background:var(--panneau-2);
+  font-size:13px; color:var(--panneau-tx2);
+  display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;
+}
+.aujourdhui-corps { padding:15px 16px 17px; }
+.poste-nom {
+  font-size:40px; font-weight:800; letter-spacing:-0.02em; line-height:1.05;
+  color:var(--panneau-tx); margin:0;
+}
+.poste-heures {
+  font-size:17px; font-weight:650; color:var(--ambre-clair); margin-top:4px;
+  font-variant-numeric:tabular-nums;
+}
+.poste-note { font-size:13px; color:var(--panneau-tx2); margin-top:6px; }
+
+/* ===== Calendrier ===== */
+.mois {
+  background:var(--surface); border:1px solid var(--trait);
+  border-radius:14px; padding:12px; margin-bottom:14px;
+}
+.mois-tete {
+  display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px;
+}
+.mois-nom { font-size:15px; font-weight:700; text-transform:capitalize; }
+
+/* Colonne de gauche : le poste de la semaine. En 3x8 il ne change pas d'un
+   jour à l'autre, donc une marque par ligne suffit — sept pastilles par
+   semaine répétaient la même information. */
+.grille { display:grid; grid-template-columns:34px repeat(7, 1fr); gap:2px; }
+
+.entete {
+  font-size:11px; font-weight:700; color:var(--encre-2);
+  text-align:center; padding:4px 0;
+}
+
+.semaine-poste {
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:800; color:var(--encre-2);
+  border-radius:7px 0 0 7px;
+}
+
+.jour {
+  position:relative; min-height:42px; padding:5px 2px 3px;
+  text-align:center; font-size:14px; font-variant-numeric:tabular-nums;
+  border-radius:3px;
+}
+.jour-matin { background:var(--matin); }
+.jour-aprem { background:var(--aprem); }
+.jour-nuit  { background:var(--nuit); }
+.jour-vide  { background:transparent; }
+.jour-horsmois { opacity:.34; }
+
+.jour-num { font-weight:650; }
+
+/* Aujourd'hui : un cadre, pas un aplat — l'aplat sert déjà au poste. */
+.jour-today { outline:2.5px solid var(--encre); outline-offset:-2.5px; border-radius:7px; }
+.jour-today .jour-num { font-weight:800; }
+
+/* Fermeture ou férié : l'ambre est la seule couleur de la page, elle ne
+   signale que ça. */
+.jour-ferme { background:var(--ambre-fond); }
+.jour-ferme .jour-num { color:var(--ambre); font-weight:800; }
+.pastille {
+  display:block; width:5px; height:5px; border-radius:50%;
+  background:var(--ambre); margin:2px auto 0;
+}
+.ecole {
+  display:block; height:2px; border-radius:1px;
+  background:var(--encre-2); opacity:.42; margin:3px 6px 0;
+}
+
+.legende {
+  display:flex; flex-wrap:wrap; gap:8px 14px;
+  margin-top:11px; padding-top:11px; border-top:1px solid var(--trait);
+  font-size:12px; color:var(--encre-2);
+}
+.legende span { display:inline-flex; align-items:center; gap:5px; }
+.puce { width:11px; height:11px; border-radius:3px; border:1px solid var(--trait); }
+
+.avis {
+  background:var(--ambre-fond); border:1px solid var(--ambre);
+  border-radius:11px; padding:11px 13px; margin-bottom:14px;
+  font-size:13px; color:var(--encre);
+}
+.avis b { color:var(--ambre); }
+.cache { display:none; }
+.invisible {
+  position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
+}
+
+@media (max-width:359px) {
+  .grille { grid-template-columns:26px repeat(7, 1fr); gap:1px; }
+  .jour { min-height:38px; font-size:13px; }
+  .poste-nom { font-size:34px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  *,*::before,*::after { transition-duration:.001ms !important; animation-duration:.001ms !important; }
+}
+</style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col items-center p-4">
+<body>
+<div class="page">
 
-    <!-- Header & Configuration -->
-    <header class="w-full max-w-md mb-6 flex flex-col items-center fade-in">
-        <h1 class="text-3xl font-bold text-slate-900 mb-2">Mon Planning 3x8</h1>
-        <!-- Légende Rapide Postes -->
-        <div class="flex gap-2 text-sm font-medium mb-4">
-            <span class="px-3 py-1 rounded-full bg-blue-100 text-blue-700 border border-blue-200 shadow-sm">A</span>
-            <span class="px-3 py-1 rounded-full bg-orange-100 text-orange-700 border border-orange-200 shadow-sm">B</span>
-            <span class="px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200 shadow-sm">C</span>
-        </div>
-    </header>
+  <header class="barre">
+    <h1>Planning 3x8</h1>
+    <button id="btnTheme" class="bouton" type="button" aria-label="Passer au thème sombre">☾</button>
+  </header>
 
-    <!-- Carte Aujourd'hui -->
-    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden mb-6 fade-in">
-        <div class="p-6 text-center">
-            <p class="text-slate-500 uppercase tracking-wide text-xs font-bold mb-1">Aujourd'hui</p>
-            <h2 id="currentDateDisplay" class="text-xl font-semibold text-slate-800 mb-4">Chargement...</h2>
-            
-            <div id="currentShiftCard" class="bg-slate-100 rounded-xl p-6 transition-all duration-300">
-                <div class="text-5xl font-bold mb-2" id="currentShiftCode">-</div>
-                <div class="text-lg font-medium opacity-90" id="currentShiftTime">--h - --h</div>
-            </div>
-            
-            <!-- Indicateur jour spécial aujourd'hui -->
-            <div id="todayHoliday" class="hidden mt-3 font-medium text-sm flex items-center justify-center gap-2">
-                <!-- Icone -->
-                <span id="todayIcon"></span>
-                <span id="todayHolidayName"></span>
-            </div>
-        </div>
-        <div class="bg-slate-50 p-4 border-t border-slate-100 flex justify-between items-center text-sm">
-            <span class="text-slate-500">Semaine prochaine :</span>
-            <span id="nextWeekPreview" class="font-bold px-2 py-1 rounded bg-white border border-slate-200 shadow-sm">--</span>
-        </div>
+  <section class="aujourdhui">
+    <div class="aujourdhui-date">
+      <span id="dateJour">—</span>
+      <span id="etiquetteJour"></span>
+    </div>
+    <div class="aujourdhui-corps">
+      <p class="poste-nom" id="posteNom">—</p>
+      <div class="poste-heures" id="posteHeures"></div>
+      <div class="poste-note" id="posteNote"></div>
+    </div>
+  </section>
+
+  <div id="avisDonnees" class="avis cache"></div>
+
+  <section class="mois">
+    <div class="mois-tete">
+      <button id="moisPrec" class="bouton" type="button" aria-label="Mois précédent">‹</button>
+      <span class="mois-nom" id="moisNom">—</span>
+      <button id="moisSuiv" class="bouton" type="button" aria-label="Mois suivant">›</button>
     </div>
 
-    <!-- Calendrier -->
-    <div class="w-full max-w-md bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden fade-in" style="animation-delay: 0.1s;">
-        <!-- Navigation Mois -->
-        <div class="flex justify-between items-center p-4 border-b border-slate-100 bg-slate-50">
-            <button onclick="changeMonth(-1)" class="p-2 hover:bg-slate-200 rounded-lg transition-colors text-slate-600" aria-label="Mois précédent">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6"><path d="m15 18-6-6 6-6"/></svg>
-            </button>
-            <h3 id="calendarMonthYear" class="text-lg font-bold text-slate-800 capitalize">Janvier 2026</h3>
-            <button onclick="changeMonth(1)" class="p-2 hover:bg-slate-200 rounded-lg transition-colors text-slate-600" aria-label="Mois suivant">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6"><path d="m9 18 6-6-6-6"/></svg>
-            </button>
-        </div>
+    <div class="grille" id="grille" role="grid" aria-labelledby="moisNom"></div>
 
-        <!-- Jours de la semaine -->
-        <div class="grid grid-cols-7 text-center py-2 bg-white text-xs font-semibold text-slate-400 border-b border-slate-100">
-            <div>Lun</div>
-            <div>Mar</div>
-            <div>Mer</div>
-            <div>Jeu</div>
-            <div>Ven</div>
-            <div>Sam</div>
-            <div>Dim</div>
-        </div>
-
-        <!-- Grille des jours -->
-        <div id="calendarGrid" class="grid grid-cols-7 text-center bg-white">
-            <!-- Rempli par JS -->
-        </div>
+    <div class="legende">
+      <span><i class="puce" style="background:var(--matin)"></i>Matin</span>
+      <span><i class="puce" style="background:var(--aprem)"></i>Après-midi</span>
+      <span><i class="puce" style="background:var(--nuit)"></i>Nuit</span>
+      <span><i class="puce" style="background:var(--ambre-fond);border-color:var(--ambre)"></i>Fermé / férié</span>
+      <span><i class="ecole" style="width:14px;margin:0"></i>Vacances scolaires</span>
     </div>
+  </section>
+</div>
 
-    <!-- Légende Complète -->
-    <div class="w-full max-w-md mt-6 bg-white rounded-xl border border-slate-200 p-4 fade-in">
-        <h4 class="text-xs font-bold text-slate-500 uppercase mb-3 border-b border-slate-100 pb-2">Légende</h4>
-        <div class="grid grid-cols-2 gap-3 text-xs">
-            <div class="flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-blue-500"></span>
-                <span>Matin (A)</span>
-            </div>
-            <div class="flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-orange-500"></span>
-                <span>Après-midi (B)</span>
-            </div>
-            <div class="flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-indigo-600"></span>
-                <span>Nuit (C)</span>
-            </div>
-            <div class="flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-red-500"></span>
-                <span>Jour Férié</span>
-            </div>
-            <div class="flex items-center gap-2">
-                <span class="w-6 h-4 bg-emerald-100 border-b-2 border-emerald-400"></span>
-                <span>Vacances Scolaires</span>
-            </div>
-            <div class="flex items-center gap-2 col-span-2 mt-1">
-                <span class="w-6 h-4 border-2 border-red-600 bg-amber-400" style="background-image: repeating-linear-gradient(135deg, #fbbf24, #fbbf24 5px, #f59e0b 5px, #f59e0b 10px);"></span>
-                <span class="font-bold text-slate-700">Potentiellement Fermé (Orange)</span>
-            </div>
-        </div>
-    </div>
+<script>
+(function () {
+  'use strict';
 
-    <footer class="mt-8 text-xs text-slate-400 text-center max-w-xs pb-8">
-        Cycle calculé sur la base : B (semaine du 25/01/26) &rarr; A &rarr; C.<br>
-    </footer>
+  const $ = function (id) { return document.getElementById(id); };
 
-    <script>
-        // --- Configuration du cycle ---
-        const SHIFT_SEQUENCE = ['B', 'A', 'C'];
-        
-        const SHIFTS = {
-            'A': { label: 'Matin', time: '06h - 14h', color: 'bg-blue-500', text: 'text-blue-600', light: 'bg-blue-50', border: 'border-blue-200' },
-            'B': { label: 'Après-midi', time: '14h - 22h', color: 'bg-orange-500', text: 'text-orange-600', light: 'bg-orange-50', border: 'border-orange-200' },
-            'C': { label: 'Nuit', time: '22h - 06h', color: 'bg-indigo-600', text: 'text-indigo-600', light: 'bg-indigo-50', border: 'border-indigo-200' }
-        };
+  // ===== Rotation =====
+  // Le cycle est calculé, pas listé : il reste juste indéfiniment.
+  const CYCLE = ['B', 'A', 'C'];
+  const POSTES = {
+    A: { nom: 'Matin',      heures: '06h – 14h', classe: 'jour-matin' },
+    B: { nom: 'Après-midi', heures: '14h – 22h', classe: 'jour-aprem' },
+    C: { nom: 'Nuit',       heures: '22h – 06h', classe: 'jour-nuit'  }
+  };
+  const REFERENCE = new Date(2026, 0, 19); // un lundi, début de cycle connu
 
-        const REF_DATE = new Date(2026, 0, 19); 
-        let currentViewDate = new Date();
+  // ===== Données propres au site =====
+  // Séparées du code : ajouter une année revient à ajouter un bloc ici.
+  // Tant qu'une année manque, la page le dit au lieu d'afficher un calendrier
+  // muet — c'est le piège de la version précédente, qui n'avait que 2026 et
+  // n'aurait plus rien signalé à partir du 1er janvier 2027.
+  const DONNEES = {
+    2026: {
+      vacances: [
+        ['2026-02-07', '2026-02-22', 'Vacances d’hiver'],
+        ['2026-04-04', '2026-04-19', 'Vacances de printemps'],
+        ['2026-07-04', '2026-09-01', 'Grandes vacances'],
+        ['2026-10-17', '2026-11-01', 'Vacances de la Toussaint'],
+        ['2026-12-19', '2027-01-03', 'Vacances de Noël']
+      ],
+      fermetures: [
+        '2026-03-19', '2026-03-20',
+        '2026-04-11', '2026-04-12', '2026-04-30',
+        '2026-05-01', '2026-05-02', '2026-05-03', '2026-05-14', '2026-05-15',
+        '2026-06-11', '2026-06-12',
+        '2026-09-10', '2026-09-11', '2026-09-25',
+        '2026-10-23', '2026-10-24', '2026-10-25', '2026-10-26',
+        '2026-11-12', '2026-11-13',
+        '2026-12-10', '2026-12-11'
+      ]
+    }
+  };
 
-        // --- Gestion des jours fériés ---
-        function getHolidays(year) {
-            const holidays = {};
-            const addDate = (date, name) => {
-                const k = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
-                holidays[k] = name;
-            };
+  // ===== Dates =====
+  function cle(d) {
+    return d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0');
+  }
 
-            addDate(new Date(year, 0, 1), "Jour de l'an");
-            addDate(new Date(year, 4, 1), "Fête du Travail");
-            addDate(new Date(year, 4, 8), "Victoire 1945");
-            addDate(new Date(year, 6, 14), "Fête Nationale");
-            addDate(new Date(year, 7, 15), "Assomption");
-            addDate(new Date(year, 10, 1), "Toussaint");
-            addDate(new Date(year, 10, 11), "Armistice");
-            addDate(new Date(year, 11, 25), "Noël");
+  function lundiDe(d) {
+    const c = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const jour = c.getDay();
+    c.setDate(c.getDate() - (jour === 0 ? 6 : jour - 1));
+    return c;
+  }
 
-            const a = year % 19;
-            const b = Math.floor(year / 100);
-            const c = year % 100;
-            const d = Math.floor(b / 4);
-            const e = b % 4;
-            const f = Math.floor((b + 8) / 25);
-            const g = Math.floor((b - f + 1) / 3);
-            const h = (19 * a + b - d - g + 15) % 30;
-            const i = Math.floor(c / 4);
-            const k = c % 4;
-            const l = (32 + 2 * e + 2 * i - h - k) % 7;
-            const m = Math.floor((a + 11 * h + 22 * l) / 451);
-            const month = Math.floor((h + l - 7 * m + 114) / 31);
-            const day = ((h + l - 7 * m + 114) % 31) + 1;
-            const easter = new Date(year, month - 1, day);
+  function posteDe(date) {
+    // En semaines pleines plutôt qu'en millisecondes : les changements
+    // d'heure décalent la journée d'une heure et fausseraient une division.
+    const a = lundiDe(REFERENCE), b = lundiDe(date);
+    const semaines = Math.round((b - a) / 604800000);
+    return CYCLE[((semaines % 3) + 3) % 3];
+  }
 
-            const easterMonday = new Date(easter); easterMonday.setDate(easter.getDate() + 1);
-            addDate(easterMonday, "Lundi de Pâques");
+  /** Jours fériés français, Pâques comprise (algorithme de Meeus). */
+  function feries(annee) {
+    const f = {};
+    const pose = function (d, nom) { f[cle(d)] = nom; };
+    pose(new Date(annee, 0, 1),  'Jour de l’an');
+    pose(new Date(annee, 4, 1),  'Fête du Travail');
+    pose(new Date(annee, 4, 8),  'Victoire 1945');
+    pose(new Date(annee, 6, 14), 'Fête nationale');
+    pose(new Date(annee, 7, 15), 'Assomption');
+    pose(new Date(annee, 10, 1), 'Toussaint');
+    pose(new Date(annee, 10, 11),'Armistice');
+    pose(new Date(annee, 11, 25),'Noël');
 
-            const ascension = new Date(easter); ascension.setDate(easter.getDate() + 39);
-            addDate(ascension, "Ascension");
+    const a = annee % 19, b = Math.floor(annee / 100), c = annee % 100;
+    const d = Math.floor(b / 4), e = b % 4;
+    const g = Math.floor((b - Math.floor((b + 8) / 25) + 1) / 3);
+    const h = (19 * a + b - d - g + 15) % 30;
+    const i = Math.floor(c / 4), k = c % 4;
+    const l = (32 + 2 * e + 2 * i - h - k) % 7;
+    const m = Math.floor((a + 11 * h + 22 * l) / 451);
+    const mois = Math.floor((h + l - 7 * m + 114) / 31);
+    const jour = ((h + l - 7 * m + 114) % 31) + 1;
+    const paques = new Date(annee, mois - 1, jour);
 
-            const pentecost = new Date(easter); pentecost.setDate(easter.getDate() + 50);
-            addDate(pentecost, "Lundi de Pentecôte");
+    const decale = function (n) {
+      const x = new Date(paques); x.setDate(paques.getDate() + n); return x;
+    };
+    pose(decale(1),  'Lundi de Pâques');
+    pose(decale(39), 'Ascension');
+    pose(decale(50), 'Lundi de Pentecôte');
+    return f;
+  }
 
-            return holidays;
+  /** Fermetures de l'année demandée, plus celles d'une année voisine. */
+  function fermetures(annee) {
+    const s = {};
+    [annee - 1, annee, annee + 1].forEach(function (an) {
+      const bloc = DONNEES[an];
+      if (bloc) bloc.fermetures.forEach(function (k) { s[k] = true; });
+    });
+    return s;
+  }
+
+  /** Vacances scolaires, y compris celles à cheval sur deux années. */
+  function vacances(annee) {
+    const r = [];
+    [annee - 1, annee, annee + 1].forEach(function (an) {
+      const bloc = DONNEES[an];
+      if (bloc) bloc.vacances.forEach(function (v) {
+        r.push({ debut: v[0], fin: v[1], nom: v[2] });
+      });
+    });
+    return r;
+  }
+
+  function vacanceDe(k, plages) {
+    for (let i = 0; i < plages.length; i++) {
+      if (k >= plages[i].debut && k <= plages[i].fin) return plages[i].nom;
+    }
+    return null;
+  }
+
+  // ===== Affichage =====
+  let moisAffiche = new Date();
+
+  function rendreAujourdhui() {
+    const now = new Date();
+    const aujourdhui = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const k = cle(aujourdhui);
+    const poste = POSTES[posteDe(aujourdhui)];
+
+    $('dateJour').textContent = aujourdhui.toLocaleDateString('fr-FR',
+      { weekday: 'long', day: 'numeric', month: 'long' });
+
+    const ferie = feries(aujourdhui.getFullYear())[k];
+    const ferme = fermetures(aujourdhui.getFullYear())[k];
+    const vac = vacanceDe(k, vacances(aujourdhui.getFullYear()));
+
+    const etiquette = ferie || (ferme ? 'Fermeture' : '');
+    $('etiquetteJour').textContent = etiquette;
+
+    if (ferie || ferme) {
+      $('posteNom').textContent = ferie ? ferie : 'Fermé';
+      $('posteHeures').textContent = '';
+      $('posteNote').textContent = 'Poste de la semaine : ' + poste.nom + ', ' + poste.heures;
+    } else {
+      $('posteNom').textContent = poste.nom;
+      $('posteHeures').textContent = poste.heures;
+      $('posteNote').textContent = vac ? vac : '';
+    }
+  }
+
+  function rendreMois() {
+    const annee = moisAffiche.getFullYear();
+    const mois = moisAffiche.getMonth();
+
+    $('moisNom').textContent = new Date(annee, mois)
+      .toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+
+    // Prévenir quand les données du site manquent pour l'année affichée.
+    const avis = $('avisDonnees');
+    if (!DONNEES[annee]) {
+      avis.innerHTML = '<b>Données ' + annee + ' absentes.</b> Les postes restent justes, ' +
+        'mais les fermetures, ponts et vacances scolaires de cette année ne sont pas ' +
+        'encore renseignés — le calendrier ne les affichera pas.';
+      avis.classList.remove('cache');
+    } else {
+      avis.classList.add('cache');
+    }
+
+    const jFeries = feries(annee);
+    const jFermes = fermetures(annee);
+    const plages = vacances(annee);
+
+    const now = new Date();
+    const kToday = cle(new Date(now.getFullYear(), now.getMonth(), now.getDate()));
+
+    const grille = $('grille');
+    grille.innerHTML = '';
+
+    ['', 'L', 'M', 'M', 'J', 'V', 'S', 'D'].forEach(function (t, i) {
+      const c = document.createElement('div');
+      c.className = 'entete';
+      c.textContent = t;
+      if (t) c.setAttribute('aria-label',
+        ['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'][i - 1]);
+      grille.appendChild(c);
+    });
+
+    // On parcourt par semaines entières, du lundi précédant le 1er du mois
+    // jusqu'à couvrir le dernier jour.
+    const premier = new Date(annee, mois, 1);
+    const dernier = new Date(annee, mois + 1, 0);
+    let curseur = lundiDe(premier);
+
+    while (curseur <= dernier) {
+      const code = posteDe(curseur);
+      const poste = POSTES[code];
+
+      const marque = document.createElement('div');
+      marque.className = 'semaine-poste';
+      marque.textContent = code;
+      marque.title = poste.nom + ' (' + poste.heures + ')';
+      marque.setAttribute('aria-label', 'Semaine en ' + poste.nom);
+      grille.appendChild(marque);
+
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(curseur.getFullYear(), curseur.getMonth(), curseur.getDate() + i);
+        const k = cle(d);
+        const dansLeMois = d.getMonth() === mois;
+
+        const cellule = document.createElement('div');
+        const ferie = jFeries[k];
+        const ferme = jFermes[k];
+        const vac = vacanceDe(k, plages);
+
+        let classes = 'jour ' + ((ferie || ferme) ? 'jour-ferme' : poste.classe);
+        if (!dansLeMois) classes += ' jour-horsmois';
+        if (k === kToday) classes += ' jour-today';
+        cellule.className = classes;
+
+        const num = document.createElement('span');
+        num.className = 'jour-num';
+        num.textContent = d.getDate();
+        cellule.appendChild(num);
+
+        if (ferie || ferme) {
+          const p = document.createElement('i');
+          p.className = 'pastille';
+          cellule.appendChild(p);
+        } else if (vac) {
+          const b = document.createElement('i');
+          b.className = 'ecole';
+          cellule.appendChild(b);
         }
 
-        // --- Gestion des Vacances Scolaires (Zone A 2026 - CORRIGÉES) ---
-        // Fin ajustée pour exclure le jour de la rentrée
-        function getSchoolHolidays(year) {
-            const ranges = [];
-            if (year === 2026) {
-                // Hiver (Zone A): 07/02 au 22/02 (Rentrée le 23)
-                ranges.push({start: new Date(2026, 1, 7), end: new Date(2026, 1, 22), name: "Vacances Hiver"});
-                // Printemps (Zone A): 04/04 au 19/04 (Rentrée le 20)
-                ranges.push({start: new Date(2026, 3, 4), end: new Date(2026, 3, 19), name: "Vacances Printemps"});
-                // Été: 04/07 au 31/08 (Rentrée le 1er Sept)
-                ranges.push({start: new Date(2026, 6, 4), end: new Date(2026, 8, 1), name: "Grandes Vacances"});
-                // Toussaint: 17/10 au 01/11 (Rentrée le 02/11)
-                ranges.push({start: new Date(2026, 9, 17), end: new Date(2026, 10, 1), name: "Vacances Toussaint"});
-                // Noël: 19/12 au 03/01/2027 (Rentrée le 04/01)
-                ranges.push({start: new Date(2026, 11, 19), end: new Date(2027, 0, 3), name: "Vacances Noël"});
-            }
-            return ranges;
-        }
+        const dit = d.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' }) +
+          ' — ' + (ferie ? ferie : (ferme ? 'fermeture' : poste.nom)) + (vac ? ', ' + vac : '');
+        cellule.title = dit;
+        cellule.setAttribute('role', 'gridcell');
+        cellule.setAttribute('aria-label', dit);
 
-        function isSchoolHoliday(date, ranges) {
-            for (let r of ranges) {
-                if (date >= r.start && date <= r.end) return r.name;
-            }
-            return null;
-        }
+        grille.appendChild(cellule);
+      }
 
-        // --- Gestion des Jours Fermés Spécifiques ---
-        function getPotentialClosedDays(year) {
-            const closedDays = {};
-            const addClosed = (dateStr, name) => {
-                 const [day, month] = dateStr.split('/').map(Number);
-                 const k = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-                 closedDays[k] = name;
-            }
+      curseur = new Date(curseur.getFullYear(), curseur.getMonth(), curseur.getDate() + 7);
+    }
+  }
 
-            if (year === 2026) {
-                const dates2026 = [
-                    "19/03", "20/03",
-                    "11/04", "12/04", "30/04", 
-                    "01/05", "02/05", "03/05", "14/05", "15/05",
-                    "11/06", "12/06",
-                    "10/09", "11/09", "25/09",
-                    "23/10", "24/10", "25/10", "26/10",
-                    "12/11", "13/11",
-                    "10/12", "11/12"
-                ];
-                dates2026.forEach(d => addClosed(d, "Fermeture / Pont"));
-            }
-            return closedDays;
-        }
+  function changerMois(delta) {
+    moisAffiche = new Date(moisAffiche.getFullYear(), moisAffiche.getMonth() + delta, 1);
+    rendreMois();
+  }
 
-        function getMonday(d) {
-            d = new Date(d);
-            const day = d.getDay(),
-                diff = d.getDate() - day + (day === 0 ? -6 : 1);
-            return new Date(d.setDate(diff));
-        }
+  function appliquerTheme() {
+    let sombre = false;
+    try { sombre = localStorage.getItem('calc.theme') === 'dark'; } catch (e) {}
+    document.documentElement.classList.toggle('sombre', sombre);
+    const b = $('btnTheme');
+    b.textContent = sombre ? '☀' : '☾';
+    b.setAttribute('aria-label', sombre ? 'Passer au thème clair' : 'Passer au thème sombre');
+  }
 
-        function getShiftForDate(date) {
-            const mondayTarget = getMonday(date);
-            const mondayRef = getMonday(REF_DATE);
-            const diffTime = mondayTarget.getTime() - mondayRef.getTime();
-            const diffWeeks = Math.round(diffTime / (1000 * 60 * 60 * 24 * 7));
-            const cycleLength = SHIFT_SEQUENCE.length;
-            const index = ((diffWeeks % cycleLength) + cycleLength) % cycleLength;
-            return SHIFT_SEQUENCE[index];
-        }
+  document.addEventListener('DOMContentLoaded', function () {
+    appliquerTheme();
+    $('btnTheme').addEventListener('click', function () {
+      try {
+        localStorage.setItem('calc.theme',
+          localStorage.getItem('calc.theme') === 'dark' ? 'light' : 'dark');
+      } catch (e) {}
+      appliquerTheme();
+    });
 
-        function renderApp() {
-            renderTodayCard();
-            renderCalendar();
-        }
+    $('moisPrec').addEventListener('click', function () { changerMois(-1); });
+    $('moisSuiv').addEventListener('click', function () { changerMois(1); });
 
-        function renderTodayCard() {
-            const today = new Date();
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            document.getElementById('currentDateDisplay').textContent = today.toLocaleDateString('fr-FR', options);
-
-            const shiftCode = getShiftForDate(today);
-            const shiftData = SHIFTS[shiftCode];
-            
-            const card = document.getElementById('currentShiftCard');
-            card.className = `rounded-xl p-6 shadow-sm border transition-all duration-300 ${shiftData.color} text-white`;
-            
-            document.getElementById('currentShiftCode').textContent = `Poste ${shiftCode}`;
-            document.getElementById('currentShiftTime').textContent = shiftData.time;
-
-            // Check details
-            const holidays = getHolidays(today.getFullYear());
-            const closedDays = getPotentialClosedDays(today.getFullYear());
-            const schoolHolidaysRanges = getSchoolHolidays(today.getFullYear());
-            
-            const dateKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-            const schoolHolidayName = isSchoolHoliday(today, schoolHolidaysRanges);
-            
-            const holidayEl = document.getElementById('todayHoliday');
-            const holidayNameEl = document.getElementById('todayHolidayName');
-            const iconEl = document.getElementById('todayIcon');
-
-            holidayEl.className = "hidden mt-3 font-medium text-sm flex items-center justify-center gap-2"; // Reset
-            iconEl.innerHTML = "";
-
-            if (holidays[dateKey]) {
-                holidayNameEl.textContent = holidays[dateKey];
-                holidayEl.className = "mt-3 font-bold text-red-600 text-sm flex items-center justify-center gap-2";
-                iconEl.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
-                holidayEl.classList.remove('hidden');
-            } else if (closedDays[dateKey]) {
-                 holidayNameEl.textContent = closedDays[dateKey];
-                 holidayEl.className = "mt-3 font-bold text-amber-900 text-sm flex items-center justify-center gap-2 bg-amber-200 py-1 px-3 rounded-full border-2 border-red-500";
-                 iconEl.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
-                 holidayEl.classList.remove('hidden');
-            } else if (schoolHolidayName) {
-                 holidayNameEl.textContent = schoolHolidayName;
-                 holidayEl.className = "mt-3 font-bold text-emerald-700 text-sm flex items-center justify-center gap-2 bg-emerald-100 py-1 px-3 rounded-full";
-                 // Bigger Sun Icon
-                 iconEl.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="text-emerald-500"><path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591zM12 18a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-2.25A.75.75 0 0112 18zM7.758 17.303a.75.75 0 00-1.061-1.06l-1.591 1.59a.75.75 0 001.06 1.061l1.591-1.59zM6 12a.75.75 0 01-.75.75H3a.75.75 0 010-1.5h2.25A.75.75 0 016 12zM6.697 7.757a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 00-1.061 1.06l1.59 1.591z" /></svg>`;
-                 holidayEl.classList.remove('hidden');
-            } else {
-                holidayEl.classList.add('hidden');
-            }
-
-            // Preview next week
-            const nextWeekDate = new Date(today);
-            nextWeekDate.setDate(today.getDate() + 7);
-            const nextShiftCode = getShiftForDate(nextWeekDate);
-            const nextShiftData = SHIFTS[nextShiftCode];
-            
-            const nextPreview = document.getElementById('nextWeekPreview');
-            nextPreview.textContent = `Poste ${nextShiftCode}`;
-            nextPreview.className = `font-bold px-3 py-1 rounded border shadow-sm ${nextShiftData.light} ${nextShiftData.text} ${nextShiftData.border}`;
-        }
-
-        function renderCalendar() {
-            const year = currentViewDate.getFullYear();
-            const month = currentViewDate.getMonth();
-            const holidays = getHolidays(year); 
-            const closedDays = getPotentialClosedDays(year); 
-            const schoolHolidaysRanges = getSchoolHolidays(year);
-
-            document.getElementById('calendarMonthYear').textContent = new Date(year, month).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-
-            const grid = document.getElementById('calendarGrid');
-            grid.innerHTML = '';
-
-            const firstDayOfMonth = new Date(year, month, 1);
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            
-            let paddingDays = firstDayOfMonth.getDay() - 1;
-            if (paddingDays === -1) paddingDays = 6;
-
-            for(let i = 0; i < paddingDays; i++) {
-                const emptyCell = document.createElement('div');
-                emptyCell.className = 'h-24 bg-slate-50 border-b border-r border-slate-100';
-                grid.appendChild(emptyCell);
-            }
-
-            const today = new Date();
-            today.setHours(0,0,0,0);
-
-            for(let day = 1; day <= daysInMonth; day++) {
-                const date = new Date(year, month, day);
-                const shiftCode = getShiftForDate(date);
-                const shiftData = SHIFTS[shiftCode];
-                const isToday = date.getTime() === today.getTime();
-                
-                // Keys & Status
-                const dateKey = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-                const holidayName = holidays[dateKey];
-                const closedName = closedDays[dateKey]; 
-                const schoolHolidayName = isSchoolHoliday(date, schoolHolidaysRanges);
-                
-                const isHoliday = !!holidayName;
-                const isClosed = !!closedName;
-                const isSchool = !!schoolHolidayName;
-
-                // Cell Base Style
-                const cell = document.createElement('div');
-                let bgClass = "bg-white border-b border-r border-slate-100"; // default
-
-                if (isToday) {
-                    bgClass = "bg-sky-50 border-2 border-sky-400 z-20"; 
-                } else if (isClosed && !isHoliday) {
-                    bgClass = "flashy-closed z-10"; 
-                } else if (isClosed && isHoliday) {
-                    bgClass = "flashy-closed z-10";
-                } else if (isSchool) {
-                    // Si vacances scolaires (et pas fermé/férié) -> Vert
-                    bgClass = "school-holiday";
-                }
-
-                cell.className = `h-20 sm:h-24 relative flex flex-col justify-between p-1 sm:p-2 transition-colors hover:bg-slate-50 ${bgClass}`;
-                
-                let titleParts = [];
-                if (isHoliday) titleParts.push(holidayName);
-                if (isClosed) titleParts.push(closedName || "Fermé");
-                if (isSchool) titleParts.push(schoolHolidayName);
-                if (titleParts.length > 0) cell.title = titleParts.join(" - ");
-
-                // Header du jour
-                const headerDiv = document.createElement('div');
-                headerDiv.className = "flex justify-between items-start";
-
-                const dayNumber = document.createElement('span');
-                if (isToday) {
-                    dayNumber.className = `text-xs font-semibold bg-sky-600 text-white w-6 h-6 flex items-center justify-center rounded-full`;
-                } else if (isHoliday) {
-                    dayNumber.className = `text-xs font-extrabold text-red-700`;
-                } else if (isClosed) {
-                    dayNumber.className = `text-xs font-extrabold text-red-900`;
-                } else if (isSchool) {
-                    // Vacances scolaires : texte vert foncé
-                    dayNumber.className = `text-xs font-bold text-emerald-700`;
-                } else {
-                    dayNumber.className = `text-xs font-semibold text-slate-500`;
-                }
-                dayNumber.textContent = day;
-                headerDiv.appendChild(dayNumber);
-
-                // Indicateurs (Points / Icones)
-                const indicators = document.createElement('div');
-                indicators.className = "flex gap-1";
-
-                if ((isHoliday) && !isToday) {
-                    const dot = document.createElement('span');
-                    dot.className = `w-1.5 h-1.5 rounded-full bg-red-600 border border-white`;
-                    indicators.appendChild(dot);
-                }
-                
-                // Icone Fermé
-                if (isClosed && !isToday) {
-                     const warn = document.createElement('span');
-                     warn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7f1d1d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
-                     indicators.appendChild(warn);
-                }
-
-                // Icone Vacances (SOLEIL)
-                if (isSchool) {
-                     const vac = document.createElement('span');
-                     const colorClass = isClosed ? "text-emerald-800" : "text-emerald-500"; 
-                     // Sun Icon (Filled)
-                     vac.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="${colorClass}"><path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591zM12 18a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-2.25A.75.75 0 0112 18zM7.758 17.303a.75.75 0 00-1.061-1.06l-1.591 1.59a.75.75 0 001.06 1.061l1.591-1.59zM6 12a.75.75 0 01-.75.75H3a.75.75 0 010-1.5h2.25A.75.75 0 016 12zM6.697 7.757a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 00-1.061 1.06l1.59 1.591z" /></svg>`;
-                     indicators.appendChild(vac);
-                }
-
-                headerDiv.appendChild(indicators);
-
-                const badge = document.createElement('div');
-                
-                // Si c'est flashy ou vacances, fond blanc semi-transparent
-                let badgeContainerClass = "";
-                if (isClosed || (isHoliday && isClosed) || isSchool) {
-                    badgeContainerClass = "bg-white/80 backdrop-blur-sm shadow-sm border border-slate-100";
-                }
-
-                badge.className = `mt-1 w-full rounded py-1 px-1 sm:px-2 text-center text-xs font-bold ${shiftData.light} ${shiftData.text} ${badgeContainerClass}`;
-                badge.innerHTML = `<span class="block text-sm">${shiftCode}</span><span class="hidden sm:inline text-[10px]">${shiftData.time.split(' ')[0]}</span>`;
-
-                cell.appendChild(headerDiv);
-                cell.appendChild(badge);
-                grid.appendChild(cell);
-            }
-        }
-
-        function changeMonth(delta) {
-            currentViewDate.setMonth(currentViewDate.getMonth() + delta);
-            renderCalendar();
-        }
-
-        renderApp();
-
-    </script>
+    rendreAujourdhui();
+    rendreMois();
+  });
+})();
+</script>
 </body>
 </html>
