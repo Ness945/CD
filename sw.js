@@ -5,7 +5,7 @@
  * figées et versionnées. Changer VERSION invalide l'ancien cache et force le
  * rechargement complet au prochain passage en ligne.
  */
-const VERSION = 'nst-v8.3.0';
+const VERSION = 'nst-v8.4.0';
 
 const RESSOURCES = [
   './',

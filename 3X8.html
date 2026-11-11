@@ -30,6 +30,12 @@
   --matin:#e7ebdf;
   --aprem:#c6ccbb;
   --nuit:#949e8f;
+
+  /* Trois signaux, trois couleurs franches : rouge = férié, ambre = fermeture
+     du site, bleu = vacances scolaires. Les postes restent en gris pour que
+     ces trois-là ressortent. */
+  --ferie:#c0392b;
+  --vac:#1f6fd6;
 }
 :root.sombre {
   --sol:#101316; --surface:#191d21; --surface-2:#14181b;
@@ -43,6 +49,8 @@
   --matin:#4c555c;
   --aprem:#363e44;
   --nuit:#242a2f;
+  --ferie:#d9513f;
+  --vac:#5aa2ff;
 }
 
 * { box-sizing:border-box; }
@@ -130,21 +138,34 @@ h1 { margin:0; font-size:15px; font-weight:700; letter-spacing:-0.01em; }
 
 .jour-num { font-weight:650; }
 
+/* Week-end : jamais travaillé, donc pas de teinte de poste. */
+.jour-weekend { background:transparent; }
+.jour-weekend .jour-num { color:var(--encre-2); font-weight:500; }
+
 /* Aujourd'hui : un cadre, pas un aplat — l'aplat sert déjà au poste. */
 .jour-today { outline:2.5px solid var(--encre); outline-offset:-2.5px; border-radius:7px; }
 .jour-today .jour-num { font-weight:800; }
 
-/* Fermeture ou férié : l'ambre est la seule couleur de la page, elle ne
-   signale que ça. */
+/* Fermeture du site : ambre. */
 .jour-ferme { background:var(--ambre-fond); }
 .jour-ferme .jour-num { color:var(--ambre); font-weight:800; }
 .pastille {
   display:block; width:5px; height:5px; border-radius:50%;
   background:var(--ambre); margin:2px auto 0;
 }
+
+/* Jour férié : aplat rouge, chiffre blanc — visible d'un coup d'œil. */
+.jour-ferie { background:var(--ferie); }
+.jour-ferie .jour-num { color:#fff; font-weight:800; }
+
+/* Vacances scolaires : bandeau bleu en pied de case. Les cases se touchant
+   presque, il forme un ruban continu sur toute la période, week-ends compris. */
 .ecole {
-  display:block; height:2px; border-radius:1px;
-  background:var(--encre-2); opacity:.42; margin:3px 6px 0;
+  position:absolute; left:0; right:0; bottom:0; height:6px;
+  background:var(--vac); border-radius:0 0 3px 3px;
+}
+.puce-vac {
+  background:linear-gradient(to top, var(--vac) 50%, transparent 50%);
 }
 
 .legende {
@@ -212,8 +233,9 @@ h1 { margin:0; font-size:15px; font-weight:700; letter-spacing:-0.01em; }
       <span><i class="puce" style="background:var(--matin)"></i>Matin</span>
       <span><i class="puce" style="background:var(--aprem)"></i>Après-midi</span>
       <span><i class="puce" style="background:var(--nuit)"></i>Nuit</span>
-      <span><i class="puce" style="background:var(--ambre-fond);border-color:var(--ambre)"></i>Fermé / férié</span>
-      <span><i class="ecole" style="width:14px;margin:0"></i>Vacances scolaires</span>
+      <span><i class="puce" style="background:var(--ferie);border-color:var(--ferie)"></i>Férié</span>
+      <span><i class="puce" style="background:var(--ambre-fond);border-color:var(--ambre)"></i>Fermeture</span>
+      <span><i class="puce puce-vac"></i>Vacances scolaires</span>
     </div>
   </section>
 </div>
@@ -234,31 +256,51 @@ h1 { margin:0; font-size:15px; font-weight:700; letter-spacing:-0.01em; }
   };
   const REFERENCE = new Date(2026, 0, 19); // un lundi, début de cycle connu
 
-  // ===== Données propres au site =====
-  // Séparées du code : ajouter une année revient à ajouter un bloc ici.
-  // Tant qu'une année manque, la page le dit au lieu d'afficher un calendrier
-  // muet — c'est le piège de la version précédente, qui n'avait que 2026 et
-  // n'aurait plus rien signalé à partir du 1er janvier 2027.
-  const DONNEES = {
-    2026: {
-      vacances: [
-        ['2026-02-07', '2026-02-22', 'Vacances d’hiver'],
-        ['2026-04-04', '2026-04-19', 'Vacances de printemps'],
-        ['2026-07-04', '2026-09-01', 'Grandes vacances'],
-        ['2026-10-17', '2026-11-01', 'Vacances de la Toussaint'],
-        ['2026-12-19', '2027-01-03', 'Vacances de Noël']
-      ],
-      fermetures: [
-        '2026-03-19', '2026-03-20',
-        '2026-04-11', '2026-04-12', '2026-04-30',
-        '2026-05-01', '2026-05-02', '2026-05-03', '2026-05-14', '2026-05-15',
-        '2026-06-11', '2026-06-12',
-        '2026-09-10', '2026-09-11', '2026-09-25',
-        '2026-10-23', '2026-10-24', '2026-10-25', '2026-10-26',
-        '2026-11-12', '2026-11-13',
-        '2026-12-10', '2026-12-11'
-      ]
-    }
+  // La semaine de nuit commence le lundi à 22h et finit le samedi à 06h.
+  // Le week-end n'est jamais travaillé.
+  const DEBUT_NUIT = 22, FIN_NUIT = 6;
+
+  // ===== Vacances scolaires — zone A (académie de Clermont-Ferrand) =====
+  // Du premier jour sans classe (le samedi) à la veille de la reprise.
+  // Source : calendrier officiel de l'Éducation nationale. Le calendrier
+  // 2028-2029 n'est pas encore publié : ajouter ses lignes ici quand il le
+  // sera, et repousser FIN_VACANCES_CONNUES.
+  const VACANCES = [
+    ['2026-02-07', '2026-02-22', 'Vacances d’hiver'],
+    ['2026-04-04', '2026-04-19', 'Vacances de printemps'],
+    ['2026-07-04', '2026-08-31', 'Grandes vacances'],
+    ['2026-10-17', '2026-11-01', 'Vacances de la Toussaint'],
+    ['2026-12-19', '2027-01-03', 'Vacances de Noël'],
+
+    ['2027-02-13', '2027-02-28', 'Vacances d’hiver'],
+    ['2027-04-10', '2027-04-25', 'Vacances de printemps'],
+    ['2027-05-06', '2027-05-09', 'Pont de l’Ascension'],
+    ['2027-07-03', '2027-09-01', 'Grandes vacances'],
+    ['2027-10-23', '2027-11-07', 'Vacances de la Toussaint'],
+    ['2027-12-18', '2028-01-02', 'Vacances de Noël'],
+
+    ['2028-02-19', '2028-03-05', 'Vacances d’hiver'],
+    ['2028-04-22', '2028-05-08', 'Vacances de printemps'],
+    ['2028-05-25', '2028-05-28', 'Pont de l’Ascension'],
+    // Fin des cours le mardi 4 juillet 2028 ; date de rentrée pas encore publiée.
+    ['2028-07-05', '2028-08-31', 'Grandes vacances']
+  ];
+  const FIN_VACANCES_CONNUES = '2028-08-31';
+
+  // ===== Fermetures du site =====
+  // Propres à l'usine : une ligne par année. Tant qu'une année manque, la
+  // page le dit au lieu d'afficher un calendrier muet.
+  const FERMETURES = {
+    2026: [
+      '2026-03-19', '2026-03-20',
+      '2026-04-11', '2026-04-12', '2026-04-30',
+      '2026-05-01', '2026-05-02', '2026-05-03', '2026-05-14', '2026-05-15',
+      '2026-06-11', '2026-06-12',
+      '2026-09-10', '2026-09-11', '2026-09-25',
+      '2026-10-23', '2026-10-24', '2026-10-25', '2026-10-26',
+      '2026-11-12', '2026-11-13',
+      '2026-12-10', '2026-12-11'
+    ]
   };
 
   // ===== Dates =====
@@ -316,63 +358,110 @@ h1 { margin:0; font-size:15px; font-weight:700; letter-spacing:-0.01em; }
     return f;
   }
 
-  /** Fermetures de l'année demandée, plus celles d'une année voisine. */
+  /** Fermetures de l'année demandée, plus celles des années voisines. */
   function fermetures(annee) {
     const s = {};
     [annee - 1, annee, annee + 1].forEach(function (an) {
-      const bloc = DONNEES[an];
-      if (bloc) bloc.fermetures.forEach(function (k) { s[k] = true; });
+      (FERMETURES[an] || []).forEach(function (k) { s[k] = true; });
     });
     return s;
   }
 
-  /** Vacances scolaires, y compris celles à cheval sur deux années. */
-  function vacances(annee) {
-    const r = [];
-    [annee - 1, annee, annee + 1].forEach(function (an) {
-      const bloc = DONNEES[an];
-      if (bloc) bloc.vacances.forEach(function (v) {
-        r.push({ debut: v[0], fin: v[1], nom: v[2] });
-      });
-    });
-    return r;
-  }
-
-  function vacanceDe(k, plages) {
-    for (let i = 0; i < plages.length; i++) {
-      if (k >= plages[i].debut && k <= plages[i].fin) return plages[i].nom;
+  function vacanceDe(k) {
+    for (let i = 0; i < VACANCES.length; i++) {
+      if (k >= VACANCES[i][0] && k <= VACANCES[i][1]) return VACANCES[i][2];
     }
     return null;
   }
 
+  function estWeekend(d) { return d.getDay() === 0 || d.getDay() === 6; }
+
+  function decaler(d, jours) {
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate() + jours);
+  }
+
+  /** Nom du férié, « Fermeture », ou null si le jour est normalement ouvert. */
+  function chome(d) {
+    const k = cle(d);
+    return feries(d.getFullYear())[k] || (fermetures(d.getFullYear())[k] ? 'Fermeture' : null);
+  }
+
+  /**
+   * Ce qu'il faut afficher à un instant donné : { nom, heures, note }.
+   *
+   * La nuit est à cheval sur deux dates : de 00h à 06h on est encore dans le
+   * poste commencé la veille à 22h. C'est vrai du mardi au samedi d'une
+   * semaine de nuit — pas le lundi, puisque la semaine démarre le lundi 22h.
+   */
+  function etatA(now) {
+    const jour = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const code = posteDe(jour);
+    const poste = POSTES[code];
+    const dow = jour.getDay();              // 0 = dimanche … 6 = samedi
+    const h = now.getHours();
+
+    // Nuit commencée la veille et pas encore finie.
+    if (code === 'C' && dow >= 2 && h < FIN_NUIT && !chome(decaler(jour, -1))) {
+      return {
+        nom: 'Nuit', heures: 'En cours — fin à 06h',
+        note: dow === 6 ? 'Dernière nuit de la semaine. Week-end ensuite.'
+                        : 'Prochaine prise de poste ce soir à 22h.'
+      };
+    }
+
+    if (estWeekend(jour)) {
+      const lundi = decaler(lundiDe(jour), 7);
+      const suivant = POSTES[posteDe(lundi)];
+      return {
+        nom: 'Week-end', heures: 'Repos',
+        note: 'Reprise lundi : ' + suivant.nom + ', ' + suivant.heures
+      };
+    }
+
+    const motif = chome(jour);
+    if (motif) {
+      return {
+        nom: motif === 'Fermeture' ? 'Fermé' : motif, heures: '',
+        note: 'Poste de la semaine : ' + poste.nom + ', ' + poste.heures
+      };
+    }
+
+    if (code === 'C') {
+      return {
+        nom: 'Nuit', heures: poste.heures,
+        note: (h < DEBUT_NUIT ? 'Prise de poste ce soir à 22h. ' : '') +
+          'Semaine de nuit : du lundi 22h au samedi 06h.'
+      };
+    }
+
+    return { nom: poste.nom, heures: poste.heures, note: '' };
+  }
+
   // ===== Affichage =====
   let moisAffiche = new Date();
+  let jourRendu = '';
 
   function rendreAujourdhui() {
     const now = new Date();
     const aujourdhui = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const k = cle(aujourdhui);
-    const poste = POSTES[posteDe(aujourdhui)];
 
     $('dateJour').textContent = aujourdhui.toLocaleDateString('fr-FR',
       { weekday: 'long', day: 'numeric', month: 'long' });
 
-    const ferie = feries(aujourdhui.getFullYear())[k];
-    const ferme = fermetures(aujourdhui.getFullYear())[k];
-    const vac = vacanceDe(k, vacances(aujourdhui.getFullYear()));
+    const motif = chome(aujourdhui);
+    const vac = vacanceDe(k);
+    $('etiquetteJour').textContent = motif || vac || '';
 
-    const etiquette = ferie || (ferme ? 'Fermeture' : '');
-    $('etiquetteJour').textContent = etiquette;
+    const etat = etatA(now);
+    $('posteNom').textContent = etat.nom;
+    $('posteHeures').textContent = etat.heures;
+    $('posteNote').textContent = etat.note;
 
-    if (ferie || ferme) {
-      $('posteNom').textContent = ferie ? ferie : 'Fermé';
-      $('posteHeures').textContent = '';
-      $('posteNote').textContent = 'Poste de la semaine : ' + poste.nom + ', ' + poste.heures;
-    } else {
-      $('posteNom').textContent = poste.nom;
-      $('posteHeures').textContent = poste.heures;
-      $('posteNote').textContent = vac ? vac : '';
-    }
+    // Si la date a changé depuis le dernier rendu (page restée ouverte),
+    // le cadre « aujourd'hui » du calendrier doit suivre.
+    if (jourRendu && jourRendu !== k) rendreMois();
+    jourRendu = k;
   }
 
   function rendreMois() {
@@ -382,12 +471,15 @@ h1 { margin:0; font-size:15px; font-weight:700; letter-spacing:-0.01em; }
     $('moisNom').textContent = new Date(annee, mois)
       .toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
 
-    // Prévenir quand les données du site manquent pour l'année affichée.
+    // Prévenir quand des données manquent pour le mois affiché. Les postes et
+    // les jours fériés sont calculés : eux restent toujours justes.
     const avis = $('avisDonnees');
-    if (!DONNEES[annee]) {
-      avis.innerHTML = '<b>Données ' + annee + ' absentes.</b> Les postes restent justes, ' +
-        'mais les fermetures, ponts et vacances scolaires de cette année ne sont pas ' +
-        'encore renseignés — le calendrier ne les affichera pas.';
+    const manques = [];
+    if (!FERMETURES[annee]) manques.push('les fermetures du site');
+    if (cle(new Date(annee, mois, 1)) > FIN_VACANCES_CONNUES) manques.push('les vacances scolaires');
+    if (manques.length) {
+      avis.innerHTML = '<b>' + annee + ' incomplet.</b> Postes et jours fériés sont justes. ' +
+        'Pas encore dans le calendrier : ' + manques.join(' et ') + '.';
       avis.classList.remove('cache');
     } else {
       avis.classList.add('cache');
@@ -395,7 +487,6 @@ h1 { margin:0; font-size:15px; font-weight:700; letter-spacing:-0.01em; }
 
     const jFeries = feries(annee);
     const jFermes = fermetures(annee);
-    const plages = vacances(annee);
 
     const now = new Date();
     const kToday = cle(new Date(now.getFullYear(), now.getMonth(), now.getDate()));
@@ -435,11 +526,16 @@ h1 { margin:0; font-size:15px; font-weight:700; letter-spacing:-0.01em; }
         const dansLeMois = d.getMonth() === mois;
 
         const cellule = document.createElement('div');
-        const ferie = jFeries[k];
-        const ferme = jFermes[k];
-        const vac = vacanceDe(k, plages);
+        // Un férié de janvier affiché en fin de grille de décembre appartient
+        // à l'année suivante : on le cherche dans l'année du jour lui-même.
+        const ferie = d.getFullYear() === annee ? jFeries[k] : feries(d.getFullYear())[k];
+        const weekend = estWeekend(d);
+        const ferme = !weekend && jFermes[k];
+        const vac = vacanceDe(k);
 
-        let classes = 'jour ' + ((ferie || ferme) ? 'jour-ferme' : poste.classe);
+        // Priorité : férié (rouge) > fermeture (ambre) > week-end > poste.
+        let classes = 'jour ' + (ferie ? 'jour-ferie'
+          : (ferme ? 'jour-ferme' : (weekend ? 'jour-weekend' : poste.classe)));
         if (!dansLeMois) classes += ' jour-horsmois';
         if (k === kToday) classes += ' jour-today';
         cellule.className = classes;
@@ -449,18 +545,20 @@ h1 { margin:0; font-size:15px; font-weight:700; letter-spacing:-0.01em; }
         num.textContent = d.getDate();
         cellule.appendChild(num);
 
-        if (ferie || ferme) {
+        if (ferme && !ferie) {
           const p = document.createElement('i');
           p.className = 'pastille';
           cellule.appendChild(p);
-        } else if (vac) {
+        }
+        if (vac) {
           const b = document.createElement('i');
           b.className = 'ecole';
           cellule.appendChild(b);
         }
 
         const dit = d.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' }) +
-          ' — ' + (ferie ? ferie : (ferme ? 'fermeture' : poste.nom)) + (vac ? ', ' + vac : '');
+          ' — ' + (ferie ? ferie : (ferme ? 'fermeture' : (weekend ? 'week-end' : poste.nom))) +
+          (vac ? ', ' + vac : '');
         cellule.title = dit;
         cellule.setAttribute('role', 'gridcell');
         cellule.setAttribute('aria-label', dit);
@@ -501,6 +599,13 @@ h1 { margin:0; font-size:15px; font-weight:700; letter-spacing:-0.01em; }
 
     rendreAujourdhui();
     rendreMois();
+
+    // Le bandeau dépend de l'heure (22h, 06h, minuit) : on le rafraîchit
+    // chaque minute et à chaque retour sur la page.
+    setInterval(rendreAujourdhui, 60000);
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden) rendreAujourdhui();
+    });
   });
 })();
 </script>
